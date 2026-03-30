@@ -1,0 +1,24 @@
+algo GCDGraphIter(natural a, natural b)
+    tree GCDTree // This is a comment
+        node r, nodeLeft, nodeRight, refA, refB
+        nodes.addAttribute(natural, value)
+
+        // This is another comment
+        nodeLeft.value := a
+        nodeRight.value := b
+
+        root := r
+        edge r --> nodeLeft
+        edge r --> nodeRight
+
+        refA := nodeLeft
+        refB := nodeRight 
+
+        while refB.value != 0 then
+            node tempLeaf
+            tempLeaf.value := refA.value % refB.value
+            edge refA --> tempLeaf
+            refA := refB
+            refB := tempLeaf
+        r.value := refA.value
+    return GCDTree.root.value
