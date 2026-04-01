@@ -2,9 +2,9 @@ import re
 indent_counter = 0
 
 final_string = ""
-with open("./Preprosessor/test.gsl", "r") as file:
+with open("./Preprosessor/test.gsl", "r") as input_file:
     inside_comment = False
-    for line in file:
+    for line in input_file:
         temp_str = line
 
         # Checks if inside multiline comment. Then check if there is an end. Otherwise skip
@@ -58,3 +58,7 @@ final_string += " @NEWLINE $"
     
 #print(repr(final_string))
 print((final_string))
+
+# Output to file
+with open("output.gsl", "w") as output_file:
+    output_file.write(final_string)
