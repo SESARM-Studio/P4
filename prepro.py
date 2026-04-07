@@ -51,10 +51,10 @@ with open("./Preprosessor/test.gsl", "r") as input_file:
         # Appends to final string
         final_string += temp_str
 
-
+final_string += " @NEWLINE\n"
 if indent_counter != 0:
     final_string += indent_counter * " @DEDENT"
-final_string += " @NEWLINE $"
+final_string += " $"
     
 #print(repr(final_string))
 print((final_string))
