@@ -1,8 +1,10 @@
 import re
 indent_counter = 0
+SPACES_OR_INDENTS = 0
+SPACES_AMOUNT = None
 
 final_string = ""
-with open("./test.gsl", "r") as input_file:
+with open("./Preprocessor/test.gsl", "r") as input_file:
     inside_comment = False
     for line in input_file:
         temp_str = line
@@ -29,19 +31,43 @@ with open("./test.gsl", "r") as input_file:
             continue
 
         # Replaces new/missing tabs / 4 spaces with "@INDENT"/"@DEDENT"
-        number_indents = ""
+        number_indents = 0
         indents = ""
-        SPACES_INDENT = 4
 
-        if m := re.match(rf"(\t|\ {{{SPACES_INDENT}}})+", temp_str):
+
+        if m:= re.match(rf"(\t|\ )+", temp_str):
             indents = m.group(0)
-            number_indents = re.sub(rf"(\ {{{SPACES_INDENT}}})", "\t", indents)
 
-        change_indents = len(number_indents) - indent_counter
+            
+
+            if SPACES_OR_INDENTS == 0:
+                if "\t" in indents and " " in indents:
+                    exit("ERROR: Tabs and spaces cannot be combined")
+
+                if "\t" in indents:
+                    SPACES_OR_INDENTS = 2
+                else:
+                    SPACES_OR_INDENTS = 1
+                    SPACES_AMOUNT = len(indents)
+                    print("Number of spaces for this file: " + str(SPACES_AMOUNT))
+            
+            if SPACES_OR_INDENTS == 1:
+                if "\t" in indents:
+                    exit("ERROR: Tabs and spaces cannot be combined")
+                number_indents = len(indents) / SPACES_AMOUNT
+                if number_indents % 1 != 0:
+                    exit("ERROR: Inconsistent use of spaces")
+            
+            if SPACES_AMOUNT == 2:
+                if " " in indents:
+                    exit("ERROR: Tabs and spaces cannot be combined")
+
+
+        change_indents = int(number_indents) - indent_counter
         if change_indents > 0:
-            temp_str = re.sub(rf"^(\t|\ {{{SPACES_INDENT}}})*", abs(change_indents) * "@INDENT ", temp_str)
+            temp_str = re.sub(rf"^(\t|\ {{{SPACES_AMOUNT}}})*", abs(change_indents) * "@INDENT ", temp_str)
         else:
-            temp_str = re.sub(rf"^(\t|\ {{{SPACES_INDENT}}})*", abs(change_indents) * "@DEDENT ", temp_str)
+            temp_str = re.sub(rf"^(\t|\ {{{SPACES_AMOUNT}}})*", abs(change_indents) * "@DEDENT ", temp_str)
 
         indent_counter += change_indents
 
