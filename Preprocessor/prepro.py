@@ -4,9 +4,9 @@ SPACES_OR_TABS = 0 # 1 for spaces, 2 for tabs
 SPACES_AMOUNT = None
 
 final_string = ""
-with open("./Preprocessor/test.gsl", "r") as input_file:
+with open("./Preprocessor/test_tabs.gsl", "r") as input_file:
     inside_comment = False
-    for line in input_file:
+    for i, line in enumerate (input_file, 1):
         temp_str = line
 
         # Checks if inside multiline comment. Then check if there is an end. Otherwise skip
@@ -14,13 +14,20 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
             if "*/" not in temp_str:
                 continue
             else:
-                temp_str = re.sub(r".*\*\/.*","", temp_str, flags=re.DOTALL)
+                temp_str = re.sub(r".*\*\/","", temp_str)
+                if temp_str.strip() != "":
+                    exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
                 inside_comment = False
 
         # Remove multi-line comments "/*  */"
-        temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str, flags=re.DOTALL)
+        multi_line = re.split(r"/\*.*\*/", temp_str)
+        if len(multi_line) > 1:
+            if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
+                exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+
+        temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
         if "/*" in temp_str:
-            temp_str = re.sub(r"/\*.*","", temp_str, flags=re.DOTALL)
+            temp_str = re.sub(r"/\*.*","", temp_str)
             inside_comment = True
 
         # Remove single-line comments "//":
@@ -42,7 +49,7 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
             # If it has not yet been defined if the document uses spaces or tabs
             if SPACES_OR_TABS == 0:
                 if "\t" in indents and " " in indents:
-                    exit("ERROR: Tabs and spaces cannot be combined")
+                    exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
 
                 if "\t" in indents:
                     SPACES_OR_TABS = 2
@@ -54,15 +61,16 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
             # If the document uses spaces
             if SPACES_OR_TABS == 1:
                 if "\t" in indents:
-                    exit("ERROR: Tabs and spaces cannot be combined")
+                    exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
                 number_indents = len(indents) / SPACES_AMOUNT
                 if number_indents % 1 != 0:
-                    exit("ERROR: Inconsistent use of spaces")
+                    exit(f"ERROR LINE {i}: Inconsistent use of spaces")
             
             # If the document uses tabs
             if SPACES_OR_TABS == 2:
                 if " " in indents:
-                    exit("ERROR: Tabs and spaces cannot be combined")
+                    exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
+                number_indents = len(indents)
 
         change_indents = int(number_indents) - indent_counter
 
@@ -76,7 +84,7 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
         indent_counter += change_indents
 
         # Replaces 1+ newlines wit one "@NEWLINE"
-        temp_str = re.sub(r"(\n)+"," @NEWLINE\n",temp_str)
+        temp_str = re.sub(r"(\n)"," @NEWLINE\n",temp_str)
 
         # Appends to final string
         final_string += temp_str
