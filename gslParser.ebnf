@@ -34,7 +34,7 @@ ExprCall      ::= '(' Expression ')'
                 | '||' Expression '||' 
                 | IDENTIFIER '(' (Expression (',' Expression)*)? ')'
                 | IDENTIFIER ('[' Expression ']')+ 
-                | IDENTIFIER ('.' ExprTest)
+                | IDENTIFIER ('.' ExprCall)
                 | Term
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
