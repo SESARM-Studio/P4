@@ -13,9 +13,15 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v5      
+      uses: actions/setup-python@v5
       with:
           python-version: 3.12
-        
+
+    - name: Setup environment
+      run: python3 -m venv env && source env/bin/activate
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+
     - name: Test with PyTest
-      run: echo Ran all tests!
+      run: pytest
