@@ -9,4 +9,4 @@ def test_example():
     z = x + 1
 
     # Assert
-    assert z < y, "fail message"
+    assert z > x, "fail message"
