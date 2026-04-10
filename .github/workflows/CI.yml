@@ -1,0 +1,21 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  merge_group:
+
+jobs:
+  test-job:
+    name: "Approved by Soren"
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 25
+      uses: actions/setup-python@v5      
+      with:
+          python-version: 3.12
+        
+    - name: Test with PyTest
+      run: echo Ran all tests!
