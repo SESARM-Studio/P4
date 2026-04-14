@@ -3,13 +3,16 @@ import pytest
 from Preprocessor.prepro import preprocessor
 
 INPUT_FILES = "test/input_files/"
-OUTPUT_FILES = "test/output_files/"
+OUTPUT_FILES = "output_files"
 
-def test_comments():
+def test_comments(tmp_path):
     # Arrange
     expected = "x in int := 1 @NEWLINE\n$"
     input_file = INPUT_FILES + "comments.gsl"
-    output_file = OUTPUT_FILES + "comments_out.gsl"
+
+    output_dir = tmp_path / OUTPUT_FILES
+    output_dir.mkdir()
+    output_file = output_dir / "comments_out.gsl"
 
     # Act
     preprocessor(input_file, output_file)
@@ -21,7 +24,7 @@ def test_comments():
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_indents():
+def test_indents(tmp_path):
     # Arrange
     expected = \
     """graph G @NEWLINE
@@ -37,7 +40,10 @@ a --> c weight integer 3 @NEWLINE
 @DEDENT @DEDENT $"""
 
     input_file = INPUT_FILES + "indents.gsl"
-    output_file = OUTPUT_FILES + "comments_out.gsl"
+
+    output_dir = tmp_path / OUTPUT_FILES
+    output_dir.mkdir()
+    output_file = output_dir / "indents_out.gsl"
 
     # Act
     preprocessor(input_file, output_file)
@@ -49,7 +55,7 @@ a --> c weight integer 3 @NEWLINE
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_newlines():
+def test_newlines(tmp_path):
     # Arrange
     expected = \
     """x in int := 4 @NEWLINE
@@ -61,7 +67,10 @@ o in real := y^2 * v @NEWLINE
 $"""
 
     input_file = INPUT_FILES + "newlines.gsl"
-    output_file = OUTPUT_FILES + "newlines_out.gsl"
+
+    output_dir = tmp_path / OUTPUT_FILES
+    output_dir.mkdir()
+    output_file = output_dir / "newlines_out.gsl"
 
     # Act
     preprocessor(input_file, output_file)
