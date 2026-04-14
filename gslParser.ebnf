@@ -29,7 +29,7 @@ ExprPlus      ::= ExprMult (('+' | '-') ExprMult)*
 ExprMult      ::= ExprExp (('*' | '/' | '%') ExprExp)*
 ExprExp       ::= ExprNot ('^' ExprNot)*
 ExprNot       ::= ('neg' | '-')? ExprCall
-ExprCall      ::= '(' Expression ')' 
+ExprCall      ::= '(' Expression (',' Expression)* ')' 
                 | '|' Expression '|' 
                 | '||' Expression '||' 
                 | IDENTIFIER '(' (Expression (',' Expression)*)? ')'
