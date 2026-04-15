@@ -37,7 +37,7 @@ ExprCall      ::= '(' Expression ')'
                 | '||' Expression '||' 
                 | IDENTIFIER '(' (Expression (',' Expression)*)? ')'
                 | IDENTIFIER ('[' Expression ']')+ 
-                | IDENTIFIER ('.' ExprCall)
+                | IDENTIFIER '.' ExprCall
                 | Term
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
@@ -54,7 +54,7 @@ Parameter     ::= IDENTIFIER 'in' TYPE_ARITH
 
 LoopModifier  ::= 'stop'
 
-GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT ((TYPE_OTHER IDENTIFIER (',' IDENTIFIER)*) NEWLINE | ExprEdge NEWLINE )+ DEDENT 
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* NEWLINE | ExprEdge NEWLINE )+ DEDENT 
 
 <?TOKENS?>
 
