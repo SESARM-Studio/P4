@@ -1,4 +1,5 @@
 Program       ::= Statement* EOF
+
 Statement     ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH NEWLINE
                 | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* NEWLINE
                 | IDENTIFIER ('.' IDENTIFIER)* ':=' Expression NEWLINE
@@ -42,11 +43,11 @@ ExprCall      ::= '(' Expression ')'
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
 
-ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_OTHER IDENTIFIER | ExprEdge)
+ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge)
 ExprNode      ::= '(' Expression ')---' 
                 | '(' Expression ')-->' 
                 | '(' Expression ')<--'
-ExprEdge      ::= TYPE_OTHER IDENTIFIER ('---' | '-->' | '<--' | '<-->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
+ExprEdge      ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<-->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
 
 Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' NEWLINE INDENT Statement+ DEDENT
 Parameter     ::= IDENTIFIER 'in' TYPE_ARITH 
@@ -54,7 +55,9 @@ Parameter     ::= IDENTIFIER 'in' TYPE_ARITH
 
 LoopModifier  ::= 'stop'
 
-GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* NEWLINE | ExprEdge NEWLINE )+ DEDENT 
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (GraphNodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT 
+
+GraphNodeDec     ::= TYPE_NODE IDENTIFIER (',' IDENTIFIER)*
 
 <?TOKENS?>
 
@@ -68,7 +71,9 @@ IDENTIFIER         ::= ([a-zA-Z_][a-zA-Z0-9_]*) - (KEYWORD)
 TEXT?              ::= '"' .* '"'
 TYPE_ARITH         ::= 'int' | 'nat' | 'real'
 TYPE_GRAPH         ::= 'graph' | 'digraph' | 'tree'
-TYPE_OTHER         ::= 'text' | 'bool' | 'edge' | 'node'
+TYPE_OTHER         ::= 'text' | 'bool'
+TYPE_EDGE          ::= 'edge'
+TYPE_NODE          ::= 'node'
 
 TYPE               ::= TYPE_ARITH | TYPE_GRAPH | TYPE_OTHER
 
