@@ -1,7 +1,8 @@
 import re
 indent_counter = 0
-SPACES_OR_TABS = 0 # 1 for spaces, 2 for tabs
-SPACES_AMOUNT = None
+spaces_or_tabs = 0 # 1 for spaces, 2 for tabs
+spaces_amount = None
+line_number = 0
 
 final_string = ""
 with open("./Preprocessor/test.gsl", "r") as input_file:
@@ -76,34 +77,37 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
         # Replaces new/missing tabs / 4 spaces with "@INDENT"/"@DEDENT"
         number_indents = 0
         indents = ""
+        line_number += 1
 
+        if re.match(r"(\t|\ )+", temp_str) and line_number == 1:
+            exit(f"ERROR LINE {i}: Unexpected indentation")
 
         if m:= re.match(r"(\t|\ )+", temp_str):
             # Creates string from the match
             indents = m.group(0)
 
             # If it has not yet been defined if the document uses spaces or tabs
-            if SPACES_OR_TABS == 0:
+            if spaces_or_tabs == 0:
                 if "\t" in indents and " " in indents:
                     exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
 
                 if "\t" in indents:
-                    SPACES_OR_TABS = 2
+                    spaces_or_tabs = 2
                 else:
-                    SPACES_OR_TABS = 1
-                    SPACES_AMOUNT = len(indents)
-                    print("Number of spaces for this file: " + str(SPACES_AMOUNT))
+                    spaces_or_tabs = 1
+                    spaces_amount = len(indents)
+                    print("Number of spaces for this file: " + str(spaces_amount))
             
             # If the document uses spaces
-            if SPACES_OR_TABS == 1:
+            if spaces_or_tabs == 1:
                 if "\t" in indents:
                     exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
-                number_indents = len(indents) / SPACES_AMOUNT
+                number_indents = len(indents) / spaces_amount
                 if number_indents % 1 != 0:
                     exit(f"ERROR LINE {i}: Inconsistent use of spaces")
             
             # If the document uses tabs
-            if SPACES_OR_TABS == 2:
+            if spaces_or_tabs == 2:
                 if " " in indents:
                     exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
                 number_indents = len(indents)
@@ -112,9 +116,9 @@ with open("./Preprocessor/test.gsl", "r") as input_file:
 
         # Adds @INDENT or @DEDENT tokens for each indent / dedent
         if change_indents > 0:
-            temp_str = re.sub(rf"^(\t|\ {{{SPACES_AMOUNT}}})*", abs(change_indents) * "@INDENT ", temp_str)
+            temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@INDENT ", temp_str)
         else:
-            temp_str = re.sub(rf"^(\t|\ {{{SPACES_AMOUNT}}})*", abs(change_indents) * "@DEDENT ", temp_str)
+            temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@DEDENT ", temp_str)
 
         # Updates indent counter
         indent_counter += change_indents
