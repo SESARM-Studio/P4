@@ -51,7 +51,7 @@ ExprEdge      ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<-->') IDENTIFI
 
 Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' NEWLINE INDENT Statement+ DEDENT
 Parameter     ::= IDENTIFIER 'in' TYPE_ARITH 
-                | (TYPE_GRAPH | TYPE_OTHER) IDENTIFIER
+                | (TYPE_GRAPH | TYPE_OTHER | TYPE_NODE) IDENTIFIER
 
 LoopModifier  ::= 'stop'
 
