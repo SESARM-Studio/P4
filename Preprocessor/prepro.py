@@ -4,8 +4,10 @@ SPACES_OR_TABS = 0 # 1 for spaces, 2 for tabs
 SPACES_AMOUNT = None
 
 final_string = ""
-with open("./Preprocessor/test_tabs.gsl", "r") as input_file:
+with open("./Preprocessor/test.gsl", "r") as input_file:
     inside_comment = False
+    inside_text = False
+
     for i, line in enumerate (input_file, 1):
         temp_str = line
 
@@ -18,20 +20,54 @@ with open("./Preprocessor/test_tabs.gsl", "r") as input_file:
                 if temp_str.strip() != "":
                     exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
                 inside_comment = False
+        
+        # If the line contains a double quote (") then make a thorough check of each character to allow // or /* */ inside double quotes ("")
+        if "\"" in temp_str:
+            for c in enumerate(temp_str): # c is a tuple where c[0] is the index and c[1] is the character
+                if c[1] == "\"" and inside_text == False:
+                    inside_text = True
+                    continue
+                if c[1] == "/" and inside_text == False:
+                    if temp_str[c[0]+1] == "/": # Remove single-line comments "//":
+                        temp_str = temp_str[:c[0]] # Splice removes the hidden character \n so need to manually add after
+                        temp_str += "\n"
+                        break
+                    if temp_str[c[0]+1] == "*":
+                        if "*/" in temp_str:
+                            # Check if code comes after single-line multi-line comments "/* */"
+                            multi_line = re.split(r"/\*.*\*/", temp_str)
+                            if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
+                                exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
 
-        # Remove multi-line comments "/*  */"
-        multi_line = re.split(r"/\*.*\*/", temp_str)
-        if len(multi_line) > 1:
-            if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
-                exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+                            # Remove single-line multi-line comments "/* */"
+                            temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
+                            break
+                        else:
+                            # Remove start-of multi-line comments "/*"
+                            temp_str = temp_str[:c[0]] # Splice removes the hidden character \n so need to manually add after
+                            temp_str += "\n"
+                            inside_comment = True
+                            break
+                if c[1] == "\"" and inside_text == True:
+                    inside_text = False
+                    continue
+        else:
+            # Remove single-line comments "//":
+            temp_str = re.sub(r"//.*", "", temp_str)
 
-        temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
-        if "/*" in temp_str:
-            temp_str = re.sub(r"/\*.*","", temp_str)
-            inside_comment = True
+            # Remove single-line multi-line comments "/* */"
+            temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
 
-        # Remove single-line comments "//":
-        temp_str = re.sub(r"//.*", "", temp_str)
+            # Check if code comes after single-line multi-line comments "/* */"
+            multi_line = re.split(r"/\*.*\*/", temp_str)
+            if len(multi_line) > 1:
+                if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
+                    exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+
+            # Remove start-of multi-line comments "/*"
+            if "/*" in temp_str:
+                temp_str = re.sub(r"/\*.*","", temp_str)
+                inside_comment = True
 
         # Removes a line of white-space
         if temp_str.strip() == "":
