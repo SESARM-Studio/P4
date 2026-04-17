@@ -1,6 +1,6 @@
 class ASTNode:
-    def __init__(self, kind, children=None, value=None):
-        self.kind = kind
+    def __init__(self, token, children=None, value=None):
+        self.token = token
         self.value = value
         self.children = children or []
         self.parent = None
@@ -8,16 +8,11 @@ class ASTNode:
         for c in self.children:
             c.parent = self
 
-    # def add(self, child):
-    #     child.parent = self
-    #     self.children.append(child)
-
-
 def print_ast(node, prefix="", is_last=True):
     connector = "└── " if is_last else "├── "
 
     # label shown
-    label = node.kind
+    label = node.token
     if node.value is not None:
         label += f" ({node.value})"
 
@@ -30,26 +25,31 @@ def print_ast(node, prefix="", is_last=True):
         print_ast(child, new_prefix, last)
 
 
-
+# Class for the abstract syntax
 class AbstractSyntaxTreeBuilder:
     def __init__(self, input_string):
         self.input = input_string
 
+    # After parsing completes successfully, the single remaining node in the stack is the non-terminal representing the start symbol.
+    # Therefore, the AST is build on the single element in the stack.
     def build_tree(self, stack):
         root = stack[0]
         return self.recursive_builder(root)
 
+    # Splices the input_string from begin to end index, and returns that string.
     def characters(self, b, e):
         return self.input[b:e]
-
-
+    
+    # Recursive function, which builds the AST from last non-terminal of the stack, in the ASTNode format.
     def recursive_builder(self, symbol):
         symbol_children = []
         accepted_children = []
 
+        # Base case: If symbol does not have attribute children, it is a terminal.
         if hasattr(symbol, "children") is False:
             return ASTNode(symbol.name, [], self.characters(symbol.getBegin(), symbol.getEnd()))
 
+        # Creates a new array of the symbols children, and reduces redundant tokens.
         for child in symbol.children:
             if child.name not in self.SKIP_WORDS:
                 symbol_children.append(child)
@@ -59,6 +59,7 @@ class AbstractSyntaxTreeBuilder:
                 return self.recursive_builder(child)
             accepted_children.append(self.recursive_builder(child))
 
+        # Return the non-terminal as a ASTNode with the array of ASTNode children.
         return ASTNode(symbol.getName(), accepted_children)
 
 
