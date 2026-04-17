@@ -33,6 +33,8 @@ class AbstractSyntaxTreeBuilder:
     # After parsing completes successfully, the single remaining node in the stack is the non-terminal representing the start symbol.
     # Therefore, the AST is build on the single element in the stack.
     def build_tree(self, stack):
+        if not stack:
+            exit("Stack is empty")
         root = stack[0]
         return self.recursive_builder(root)
 
@@ -54,13 +56,17 @@ class AbstractSyntaxTreeBuilder:
             if child.name not in self.SKIP_WORDS:
                 symbol_children.append(child)
 
+        if len(symbol_children) <= 0:
+            exit("Error: Non-terminal has no children or they have all been terminated")
+
+        if len(symbol_children) == 1:
+            return self.recursive_builder(symbol_children[0])
+
         for child in symbol_children:
-            if len(symbol_children) == 1:
-                return self.recursive_builder(child)
             accepted_children.append(self.recursive_builder(child))
 
         # Return the non-terminal as a ASTNode with the array of ASTNode children.
-        return ASTNode(symbol.getName(), accepted_children)
+        return ASTNode(symbol.name, accepted_children)
 
 
     SKIP_WORDS = [
