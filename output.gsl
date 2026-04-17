@@ -1,0 +1,20 @@
+algo GCDGraphIter(natural a, natural b) @NEWLINE
+@INDENT tree GCDTree  @NEWLINE
+@INDENT node r, nodeLeft, nodeRight, refA, refB @NEWLINE
+nodes.addAttribute(natural, value) @NEWLINE
+nodeLeft.value := a  @NEWLINE
+nodeRight.value := b  @NEWLINE
+root := r @NEWLINE
+edge r --> nodeLeft @NEWLINE
+edge r --> nodeRight @NEWLINE
+refA := nodeLeft @NEWLINE
+refB := nodeRight  @NEWLINE
+while refB.value != 0 then @NEWLINE
+@INDENT node tempLeaf @NEWLINE
+tempLeaf.value := refA.value % refB.value @NEWLINE
+edge refA --> tempLeaf @NEWLINE
+refA := refB @NEWLINE
+refB := tempLeaf @NEWLINE
+@DEDENT r.value := refA.value @NEWLINE
+@INDENT return GCDTree.root.value @NEWLINE
+@DEDENT @DEDENT @DEDENT $

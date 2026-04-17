@@ -1,12 +1,12 @@
 import re
-def preprocessor(file):
+def preprocessor(file_input, file_output="output.gsl"):
     indent_counter = 0
     spaces_or_tabs = 0 # 1 for spaces, 2 for tabs
     spaces_amount = None
     line_number = 0
 
     final_string = ""
-    with open("./Preprocessor/test.gsl", "r") as input_file:
+    with open(file_input, "r") as input_file:
         inside_comment = False
         inside_text = False
 
@@ -142,5 +142,5 @@ def preprocessor(file):
     final_string += "$"
 
     # Output to file
-    with open("output.gsl", "w") as output_file:
+    with open(file_output, "w") as output_file:
         output_file.write(final_string)

@@ -1,7 +1,7 @@
 /* This is a multi-line comment.
 It ends on this line 
 */
- algo GCDGraphIter(natural a, natural b)
+algo GCDGraphIter(natural a, natural b)
     tree GCDTree // This is a comment
         node r, nodeLeft, nodeRight, refA, refB
         nodes.addAttribute(natural, value)
