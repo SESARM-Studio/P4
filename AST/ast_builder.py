@@ -35,8 +35,10 @@ class AbstractSyntaxTreeBuilder:
     def build_tree(self, stack):
         if not stack:
             exit("Stack is empty")
-        root = stack[0]
-        return self.recursive_builder(root)
+        if len(stack) > 1:
+            exit("Stack should only contain 1 element")
+        program = stack[0]
+        return self.recursive_builder(program)
 
     # Splices the input_string from begin to end index, and returns that string.
     def characters(self, b, e):
@@ -55,9 +57,6 @@ class AbstractSyntaxTreeBuilder:
         for child in symbol.children:
             if child.name not in self.SKIP_WORDS:
                 symbol_children.append(child)
-
-        if len(symbol_children) <= 0:
-            exit("Error: Non-terminal has no children or they have all been terminated")
 
         if len(symbol_children) == 1:
             return self.recursive_builder(symbol_children[0])

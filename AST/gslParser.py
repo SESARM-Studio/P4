@@ -1117,11 +1117,10 @@ def main(args):
       try:
         parser.parse_Program()
         #b.serialize(s)
-        print_ast(ast.recBuilder(b.stack[0]))
+        tree = ast.build_tree(b.stack)
+        print_ast(tree)
       except gslParser.ParseException as pe:
         raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv))
-
-# End
