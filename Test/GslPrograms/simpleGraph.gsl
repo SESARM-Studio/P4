@@ -1,0 +1,9 @@
+digraph G with int weight
+    node s, y, z, t, x 
+    edge s --> t, y weight 6, 7 
+    edge y --> z weight 9 
+    edge y --> x weight -3 
+    edge z --> s, x weight 2, 7 
+    edge t --> y, z weight 8, -4 
+    edge t --> x weight 5 
+    edge x --> t weight -2
