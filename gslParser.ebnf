@@ -75,7 +75,7 @@ TYPE_OTHER         ::= 'text' | 'bool'
 TYPE_EDGE          ::= 'edge'
 TYPE_NODE          ::= 'node'
 
-TYPE               ::= TYPE_ARITH | TYPE_GRAPH | TYPE_OTHER
+TYPE               ::= TYPE_ARITH | TYPE_GRAPH | TYPE_OTHER | TYPE_NODE 
 
 BOOL_VALUE         ::= 'true' | 'false'
 
