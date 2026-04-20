@@ -25,17 +25,17 @@ def preprocessor(file_input, file_output="output.gsl"):
             
             # If the line contains a double quote (") then make a thorough check of each character to allow // or /* */ inside double quotes ("")
             if "\"" in temp_str:
-                for c in enumerate(temp_str): # c is a tuple where c[0] is the index and c[1] is the character
-                    if c[1] == "\"" and inside_text == False:
+                for index, char in enumerate(temp_str):
+                    if char == "\"" and inside_text == False:
                         inside_text = True
                         continue
-                    if c[1] == "/" and inside_text == False:
-                        if temp_str[c[0]+1] == "/": # Remove single-line comments "//":
-                            temp_str = temp_str[:c[0]] # Splice removes the hidden character \n so need to manually add after
+                    if char == "/" and inside_text == False:
+                        if temp_str[index+1] == "/": # Remove single-line comments "//":
+                            temp_str = temp_str[:index] # Splice removes the hidden character \n so need to manually add after
                             temp_str += "\n"
                             break
-                        if temp_str[c[0]+1] == "*":
-                            if "*/" in temp_str[c[0]:]:
+                        if temp_str[index+1] == "*":
+                            if "*/" in temp_str[index:]:
                                 # Check if code comes after single-line multi-line comments "/* */"
                                 multi_line = re.split(r"/\*.*\*/", temp_str)
                                 if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
@@ -46,11 +46,11 @@ def preprocessor(file_input, file_output="output.gsl"):
                                 break
                             else:
                                 # Remove start-of multi-line comments "/*"
-                                temp_str = temp_str[:c[0]] # Splice removes the hidden character \n so need to manually add after
+                                temp_str = temp_str[:index] # Splice removes the hidden character \n so need to manually add after
                                 temp_str += "\n"
                                 inside_comment = True
                                 break
-                    if c[1] == "\"" and inside_text == True:
+                    if char == "\"" and inside_text == True:
                         inside_text = False
                         continue
             else:
@@ -97,7 +97,6 @@ def preprocessor(file_input, file_output="output.gsl"):
                     else:
                         spaces_or_tabs = 1
                         spaces_amount = len(indents)
-                        # print("Number of spaces for this file: " + str(spaces_amount))
                 
                 # If the document uses spaces
                 if spaces_or_tabs == 1:
