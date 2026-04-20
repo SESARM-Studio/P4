@@ -2,7 +2,7 @@
 # REx command line: -python -main -tree -lalr 1 gslParser.ebnf
 
 import sys
-from ASTBuilder import *
+from ast_builder import *
 
 class gslParser:
 

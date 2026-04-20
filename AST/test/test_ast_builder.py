@@ -73,3 +73,24 @@ def test_only_skip_children():
 
     # Assert
     assert 0 == len(return_node.children)
+
+def test_replace_parent():
+    # Arrange
+    input_string = "Grandfather Father Son Grandson"
+    
+    terminal1 = gslParser.Terminal("Grandchild", 23, 31)
+    nonterminal1 = gslParser.Nonterminal("Junior", 19, 21, [terminal1])
+    nonterminal2 = gslParser.Nonterminal("Dad", 12, 17, [nonterminal1])
+    nonterminal3 = gslParser.Nonterminal("Granddad", 0, 10, [nonterminal2])
+    
+    ast = AbstractSyntaxTreeBuilder(input_string)
+    stack = [nonterminal3]
+    expected_type = ASTNode
+
+    # Act
+    return_node = ast.build_tree(stack)
+
+    # Assert
+    assert isinstance(return_node, expected_type), f"expected: {expected_type} actual: {return_node.__class__.__name__}"
+    assert len(return_node.children) == 0
+    assert return_node.value == "Grandson"
