@@ -35,7 +35,7 @@ def preprocessor(file_input, file_output="output.gsl"):
                             temp_str += "\n"
                             break
                         if temp_str[c[0]+1] == "*":
-                            if "*/" in temp_str:
+                            if "*/" in temp_str[c[0]:]:
                                 # Check if code comes after single-line multi-line comments "/* */"
                                 multi_line = re.split(r"/\*.*\*/", temp_str)
                                 if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
@@ -57,14 +57,14 @@ def preprocessor(file_input, file_output="output.gsl"):
                 # Remove single-line comments "//":
                 temp_str = re.sub(r"//.*", "", temp_str)
 
-                # Remove single-line multi-line comments "/* */"
-                temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
-
                 # Check if code comes after single-line multi-line comments "/* */"
                 multi_line = re.split(r"/\*.*\*/", temp_str)
                 if len(multi_line) > 1:
                     if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
                         exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+
+                # Remove single-line multi-line comments "/* */"
+                temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
 
                 # Remove start-of multi-line comments "/*"
                 if "/*" in temp_str:
@@ -97,7 +97,7 @@ def preprocessor(file_input, file_output="output.gsl"):
                     else:
                         spaces_or_tabs = 1
                         spaces_amount = len(indents)
-                        print("Number of spaces for this file: " + str(spaces_amount))
+                        # print("Number of spaces for this file: " + str(spaces_amount))
                 
                 # If the document uses spaces
                 if spaces_or_tabs == 1:

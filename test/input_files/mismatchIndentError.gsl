@@ -1,0 +1,4 @@
+algo addition(a in int, b in int)
+    temp in int // 4 whitespace indent
+      temp := a + b // 6 whitespace indent
+      return temp
