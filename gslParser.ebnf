@@ -14,6 +14,7 @@ Statement     ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH NEWLINE
                 | Algorithm
                 | Expression NEWLINE 
                 | ExprEdge NEWLINE
+                | nodeDec NEWLINE
                 | ExprGraph NEWLINE
                 | LoopModifier NEWLINE
                 | GraphDecl
@@ -55,9 +56,9 @@ Parameter     ::= IDENTIFIER 'in' TYPE_ARITH
 
 LoopModifier  ::= 'stop'
 
-GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (GraphNodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT 
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (nodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT 
 
-GraphNodeDec     ::= TYPE_NODE IDENTIFIER (',' IDENTIFIER)*
+nodeDec     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
 
 <?TOKENS?>
 
