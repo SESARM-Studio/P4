@@ -5,7 +5,7 @@ Statement     ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH NEWLINE
                 | IDENTIFIER ('.' IDENTIFIER)* ':=' Expression NEWLINE
                 | IDENTIFIER 'in' TYPE_ARITH ':=' Expression NEWLINE
                 | TYPE_OTHER IDENTIFIER ':=' Expression NEWLINE
-                | IDENTIFIER (NATURAL_NUMBER 'd')? 'list' 'in' TYPE (':=' '[' ListExpression (',' ListExpression)* ']')? NEWLINE
+                | IDENTIFIER DIMENSION? 'list' 'in' TYPE (':=' '[' ListExpression (',' ListExpression)* ']')? NEWLINE
                 | 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
                 | 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
                 | 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
@@ -114,6 +114,8 @@ KEYWORD            ::= 'or'
                      | 'return'
                      | 'add'
                      | 'remove'
+
+DIMENSION   ::= ([1-9][0-9]*)'d'
 
 Whitespace ::= [ #x9#xA]+
                 /*ws: definition*/
