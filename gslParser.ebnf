@@ -47,7 +47,7 @@ ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge
 ExprNode      ::= '(' Expression ')---' 
                 | '(' Expression ')-->' 
                 | '(' Expression ')<--'
-ExprEdge      ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<-->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
+ExprEdge      ::= TYPE_EDGE IDENTIFIER ('.' IDENTIFIER)* ('---' | '-->' | '<--' | '<-->') (IDENTIFIER ('.' IDENTIFIER)*) (',' IDENTIFIER ('.' IDENTIFIER)*)* ('weight' Expression (',' Expression)*)?
 
 Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' NEWLINE INDENT Statement+ DEDENT
 Parameter     ::= IDENTIFIER 'in' TYPE_ARITH 
