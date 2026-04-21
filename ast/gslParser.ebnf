@@ -1,0 +1,119 @@
+Program       ::= Statement* EOF
+
+Statement     ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH NEWLINE
+                | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* NEWLINE
+                | IDENTIFIER ('.' IDENTIFIER)* ':=' Expression NEWLINE
+                | IDENTIFIER 'in' TYPE_ARITH ':=' Expression NEWLINE
+                | TYPE_OTHER IDENTIFIER ':=' Expression NEWLINE
+                | IDENTIFIER (NATURAL_NUMBER 'd')? 'list' 'in' TYPE (':=' '[' ListExpression (',' ListExpression)* ']')? NEWLINE
+                | 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
+                | 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
+                | 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
+                | 'for each' ExprEdge 'with weight' IDENTIFIER 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
+                | 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
+                | Algorithm
+                | Expression NEWLINE
+                | ExprEdge NEWLINE
+                | ExprGraph NEWLINE
+                | LoopModifier NEWLINE
+                | GraphDecl
+                | 'display' Expression NEWLINE
+                | 'return' Expression NEWLINE
+
+ListExpression ::= '[' ListExpression (',' ListExpression)* ']'
+                | Expression
+
+Expression    ::= ExprAnd ('or' ExprAnd)*
+                | 'weight of' IDENTIFIER '.' IDENTIFIER ('---' | '-->') IDENTIFIER
+                | ExprNode
+ExprAnd       ::= ExprEq ('and' ExprEq)*
+ExprEq        ::= ExprRel (('=' | '!=') ExprRel)*
+ExprRel       ::= ExprPlus (('<' | '>' | '<=' | '>=') ExprPlus)*
+ExprPlus      ::= ExprMult (('+' | '-') ExprMult)*
+ExprMult      ::= ExprExp (('*' | '/' | '%') ExprExp)*
+ExprExp       ::= ExprNot ('^' ExprNot)*
+ExprNot       ::= ('neg' | '-')? ExprCall
+ExprCall      ::= '(' Expression ')'
+                | '|' Expression '|'
+                | '||' Expression '||'
+                | IDENTIFIER '(' (Expression (',' Expression)*)? ')'
+                | IDENTIFIER ('[' Expression ']')+
+                | IDENTIFIER '.' ExprCall
+                | Term
+Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER
+
+
+ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge)
+ExprNode      ::= '(' Expression ')---'
+                | '(' Expression ')-->'
+                | '(' Expression ')<--'
+ExprEdge      ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<-->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
+
+Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' NEWLINE INDENT Statement+ DEDENT
+Parameter     ::= IDENTIFIER 'in' TYPE_ARITH
+                | (TYPE_GRAPH | TYPE_OTHER | TYPE_NODE) IDENTIFIER
+
+LoopModifier  ::= 'stop'
+
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (GraphNodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT
+
+GraphNodeDec     ::= TYPE_NODE IDENTIFIER (',' IDENTIFIER)*
+
+<?TOKENS?>
+
+INTEGER_NUMBER     ::= '-'?('0'|[1-9][0-9]*)
+NATURAL_NUMBER     ::= '0'|[1-9][0-9]*
+INTEGER_NUMBER     <<  NATURAL_NUMBER
+
+REAL_NUMBER        ::= '-'?('0'|[1-9][0-9]*)'.'[0-9]*
+
+IDENTIFIER         ::= ([a-zA-Z_][a-zA-Z0-9_]*) - (KEYWORD)
+TEXT?              ::= '"' .* '"'
+TYPE_ARITH         ::= 'int' | 'nat' | 'real'
+TYPE_GRAPH         ::= 'graph' | 'digraph' | 'tree'
+TYPE_OTHER         ::= 'text' | 'bool'
+TYPE_EDGE          ::= 'edge'
+TYPE_NODE          ::= 'node'
+
+TYPE               ::= TYPE_ARITH | TYPE_GRAPH | TYPE_OTHER
+
+BOOL_VALUE         ::= 'true' | 'false'
+
+NEWLINE            ::= '@NEWLINE'
+INDENT             ::= '@INDENT'
+DEDENT             ::= '@DEDENT'
+EOF                ::= $ | '$'
+
+KEYWORD            ::= 'or'
+                     | 'and'
+                     | 'neg'
+                     | 'true'
+                     | 'false'
+                     | 'bool'
+                     | 'int'
+                     | 'real'
+                     | 'nat'
+                     | 'graph'
+                     | 'digraph'
+                     | 'tree'
+                     | 'text'
+                     | 'bool'
+                     | 'edge'
+                     | 'node'
+                     | 'in'
+                     | 'if'
+                     | 'else'
+                     | 'while'
+                     | 'for each'
+                     | 'weight'
+                     | 'repeat'
+                     | 'times'
+                     | 'algo'
+                     | 'stop'
+                     | 'display'
+                     | 'return'
+                     | 'add'
+                     | 'remove'
+
+Whitespace ::= [ #x9#xA]+
+                /*ws: definition*/
