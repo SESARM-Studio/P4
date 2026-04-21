@@ -1,5 +1,3 @@
-import pytest
-
 import subprocess # Used to run the generated parser
 import filecmp # Used to compare parsed output and correct output
 
