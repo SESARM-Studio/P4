@@ -6,11 +6,11 @@ from preprocessor.prepro import preprocessor
 # Current naming uses parse tree, as this test is 
 # not adapted to an AST as output from parser.
 
-program_names = ["test/gsl_programs/bellman_ford.gsl", "test/gsl_programs/simple_graph.gsl"]
-correct_parse_tree_name = ["test/correct_parse_trees/correct_bellman_ford.xml", "test/correct_parse_trees/correct_simple_graph.xml"]
+program_names = ["tests/gsl_programs/bellman_ford.gsl", "tests/gsl_programs/simple_graph.gsl"]
+correct_parse_tree_name = ["tests/correct_parse_trees/correct_bellman_ford.xml", "tests/correct_parse_trees/correct_simple_graph.xml"]
 
 def test_bellman_ford_parser():
-    parsed_bellman_ford_file = "test/parsed_programs/parsed_bellman_ford.xml"
+    parsed_bellman_ford_file = "tests/parsed_programs/parsed_bellman_ford.xml"
     input_program = program_names[0]
     expected_output = correct_parse_tree_name[0]
 
@@ -29,7 +29,7 @@ def test_bellman_ford_parser():
     assert rc == True
 
 def test_simple_graph_parser():
-    parsed_simple_graph_file = "test/parsed_programs/parsed_simple_graph.xml"
+    parsed_simple_graph_file = "tests/parsed_programs/parsed_simple_graph.xml"
     input_program = program_names[1]
     expected_output = correct_parse_tree_name[1]
 
