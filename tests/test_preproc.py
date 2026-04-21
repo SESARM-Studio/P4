@@ -1,6 +1,6 @@
 import pytest
 
-from Preprocessor.prepro import preprocessor
+from preprocessor.prepro import preprocessor
 
 INPUT_FILES = "tests/input_files/"
 OUTPUT_FILES = "output_files"
