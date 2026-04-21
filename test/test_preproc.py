@@ -1,6 +1,6 @@
 import pytest
 
-from kok.prepro import preprocessor
+from preprocessor.prepro import preprocessor
 
 INPUT_FILES = "test/input_files/"
 OUTPUT_FILES = "output_files"
