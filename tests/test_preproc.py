@@ -2,7 +2,7 @@ import pytest
 
 from Preprocessor.prepro import preprocessor
 
-INPUT_FILES = "test/input_files/"
+INPUT_FILES = "tests/input_files/"
 OUTPUT_FILES = "output_files"
 
 def test_comments(tmp_path):
