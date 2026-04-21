@@ -10,7 +10,7 @@ from prepro import preprocessor
 
 PARSED_OUTPUT_FILE_NAME = "Test/parsedInput.xml"
 
-def testProgram(inputProgram: str, expectedOutput: str):
+def programParser(inputProgram: str, expectedOutput: str):
     # Run the preprocessor on GSL input
     preprocessor(inputProgram, PARSED_OUTPUT_FILE_NAME)
 
@@ -28,11 +28,12 @@ def testProgram(inputProgram: str, expectedOutput: str):
 
     # Compare parsed GSL program to expected correct parse tree
     rc = filecmp.cmp(PARSED_OUTPUT_FILE_NAME, expectedOutput, shallow=False)
+    assert rc == True
 
     return rc
 
 # Expected output could be CorrectParseTrees/CorrectBellmanFOrd.xml
-def parserTest():
+def test_parser():
     testProgramNames = ["Test/GslPrograms/bellmanFord.gsl", "Test/GslPrograms/simpleGraph.gsl"]
     correctParseTreeName = ["Test/CorrectParseTrees/correctBellmanFord.xml", "Test/CorrectParseTrees/correctSimpleGraph.xml"]
     results = []
@@ -40,10 +41,8 @@ def parserTest():
     for idx, fname in enumerate(testProgramNames):
         print(fname)
         print(correctParseTreeName[idx])
-        results.append((fname, testProgram(fname, correctParseTreeName[idx])))
-    
+        results.append((fname, programParser(fname, correctParseTreeName[idx])))
+        
     print("\n")
     for gslINput, testResult in results:
         print(gslINput + ": " + str(testResult))
-
-parserTest()
