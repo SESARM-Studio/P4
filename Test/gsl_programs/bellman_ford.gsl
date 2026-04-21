@@ -39,5 +39,3 @@ algo relax(node x1, node x2, w in int)
         x2.pi := x1
 
 bellmanFord(G, G.nodes.s)
-
-text mart := "hej"
