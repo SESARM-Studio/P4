@@ -1,0 +1,2 @@
+ a in int := 5
+b in int := a + 3

@@ -1,0 +1,8 @@
+x in int := 4
+repeat x times
+    x := x + 1
+
+
+y in real := 3.14
+v in real := 2
+o in real := y^2 * v
