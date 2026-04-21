@@ -1,0 +1,7 @@
+/*
+ * this is multiline
+ */
+
+x in int := 1
+
+// single line test

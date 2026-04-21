@@ -1,0 +1,8 @@
+graph G in int
+    node a,b,c
+    /*
+    This graph has three nodes.
+    It has edges connecting each node
+    */ edge a --> b with weight 3
+    edge b --> c with weight 5
+    edge c --> a with weight 7

@@ -1,0 +1,3 @@
+blabla in text := "Cool text /* Multiline comment */" /*
+This is a crazy multiline comment
+*/
