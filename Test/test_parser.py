@@ -19,12 +19,7 @@ def test_bellman_ford_parser():
 
     # Run the GSL parser as a subprocess and capture the output in the console
     x = subprocess.run(["python3", "./gsl_parser.py", "-i", parsed_bellman_ford_file], capture_output=True)
-
-
-    # Debug print
-    # print(x.stdout)
-
-
+    
     # Write produced AST to a file
     with open(parsed_bellman_ford_file, "w") as output:
       output.write(str(x.stdout))
@@ -43,11 +38,6 @@ def test_simple_graph_parser():
 
     # Run the GSL parser as a subprocess and capture the output in the console
     x = subprocess.run(["python3", "./gsl_parser.py", "-i", parsed_simple_graph_file], capture_output=True)
-
-
-    # Debug print
-    # print(x.stdout)
-
 
     # Write produced AST to a file
     with open(parsed_simple_graph_file, "w") as output:
