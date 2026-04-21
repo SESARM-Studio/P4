@@ -26,7 +26,7 @@ def test_bellman_ford_parser():
 
     # Compare parsed GSL program to expected correct parse tree
     rc = filecmp.cmp(parsed_bellman_ford_file, expected_output, shallow=False)
-    assert rc == True
+    assert rc == True, f"expected: {True} actual: {rc}"
 
 def test_simple_graph_parser():
     parsed_simple_graph_file = "tests/parsed_programs/parsed_simple_graph.xml"
