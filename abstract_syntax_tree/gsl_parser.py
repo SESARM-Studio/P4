@@ -3,6 +3,7 @@
 
 import sys
 from .ast_builder import *
+from preprocessor.prepro import preprocessor
 
 class gslParser:
 
@@ -1096,38 +1097,34 @@ def read(arg):
   if arg.startswith("{") and arg.endswith("}"):
     return arg[1:len(arg) - 1]
   else:
-    with open(arg, "r", encoding="utf-8") as file:
-      content = file.read()
+    content = preprocessor(arg)
     if len(content) > 0 and content[0] == "\ufeff":
       content = content[1:]
-    print(content)
     return content
 
 def main(args):
   if len(args) < 2:
-    sys.stderr.write("Usage: python gslParser.py [-i] INPUT...\n")
+    sys.stderr.write("Usage: python gslParser.py [-debug] INPUT...\n")
     sys.stderr.write("\n")
     sys.stderr.write("  parse INPUT, which is either a filename or literal text enclosed in curly braces\n")
     sys.stderr.write("\n")
     sys.stderr.write("  Option:\n")
-    sys.stderr.write("    -i     indented parse tree\n")
+    sys.stderr.write("    -debug     print abstract syntax tree in terminal\n")
   else:
-    indent = False
+    debug = False
     for arg in args[1:]:
-      if arg == "-i":
-        indent = True
+      if arg == "-debug":
+        debug = True
         continue
-      s = gslParser.XmlSerializer()
-      s.indent = indent
       b = gslParser.ParseTreeBuilder()
       inputString = read(arg)
       parser = gslParser(inputString, b)
       ast = AbstractSyntaxTreeBuilder(inputString)
       try:
         parser.parse_Program()
-        # b.serialize(s)
         tree = ast.build_tree(b.stack)
-        print_ast(tree)
+        if debug is True:
+          print_ast(tree)
       except gslParser.ParseException as pe:
         raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
 
