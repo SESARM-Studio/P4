@@ -2,7 +2,7 @@ import pytest
 
 from preprocessor.prepro import preprocessor
 
-INPUT_FILES = "tests/input_files/"
+INPUT_FILES = "tests/preprocessor_unit_tests/input_files/"
 OUTPUT_FILES = "output_files"
 
 def test_comments(tmp_path):
@@ -15,7 +15,7 @@ def test_comments(tmp_path):
     output_file = output_dir / "comments_out.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -27,13 +27,13 @@ def test_comments(tmp_path):
 def test_indents(tmp_path):
     # Arrange
     expected = \
-    """graph G @NEWLINE
+    """graph G with int weight @NEWLINE
 @INDENT node a, b, c @NEWLINE
-a --> c weight integer 3 @NEWLINE
-@DEDENT repeat || G . nodes || - 1 times @NEWLINE
-@INDENT for each x1 <-- x2 with weight w in G @NEWLINE
+edge a --> c weight 3 @NEWLINE
+@DEDENT repeat || G.nodes || - 1 times @NEWLINE
+@INDENT for each edge x1 <-- x2 with weight w in G @NEWLINE
 @INDENT relax (x1, x2, w) @NEWLINE
-@DEDENT for each x1 --> x2 with weight w in G @NEWLINE
+@DEDENT for each edge x1 --> x2 with weight w in G @NEWLINE
 @INDENT if w > 5 then @NEWLINE
 @INDENT return false @NEWLINE
 @DEDENT return true @NEWLINE
@@ -46,7 +46,7 @@ a --> c weight integer 3 @NEWLINE
     output_file = output_dir / "indents_out.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -73,7 +73,7 @@ $"""
     output_file = output_dir / "newlines_out.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -94,7 +94,7 @@ def test_codeAfterCommentError(tmp_path):
 
     # Act
     with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, output_file)   
+        preprocessor(input_file, True, output_file)   
 
     # Assert
     assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
@@ -111,7 +111,7 @@ def test_mismatchIndentError(tmp_path):
 
     # Act
     with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, output_file)   
+        preprocessor(input_file, True, output_file)   
 
     # Assert
     assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
@@ -128,14 +128,14 @@ def test_startIndentError(tmp_path):
 
     # Act
     with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, output_file)   
+        preprocessor(input_file, True, output_file)   
 
     # Assert
     assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
 
 def test_commentSLInTextType(tmp_path):
     # Arrange
-    expected = "a in text := \"This is text type with a comment // This should be here\" @NEWLINE\n$"
+    expected = "text a := \"This is text type with a comment // This should be here\" @NEWLINE\n$"
 
     input_file = INPUT_FILES + "commentSLInTextType.gsl"
 
@@ -144,7 +144,7 @@ def test_commentSLInTextType(tmp_path):
     output_file = output_dir / "commentSLInTextType.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -155,7 +155,7 @@ def test_commentSLInTextType(tmp_path):
 
 def test_commentSLInTextTypeAndAfter(tmp_path):
     # Arrange
-    expected = "testing in text := \"This is a test text // This is cool\"  @NEWLINE\n$"
+    expected = "text testing := \"This is a test text // This is cool\"  @NEWLINE\n$"
 
     input_file = INPUT_FILES + "commentSLInTextTypeAndAfter.gsl"
 
@@ -164,7 +164,7 @@ def test_commentSLInTextTypeAndAfter(tmp_path):
     output_file = output_dir / "commentSLInTextTypeAndAfter.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -175,7 +175,7 @@ def test_commentSLInTextTypeAndAfter(tmp_path):
 
 def test_commentMLInTextType(tmp_path):
     # Arrange
-    expected = "something in text := \"I love something /* Multiline comment wow */\" @NEWLINE\n$"
+    expected = "text something := \"I love something /* Multiline comment wow */\" @NEWLINE\n$"
 
     input_file = INPUT_FILES + "commentMLInTextType.gsl"
 
@@ -184,7 +184,7 @@ def test_commentMLInTextType(tmp_path):
     output_file = output_dir / "commentSLInTextType.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -195,7 +195,7 @@ def test_commentMLInTextType(tmp_path):
 
 def test_commentMLInTextTypeAndAfter(tmp_path):
     # Arrange
-    expected = "blabla in text := \"Cool text /* Multiline comment */\"  @NEWLINE\n$"
+    expected = "text blabla := \"Cool text /* Multiline comment */\"  @NEWLINE\n$"
 
     input_file = INPUT_FILES + "commentMLInTextTypeAndAfter.gsl"
 
@@ -204,7 +204,7 @@ def test_commentMLInTextTypeAndAfter(tmp_path):
     output_file = output_dir / "commentMLInTextTypeAndAfter.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -225,7 +225,7 @@ def test_commentInExpressionError(tmp_path):
 
     # Act
     with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, output_file)   
+        preprocessor(input_file, True, output_file)   
 
     # Assert
     assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
@@ -241,7 +241,7 @@ def test_multipleMLComments(tmp_path):
     output_file = output_dir / "multipleMLComments.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -265,7 +265,7 @@ $"""
     output_file = output_dir / "MLCommentAfterSLComment.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -286,7 +286,7 @@ def test_SLCommentAfterMLCommentError(tmp_path):
 
     # Act
     with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, output_file)   
+        preprocessor(input_file, True, output_file)   
 
     # Assert
     assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
@@ -302,7 +302,7 @@ def test_multipleMLCommentsAfterEachother(tmp_path):
     output_file = output_dir / "multipleMLCommentsAfterEachother.gsl"
 
     # Act
-    preprocessor(input_file, output_file)
+    preprocessor(input_file, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:

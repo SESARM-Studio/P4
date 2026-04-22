@@ -2,6 +2,7 @@
 # REx command line: -python -main -tree -lalr 1 gslParser.ebnf
 
 import sys
+from .ast_builder import *
 
 class gslParser:
 
@@ -1099,6 +1100,7 @@ def read(arg):
       content = file.read()
     if len(content) > 0 and content[0] == "\ufeff":
       content = content[1:]
+    print(content)
     return content
 
 def main(args):
@@ -1120,9 +1122,12 @@ def main(args):
       b = gslParser.ParseTreeBuilder()
       inputString = read(arg)
       parser = gslParser(inputString, b)
+      ast = AbstractSyntaxTreeBuilder(inputString)
       try:
         parser.parse_Program()
-        b.serialize(s)
+        # b.serialize(s)
+        tree = ast.build_tree(b.stack)
+        print_ast(tree)
       except gslParser.ParseException as pe:
         raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
 

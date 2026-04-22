@@ -1,6 +1,8 @@
 import pytest
 
-from gslParser import *
+from abstract_syntax_tree.gsl_parser import *
+
+
 
 def test_base_case_recursive():
     # Arrange
