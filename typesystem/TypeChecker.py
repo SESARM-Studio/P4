@@ -37,7 +37,79 @@ class TypeChecker():
         return well_formed
 
     def __parse_expression(self, env: TypeEnv) -> TypeEnum:
-        return TypeEnum.UNKNOWN
+        kind: TypeEnum = TypeEnum.UNKNOWN
+        match getattr(self.ast, "token"):
+            case "integer":
+                kind = TypeEnum.INT
+                setattr(self.ast, "type", kind)
+            case "natural":
+                kind = TypeEnum.NAT
+                setattr(self.ast, "type", kind)
+            case "real":
+                kind = TypeEnum.REAL
+                setattr(self.ast, "type", kind)
+            case "string":
+                kind = TypeEnum.TEXT
+                setattr(self.ast, "type", kind)
+            case "boolean":
+                kind = TypeEnum.BOOL
+                setattr(self.ast, "type", kind)
+            case "identifier":
+                pass
+            case "graph_expression":
+                pass
+            case "node_expression":
+                pass
+            case "edge_expression":
+                pass
+            case "abs":
+                pass
+            case "magnitude":
+                pass
+            case "function_call":
+                pass
+            case "array_access":
+                pass
+            case "attribute_access":
+                pass
+            case "list_expression":
+                pass
+            case "plus":
+                pass
+            case "minus":
+                pass
+            case "multiply":
+                pass
+            case "divide":
+                pass
+            case "modulo":
+                pass
+            case "power":
+                pass
+            case "weight_of -->":
+                pass
+            case "weight_of ---":
+                pass
+            case "equal":
+                pass
+            case "not_equal":
+                pass
+            case "smaller_than":
+                pass
+            case "smaller_than_or_equal":
+                pass
+            case "greater_than":
+                pass
+            case "greater_than_or_equal":
+                pass
+            case "negation":
+                pass
+            case "and":
+                pass
+            case "or":
+                pass
+
+        return kind
 
     def __parse_graph_expression(self, env: TypeEnv) -> TypeEnum:
         return TypeEnum.UNKNOWN
