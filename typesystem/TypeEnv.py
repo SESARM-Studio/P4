@@ -46,7 +46,7 @@ class TypeEnv():
 
         self.environment[identifier] = value
 
-    def lookup(self, identifier: str) -> TypeEnum | None:
+    def lookup(self, identifier: str) -> TypeEnum:
         """Search current and outer scopes for the identifier binding"""
 
         scope = self
@@ -55,7 +55,7 @@ class TypeEnv():
                 return scope.environment[identifier]
             scope = scope.outer_scope
 
-        return None
+        return TypeEnum.UNKNOWN
 
     def enter_scope(self) -> "TypeEnv":
         """Creates a new scope the references the outer scope"""
