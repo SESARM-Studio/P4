@@ -4,7 +4,10 @@ from TypeEnv import TypeEnv, TypeEnum
 
 # import from ast folder when fixed ##->
 class ASTNode:
-    pass
+    def __init__(self) -> None:
+        self.children = []
+        self.token = None
+        self.value = None
 
 class Program(ASTNode):
     pass
@@ -41,7 +44,7 @@ class TypeChecker():
         well_formed = True
         if isinstance(self.ast, Statement):
             try:
-                self.__parse_statement(env, TypeEnum.UNKNOWN)
+                self.parse_statement(self.ast, env, TypeEnum.UNKNOWN)
             except Exception:
                 well_formed = False
         else:
@@ -49,9 +52,9 @@ class TypeChecker():
 
         return well_formed
 
-    def __parse_expression(self, env: TypeEnv) -> TypeEnum:
+    def parse_expression(self, node: ASTNode, env: TypeEnv) -> TypeEnum:
         kind: TypeEnum = TypeEnum.UNKNOWN
-        match getattr(self.ast, "token"):
+        match node.token:
             case "integer":
                 kind = TypeEnum.INT
 
@@ -68,7 +71,7 @@ class TypeChecker():
                 kind = TypeEnum.BOOL
 
             case "identifier":
-                var = getattr(self.ast, "value")
+                var = node.value
                 var_type = env.lookup(var)
 
                 if var_type is TypeEnum.UNKNOWN:
@@ -77,7 +80,7 @@ class TypeChecker():
                 kind = var_type
 
             case "graph_expression":
-                expr_type = self.__parse_graph_expression(env)
+                expr_type = self.parse_graph_expression(node.children[0], env)
 
                 if expr_type not in self.graph_types:
                     raise Exception(f"Graph expression should return a graph type, but was {expr_type}")
@@ -85,7 +88,7 @@ class TypeChecker():
                 kind = expr_type
 
             case "node_expression":
-                expr_type = self.__parse_node_expression(env)
+                expr_type = self.parse_node_expression(node.children[0], env)
 
                 if expr_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
@@ -93,7 +96,7 @@ class TypeChecker():
                 kind = expr_type
 
             case "edge_expression":
-                expr_type = self.__parse_edge_expression(env)
+                expr_type = self.parse_edge_expression(node.children[0], env)
 
                 if expr_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
@@ -101,7 +104,7 @@ class TypeChecker():
                 kind = expr_type
 
             case "abs":
-                expr_type = self.__parse_expression(env)
+                expr_type = self.parse_expression(node.children[0], env)
 
                 if expr_type not in self.arit_types:
                     raise Exception(f"Expression should return a arit type, but was {expr_type}")
@@ -109,7 +112,7 @@ class TypeChecker():
                 kind = TypeEnum.NAT
 
             case "magnitude":
-                expr_type = self.__parse_expression(env)
+                expr_type = self.parse_expression(node.children[0], env)
 
                 if expr_type not in { TypeEnum.TEXT }: # missing the list types
                     raise Exception("Expression is invalid type for magnitude operation")
@@ -123,13 +126,13 @@ class TypeChecker():
                 pass
 
             case "attribute_access":
-                var = getattr(self.ast, "value")
+                var = node.value
                 var_type = env.lookup(var)
 
                 if var_type not in { *self.graph_types, TypeEnum.NODE, TypeEnum.EDGE }:
                     raise Exception("Identifier not of correct type")
 
-                expr_type = self.__parse_expression(env)
+                expr_type = self.parse_expression(node.children[0], env)
 
                 if expr_type is not TypeEnum.UNKNOWN:
                     raise Exception("Expression of unknown type")
@@ -138,20 +141,20 @@ class TypeChecker():
 
             case "list_expression":
                 list_types = []
-                for expr in getattr(self.ast, "children"):
-                    list_types.append(self.__parse_expression(env))
+                for child in node.children:
+                    list_types.append(self.parse_expression(child, env))
 
-                if not all(list_types):
+                if len(set(list_types)) > 1:
                     raise Exception("Mixing of types in list not allowed")
 
                 kind = list_types[0] if len(list_types) > 0 else TypeEnum.UNKNOWN
 
             case "plus" | "minus" | "multiply" | "divide" | "modulo" | "power":
-                expr1_type = self.__parse_expression(env)
+                expr1_type = self.parse_expression(node.children[0], env)
                 if expr1_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
 
-                expr2_type = self.__parse_expression(env)
+                expr2_type = self.parse_expression(node.children[1], env)
                 if expr2_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
 
@@ -175,11 +178,11 @@ class TypeChecker():
                 | "greater_than"
                 | "greater_than_or_equal"
             ):
-                expr1_type = self.__parse_expression(env)
+                expr1_type = self.parse_expression(node.children[0], env)
                 if expr1_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
 
-                expr2_type = self.__parse_expression(env)
+                expr2_type = self.parse_expression(node.children[1], env)
                 if expr2_type is TypeEnum.UNKNOWN:
                     raise Exception("Unknown type")
 
@@ -189,18 +192,18 @@ class TypeChecker():
                 kind = expr1_type
 
             case "negation":
-                expr_type = self.__parse_expression(env)
+                expr_type = self.parse_expression(node.children[0], env)
                 if expr_type is not TypeEnum.BOOL:
                     raise Exception("Type must be bool")
 
                 kind = expr_type
 
             case "and":
-                expr1_type = self.__parse_expression(env)
+                expr1_type = self.parse_expression(node.children[0], env)
                 if expr1_type is not TypeEnum.BOOL:
                     raise Exception("Type must be bool")
 
-                expr2_type = self.__parse_expression(env)
+                expr2_type = self.parse_expression(node.children[1], env)
                 if expr2_type is not TypeEnum.BOOL:
                     raise Exception("Type must be bool")
 
@@ -210,11 +213,11 @@ class TypeChecker():
                 kind = expr1_type
 
             case "or":
-                expr1_type = self.__parse_expression(env)
+                expr1_type = self.parse_expression(node.children[0], env)
                 if expr1_type is not TypeEnum.BOOL:
                     raise Exception("Type must be bool")
 
-                expr2_type = self.__parse_expression(env)
+                expr2_type = self.parse_expression(node.children[1], env)
                 if expr2_type is not TypeEnum.BOOL:
                     raise Exception("Type must be bool")
 
@@ -223,21 +226,21 @@ class TypeChecker():
 
                 kind = expr1_type
 
-        setattr(self.ast, "type", kind)
+        setattr(node, "type", kind)
         return kind
 
-    def __parse_graph_expression(self, env: TypeEnv) -> TypeEnum:
+    def parse_graph_expression(self, node: ASTNode, env: TypeEnv) -> TypeEnum:
         kind: TypeEnum = TypeEnum.UNKNOWN
 
-        match getattr(self.ast, "token"): # missing structure knowledge
+        match node.token:
             case "adn":
-                var1 = getattr(self.ast, "value")
+                var1 = node.children[0].value
                 var1_type = env.lookup(var1)
 
                 if var1_type not in self.graph_types:
                     raise Exception(f"Identifier should be a graph type, but was {var1_type}")
 
-                var2 = getattr(self.ast, "value")
+                var2 = node.children[1].value
                 var2_type = env.lookup(var2)
 
                 if var2_type is not TypeEnum.NODE:
@@ -246,26 +249,26 @@ class TypeChecker():
                 kind = var1_type
 
             case "ade":
-                var = getattr(self.ast, "value")
+                var = node.children[0].value
                 var_type = env.lookup(var)
 
                 if var_type not in self.graph_types:
                     raise Exception(f"Identifier should be a graph type, but was {var_type}")
 
-                expr_type = self.__parse_edge_expression(env)
+                expr_type = self.parse_edge_expression(node.children[0], env)
                 if expr_type is not TypeEnum.EDGE:
                     raise Exception(f"Identifier should be a edge type, but was {expr_type}")
 
                 kind = var_type
 
             case "rmn":
-                var1 = getattr(self.ast, "value")
+                var1 = node.children[0].value
                 var1_type = env.lookup(var1)
 
                 if var1_type not in self.graph_types:
                     raise Exception(f"Identifier should be a graph type, but was {var1_type}")
 
-                var2 = getattr(self.ast, "value")
+                var2 = node.children[1].value
                 var2_type = env.lookup(var2)
 
                 if var2_type is not TypeEnum.NODE:
@@ -274,41 +277,41 @@ class TypeChecker():
                 kind = var1_type
 
             case "rme":
-                var = getattr(self.ast, "value")
+                var = node.children[0].value
                 var_type = env.lookup(var)
 
                 if var_type not in self.graph_types:
                     raise Exception(f"Identifier should be a graph type, but was {var_type}")
 
-                expr_type = self.__parse_edge_expression(env)
+                expr_type = self.parse_edge_expression(node.children[0], env)
                 if expr_type is not TypeEnum.EDGE:
                     raise Exception(f"Identifier should be a edge type, but was {expr_type}")
 
                 kind = var_type
 
-        setattr(self.ast, "type", kind)
+        setattr(node, "type", kind)
         return kind
 
-    def __parse_node_expression(self, env: TypeEnv) -> TypeEnum:
-        expr_type = self.__parse_edge_expression(env)
+    def parse_node_expression(self, node: ASTNode, env: TypeEnv) -> TypeEnum:
+        expr_type = self.parse_edge_expression(node.children[0], env)
         if expr_type is not TypeEnum.NODE:
             raise Exception(f"Identifier should be a node type, but was {expr_type}")
 
         list_expr_type = [expr_type] # unsure if this is the way
-        setattr(self.ast, "type", list_expr_type)
+        setattr(node, "type", list_expr_type)
         return list_expr_type
 
-    def __parse_edge_expression(self, env: TypeEnv) -> TypeEnum:
+    def parse_edge_expression(self, node: ASTNode, env: TypeEnv) -> TypeEnum:
         kind: TypeEnum = TypeEnum.UNKNOWN
 
-        if getattr(self.ast, "token") == "with weight?":
-            var1 = getattr(self.ast, "value")
+        if node.token == "with weight?":
+            var1 = node.children[0].value
             var1_type = env.lookup(var1)
 
             if var1_type is not TypeEnum.NODE:
                 raise Exception(f"Identifier should be a node type, but was {var1_type}")
 
-            var2 = getattr(self.ast, "value")
+            var2 = node.children[1].value
             for var in var2:
                 var2_type = env.lookup(var)
                 if var2_type is not TypeEnum.NODE:
@@ -316,24 +319,24 @@ class TypeChecker():
 
             kind = TypeEnum.EDGE
         else:
-            var1 = getattr(self.ast, "value")
+            var1 = node.children[0].value
             var1_type = env.lookup(var1)
 
             if var1_type is not TypeEnum.NODE:
                 raise Exception(f"Identifier should be a node type, but was {var1_type}")
 
-            var2 = getattr(self.ast, "value")
+            var2 = node.children[1].value
             for var in var2:
                 var2_type = env.lookup(var)
                 if var2_type is not TypeEnum.NODE:
                     raise Exception(f"Identifier should be a node type, but was {var2_type}")
 
-            weights = getattr(self.ast, "children")
+            weights = node.children
             weight_types = []
-            for weight in weights:
-                weight_type = self.__parse_expression(env)
+            for child in weights:
+                weight_type = self.parse_expression(child, env)
                 if weight_type not in self.arit_types:
-                    raise Exception(f"Expression should return a arit type, but was {expr_type}")
+                    raise Exception(f"Expression should return a arit type, but was {weight_type}")
 
                 weight_types.append(weight_type)
 
@@ -342,51 +345,51 @@ class TypeChecker():
 
             kind = TypeEnum.EDGE
 
-        setattr(self.ast, "type", kind)
+        setattr(node, "type", kind)
         return kind
 
-    def __parse_statement(self, env: TypeEnv, kind: TypeEnum) -> Tuple[TypeEnv, TypeEnum]:
+    def parse_statement(self, node: ASTNode, env: TypeEnv, curr_algo: TypeEnum) -> Tuple[TypeEnv, TypeEnum]:
         ekind: TypeEnum = TypeEnum.UNKNOWN
-        match self.ast:
+        match node:
             case Expression():
-                self.__parse_expression(env)
+                self.parse_expression(node.children[0], env)
             case _:
                 raise Exception("Unknown type")
 
         return (TypeEnv(), ekind)
 
-    def __parse_loop_modifier(self, env: TypeEnv) -> bool:
+    def parse_loop_modifier(self, node: ASTNode, env: TypeEnv) -> bool:
         return True
 
-    def __parse_type(self, env: TypeEnv) -> bool:
+    def parse_type(self, node: ASTNode, env: TypeEnv) -> bool:
         return True
 
-    def __parse_type_arithmetic(self, env: TypeEnv) -> bool:
+    def parse_type_arithmetic(self, node: ASTNode, env: TypeEnv) -> bool:
         return True
 
-    def __parse_graph_type(self, env: TypeEnv) -> bool:
+    def parse_graph_type(self, node: ASTNode, env: TypeEnv) -> bool:
         return True
 
-    def __parse_algorithm(self, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
+    def parse_algorithm(self, node: ASTNode, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
         return (TypeEnv(), TypeEnum.UNKNOWN)
 
-    def __parse_declaration(self, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
+    def parse_declaration(self, node: ASTNode, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
         return (TypeEnv(), TypeEnum.UNKNOWN)
 
-    def __parse_declaration_list(self, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
+    def parse_declaration_list(self, node: ASTNode, env: TypeEnv) -> Tuple[TypeEnv, TypeEnum]:
         return (TypeEnv(), TypeEnum.UNKNOWN)
 
-    def __parse_dimensions(self, env: TypeEnv) -> bool:
+    def parse_dimensions(self, node: ASTNode, env: TypeEnv) -> bool:
         return True
 
-    def __parse_graph_declaration(self, env: TypeEnv) -> TypeEnv:
+    def parse_graph_declaration(self, node: ASTNode, env: TypeEnv) -> TypeEnv:
         return TypeEnv()
 
-    def __parse_graph_declaration_weight(self, env: TypeEnv) -> TypeEnum:
+    def parse_graph_declaration_weight(self, node: ASTNode, env: TypeEnv) -> TypeEnum:
         return TypeEnum.UNKNOWN
 
 if __name__ == "__main__":
     ast = ASTNode()
     checker = TypeChecker(ast)
 
-    print(checker._TypeChecker__parse_expression(TypeEnv()))
+    print(checker.parse_expression(ASTNode(), TypeEnv()))
