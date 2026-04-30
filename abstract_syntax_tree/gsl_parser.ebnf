@@ -1,7 +1,7 @@
 Program       ::= Statement* EOF
 
 Statement     ::= Declaration NEWLINE
-                | DeclarationInitilasation NEWLINE
+                | DeclarationInitialization NEWLINE
                 | Assignment NEWLINE
                 | IfStatement
                 | WhileStatement
@@ -18,8 +18,7 @@ Statement     ::= Declaration NEWLINE
                 | DisplayStatement
                 | ReturnStatement
 
-ListExpression ::= '[' ListExpression (',' ListExpression)* ']'
-                | Expression
+
 
 IfStatement ::= 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
 WhileStatement ::= 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
@@ -45,7 +44,7 @@ ExprCall      ::= '(' Expression ')'
                 | Magnitude 
                 | FunctionCall
                 | ArrayAccess
-                | IDENTIFIER '.' ExprCall
+                | Chaining
                 | Term
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
@@ -55,6 +54,7 @@ ArgList ::= Expression (',' Expression)*
 ArrayAccess ::= IDENTIFIER ('[' Expression ']')+
 AbsoluteValue ::= '|' Expression '|'
 Magnitude ::= '||' Expression '||'
+Chaining ::= IDENTIFIER '.' ExprCall
 
 ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge)
 ExprNode      ::= '(' Expression ')---' 
@@ -62,6 +62,8 @@ ExprNode      ::= '(' Expression ')---'
                 | '(' Expression ')<--'
                 | '(' Expression ')<->'
 ExprEdge      ::= TYPE_EDGE IdentifierAccess ('---' | '-->' | '<--' | '<->') IdentifierAccess (',' IdentifierAccess)* ('weight' Expression (',' Expression)*)?
+IdentifierAccess ::= IDENTIFIER ('.' IDENTIFIER)* ('.' FunctionCall | '.' ArrayAccess)?
+
 
 Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('return' TYPE)? NEWLINE INDENT Statement+ DEDENT
 Parameter     ::= IDENTIFIER 'in' TYPE_ARITH 
@@ -74,12 +76,12 @@ GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE (I
 NodeDec     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
 
 Declaration ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER DIMENSION? 'list' 'in' TYPE
-DeclarationInitilasation ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression | TYPE_OTHER IDENTIFIER ':=' Expression | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' '[' ListExpression (',' ListExpression)* ']'
+DeclarationInitialization ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression | TYPE_OTHER IDENTIFIER ':=' Expression | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' '[' ListExpression (',' ListExpression)* ']'
+ListExpression ::= '[' ListExpression (',' ListExpression)* ']'
+                | Expression
 
-Assignment ::= IdentifierAccess ':=' Expression
-
-IdentifierAccess ::= IDENTIFIER ('.' IDENTIFIER)* ('.' FunctionCall | '.' ArrayAccess)?
-
+Assignment ::= AssignmentVariable ':=' Expression
+AssignmentVariable ::= ArrayAccess | IDENTIFIER ('.' IDENTIFIER)* ('.' ArrayAccess)?
 
 <?TOKENS?>
 
