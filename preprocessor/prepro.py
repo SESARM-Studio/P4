@@ -1,6 +1,5 @@
 from __future__ import annotations
 import re
-import copy
 
 def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
     indent_counter = 0
@@ -15,11 +14,15 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
         source_offset = 0
         source_end_location = 0
         processed_offset = 0
+        newline_array = []
+        source_code = []
 
         for i, line in enumerate (input_file, 1):
+            source_code.append(line)
             source_offset = source_end_location
             source_end_location += len(line)
             processed_offset = len(final_string)
+            newline_array.append(source_offset)
             temp_str = line
 
 
@@ -43,7 +46,6 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
                         if temp_str[index+1] == "/": # Remove single-line comments "//":
                             temp_str = temp_str[:index] # Splice removes the hidden character \n so need to manually add after
                             temp_str += "\n"
-                            source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_offset + len(temp_str))
                             break
                         if temp_str[index+1] == "*":
                             if "*/" in temp_str[index:]:
@@ -54,14 +56,12 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
 
                                 # Remove single-line multi-line comments "/* */"
                                 temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
-                                source_map.safe_remove(processed_offset)
                                 break
                             else:
                                 # Remove start-of multi-line comments "/*"
                                 temp_str = temp_str[:index] # Splice removes the hidden character \n so need to manually add after
                                 temp_str += "\n"
                                 inside_comment = True
-                                source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_offset + len(temp_str))
                                 break
                     if char == "\"" and inside_text == True:
                         inside_text = False
@@ -69,7 +69,6 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
             else:
                 # Remove single-line comments "//":
                 temp_str = re.sub(r"//.*", "", temp_str)
-                source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_offset + len(temp_str))
 
 
                 # Check if code comes after single-line multi-line comments "/* */"
@@ -80,13 +79,11 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
 
                 # Remove multi-line comments on 1 line "/* */"
                 temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
-                source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_offset + len(temp_str))
 
                 # Remove start-of multi-line comments "/*"
                 if "/*" in temp_str:
                     temp_str = re.sub(r"/\*.*","", temp_str)
                     inside_comment = True
-                    source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_offset + len(temp_str))
 
 
             # Removes a line of white-space
@@ -135,26 +132,22 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
             # Adds @INDENT or @DEDENT tokens for each indent / dedent
             if change_indents > 0:
                 temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@INDENT ", temp_str)
-                source_map.add_span(processed_offset, source_offset, processed_offset + change_indents * 8, source_offset + len(indents))
-                source_map.add_span(processed_offset + change_indents * 8, source_offset + len(indents), processed_offset + len(temp_str), source_offset + len(temp_str))
-
 
             if change_indents < 0:
                 temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@DEDENT ", temp_str)
-                source_map.add_span(processed_offset, source_offset, processed_offset + change_indents * 8, source_offset + len(indents))
-                source_map.add_span(processed_offset + change_indents * 8, source_offset + len(indents), processed_offset + len(temp_str), source_offset + len(temp_str))
 
             # Updates indent counter
             indent_counter += change_indents
 
             # Add '@NEWLINE' token before newline escape '\n'
-            source_map.remove_newline(processed_offset, source_offset, processed_offset + len(temp_str), source_end_location, temp_str)
-            temp_str = re.sub(r"(\n)"," @NEWLINE\n",temp_str)
-            source_map.add_span(processed_offset + len(temp_str) - 10, source_end_location -1, processed_offset+len(temp_str), source_end_location)
+            token_str = re.sub(r"(\n)"," @NEWLINE\n",temp_str)
+            if token_str != temp_str:
+                temp_str = token_str
 
 
             # Appends to final string
             final_string += temp_str
+            source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_end_location)
 
     # If the document does not end on a newline, add one 
     if final_string.endswith("@NEWLINE\n") is False:
@@ -163,7 +156,6 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
     # If the document does not end unindentet, it adds the missing dedents
     if indent_counter != 0:
         final_string += indent_counter * "@DEDENT "
-        source_map.add_span(processed_offset, source_end_location, processed_offset + change_indents * 8, source_end_location )
 
 
     # Adds the EOD sign '$'
@@ -173,36 +165,82 @@ def preprocessor(file_input, source_map: SourceMap, file_output="output.gsl"):
     with open(file_output, "w") as output_file:
         output_file.write(final_string)
 
-
+    source_map.give_information(newline_array, source_code, file_input)
 
 class SourceMap:
     map = dict()
+    newline_array = []
+    input_file = ""
+    source_array = []
+
+    def give_information(self, newline_array, source_code_array, input_file):
+        self.newline_array = newline_array
+        self.source_array = source_code_array
+        self.input_file = input_file
 
     def add_span(self, processed_offset, original_offset, processed_end, original_end):
-        segment = SourceSegment(processed_offset, original_offset, processed_end, original_end)
+        segment = SpanSegment(processed_offset, original_offset, processed_end, original_end)
         self.map.update({processed_offset: segment})
 
-    def get_map(self):
-        return copy.deepcopy(map)
-    
-    def get_original_offset(self, processed_offset):
-        return None
-    
-    def safe_remove(self, processed_offset):
-        self.map.pop(processed_offset, None)
 
-    def remove_newline(self, processed_offset, original_offset, processed_end, original_end, string):
-        remove_char = 0
-        if string[-1] == '\n': remove_char = 1
+    def get_line(self, original_offset):
+        i = 0
+        while i < len(self.newline_array):
+            if original_offset < self.newline_array[i]:
+                break
+            i += 1
+        return i
 
-        old_seg: SourceSegment = self.map.get(processed_offset, None)
-        if old_seg is None:
-            self.add_span(processed_offset, original_offset, processed_end - remove_char, original_end - remove_char)
-        else:
-            new_seg = SourceSegment(old_seg.processed_start, old_seg.original_start, old_seg.processed_end - remove_char, old_seg.original_end - remove_char)
-            self.map.update({processed_offset: new_seg})
+    def get_source_spans(self, processed_offset, processed_end):
+        all_spans = list(self.map.keys())
 
-class SourceSegment:
+        key_offset = 0
+        start_index = None
+
+        for i, offset in enumerate(all_spans):
+            if processed_offset >= offset:
+                key_offset = offset
+                start_index = i
+            else: 
+                break
+
+        span_segment = self.map.get(key_offset)
+        if span_segment.processed_end >= processed_end:
+            return [span_segment]
+        
+        result = [span_segment]
+        start_index += 1
+
+        while start_index < len(all_spans):
+            next_seg = self.map.get(all_spans[start_index])
+            result.append(next_seg)
+
+            if next_seg.processed_end >= processed_end:
+                break
+
+            start_index += 1
+        
+        return result
+
+    def get_source_info(self, processed_start, processed_end):
+        span_segments = self.get_source_spans(processed_start, processed_end)
+        span_lines = []
+        string_lines = []
+        for span in span_segments:
+            span_lines.append(self.get_line(span.original_start))
+
+        for line in span_lines:
+            string_lines.append(self.source_array[line-1])
+
+        return {
+            "file_path": self.input_file,
+            "start_line": span_lines[0],
+            "end_line": span_lines[-1],
+            "lines_text": string_lines
+        }
+
+
+class SpanSegment:
     def __init__(self, ps, os, pe, oe):
         self.processed_start = ps
         self.original_start = os
