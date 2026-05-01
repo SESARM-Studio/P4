@@ -1,0 +1,13 @@
+graph G with int weight
+    node a, b, c
+
+    edge a --> c weight 3
+
+repeat || G.nodes || - 1 times
+    for each edge x1 <-- x2 with weight w in G
+        relax (x1, x2, w)
+
+    for each edge x1 --> x2 with weight w in G
+        if w > 5 then
+            return false
+        return true

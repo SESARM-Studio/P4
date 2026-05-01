@@ -1,28 +1,31 @@
 Program       ::= Statement* EOF
 
-Statement     ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH NEWLINE
-                | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* NEWLINE
-                | IDENTIFIER ('.' IDENTIFIER)* ':=' Expression NEWLINE
-                | IDENTIFIER 'in' TYPE_ARITH ':=' Expression NEWLINE
-                | TYPE_OTHER IDENTIFIER ':=' Expression NEWLINE
-                | IDENTIFIER DIMENSION? 'list' 'in' TYPE (':=' '[' ListExpression (',' ListExpression)* ']')? NEWLINE
-                | 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
-                | 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
-                | 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
-                | 'for each' ExprEdge 'with weight' IDENTIFIER 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
-                | 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
+Statement     ::= Declaration NEWLINE
+                | DeclarationInitialization NEWLINE
+                | Assignment NEWLINE
+                | IfStatement
+                | WhileStatement
+                | ForEachNormal
+                | ForEachEdge
+                | RepeatStatement
                 | Algorithm
                 | Expression NEWLINE 
-                | ExprEdge NEWLINE
-                | nodeDec NEWLINE
-                | ExprGraph NEWLINE
+                | EdgeDecl NEWLINE
+                | NodeDecl NEWLINE
+                | GraphStatement NEWLINE
                 | LoopModifier NEWLINE
                 | GraphDecl
-                | 'display' Expression NEWLINE
-                | 'return' Expression NEWLINE
+                | DisplayStatement
+                | ReturnStatement
 
-ListExpression ::= '[' ListExpression (',' ListExpression)* ']'
-                | Expression
+IfStatement ::= 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
+WhileStatement ::= 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
+ForEachNormal ::= 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
+ForEachEdge ::= 'for each' EdgeDecl ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
+RepeatStatement ::= 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
+
+DisplayStatement ::= 'display' Expression NEWLINE
+ReturnStatement ::= 'return' Expression NEWLINE
 
 Expression    ::= ExprAnd ('or' ExprAnd)* 
                 | 'weight of' IDENTIFIER '.' IDENTIFIER ('---' | '-->') IDENTIFIER
@@ -35,30 +38,48 @@ ExprMult      ::= ExprExp (('*' | '/' | '%') ExprExp)*
 ExprExp       ::= ExprNot ('^' ExprNot)*
 ExprNot       ::= ('neg' | '-')? ExprCall
 ExprCall      ::= '(' Expression ')'
-                | '|' Expression '|' 
-                | '||' Expression '||' 
-                | IDENTIFIER '(' (Expression (',' Expression)*)? ')'
-                | IDENTIFIER ('[' Expression ']')+ 
-                | IDENTIFIER '.' ExprCall
+                | AbsoluteValue 
+                | Magnitude 
+                | FunctionCall
+                | ArrayAccess
+                | ExprChaining
                 | Term
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
+FunctionCall ::= IDENTIFIER '(' ArgList? ')'
+ArgList ::= Expression (',' Expression)*
 
-ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge)
+ArrayAccess ::= IDENTIFIER ('[' Expression ']')+
+AbsoluteValue ::= '|' Expression '|'
+Magnitude ::= '||' Expression '||'
+ExprChaining ::= IDENTIFIER '.' ExprCall
+
+GraphStatement     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | EdgeDecl)
 ExprNode      ::= '(' Expression ')---' 
                 | '(' Expression ')-->' 
                 | '(' Expression ')<--'
-ExprEdge      ::= TYPE_EDGE IDENTIFIER ('.' IDENTIFIER)* ('---' | '-->' | '<--' | '<-->') (IDENTIFIER ('.' IDENTIFIER)*) (',' IDENTIFIER ('.' IDENTIFIER)*)* ('weight' Expression (',' Expression)*)?
+                | '(' Expression ')<->'
+EdgeDecl      ::= TYPE_EDGE IdentifierAccess ('---' | '-->' | '<--' | '<->') IdentifierAccess (',' IdentifierAccess)* ('weight' Expression (',' Expression)*)?
+IdentifierAccess ::= IDENTIFIER ('.' IDENTIFIER)* ('.' FunctionCall | '.' ArrayAccess)?
 
-Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' NEWLINE INDENT Statement+ DEDENT
+
+Algorithm     ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('return' TYPE)? NEWLINE INDENT Statement+ DEDENT
 Parameter     ::= IDENTIFIER 'in' TYPE_ARITH 
                 | (TYPE_GRAPH | TYPE_OTHER | TYPE_NODE) IDENTIFIER
 
 LoopModifier  ::= 'stop'
 
-GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE INDENT (nodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT 
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE (INDENT (NodeDecl NEWLINE | EdgeDecl NEWLINE )+ DEDENT)?
 
-nodeDec     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
+NodeDecl     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
+
+Declaration ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER DIMENSION? 'list' 'in' TYPE
+DeclarationInitialization ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression | TYPE_OTHER IDENTIFIER ':=' Expression | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' '[' ListExpression (',' ListExpression)* ']'
+ListExpression ::= '[' ListExpression (',' ListExpression)* ']'
+                | Expression
+
+Assignment ::= AssignmentVariable ':=' Expression
+AssignmentVariable ::= ArrayAccess | IDENTIFIER ('.' IDENTIFIER)* ('.' ArrayAccess)?
 
 <?TOKENS?>
 
@@ -115,6 +136,7 @@ KEYWORD            ::= 'or'
                      | 'return'
                      | 'add'
                      | 'remove'
+                     | 'list'
 
 DIMENSION   ::= ([1-9][0-9]*)'d'
 
