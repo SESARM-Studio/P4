@@ -1,4 +1,4 @@
-from typesystem.TypeEnv import TypeEnv, TypeEnum
+from typesystem.type_env import TypeEnv, TypeEnum
 
 def test_type_env_binding_found():
     # Arrange
