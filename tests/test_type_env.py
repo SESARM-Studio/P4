@@ -18,7 +18,7 @@ def test_type_env_binding_found():
 
 def test_type_env_binding_not_found():
     # Arrange
-    expected = None
+    expected = TypeEnum.UNKNOWN
     env = TypeEnv()
 
     # Act
@@ -63,7 +63,7 @@ def test_type_env_scope_destroyed():
     actual = env.lookup("graph_num")
 
     # Assert
-    assert actual is None, "Bindings in destroyed scope was not removed"
+    assert actual is TypeEnum.UNKNOWN, "Bindings in destroyed scope was not removed"
 
 def test_type_env_variable_shadowed():
     # Arrange
