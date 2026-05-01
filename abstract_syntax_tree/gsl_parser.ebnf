@@ -10,20 +10,18 @@ Statement     ::= Declaration NEWLINE
                 | RepeatStatement
                 | Algorithm
                 | Expression NEWLINE 
-                | ExprEdge NEWLINE
-                | NodeDec NEWLINE
-                | ExprGraph NEWLINE
+                | EdgeDecl NEWLINE
+                | NodeDecl NEWLINE
+                | GraphStatement NEWLINE
                 | LoopModifier NEWLINE
                 | GraphDecl
                 | DisplayStatement
                 | ReturnStatement
 
-
-
 IfStatement ::= 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
 WhileStatement ::= 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
 ForEachNormal ::= 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
-ForEachEdge ::= 'for each' ExprEdge ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
+ForEachEdge ::= 'for each' EdgeDecl ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
 RepeatStatement ::= 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
 
 DisplayStatement ::= 'display' Expression NEWLINE
@@ -44,7 +42,7 @@ ExprCall      ::= '(' Expression ')'
                 | Magnitude 
                 | FunctionCall
                 | ArrayAccess
-                | Chaining
+                | ExprChaining
                 | Term
 Term          ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
@@ -54,14 +52,14 @@ ArgList ::= Expression (',' Expression)*
 ArrayAccess ::= IDENTIFIER ('[' Expression ']')+
 AbsoluteValue ::= '|' Expression '|'
 Magnitude ::= '||' Expression '||'
-Chaining ::= IDENTIFIER '.' ExprCall
+ExprChaining ::= IDENTIFIER '.' ExprCall
 
-ExprGraph     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | ExprEdge)
+GraphStatement     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | EdgeDecl)
 ExprNode      ::= '(' Expression ')---' 
                 | '(' Expression ')-->' 
                 | '(' Expression ')<--'
                 | '(' Expression ')<->'
-ExprEdge      ::= TYPE_EDGE IdentifierAccess ('---' | '-->' | '<--' | '<->') IdentifierAccess (',' IdentifierAccess)* ('weight' Expression (',' Expression)*)?
+EdgeDecl      ::= TYPE_EDGE IdentifierAccess ('---' | '-->' | '<--' | '<->') IdentifierAccess (',' IdentifierAccess)* ('weight' Expression (',' Expression)*)?
 IdentifierAccess ::= IDENTIFIER ('.' IDENTIFIER)* ('.' FunctionCall | '.' ArrayAccess)?
 
 
@@ -71,9 +69,9 @@ Parameter     ::= IDENTIFIER 'in' TYPE_ARITH
 
 LoopModifier  ::= 'stop'
 
-GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE (INDENT (NodeDec NEWLINE | ExprEdge NEWLINE )+ DEDENT)?
+GraphDecl     ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE (INDENT (NodeDecl NEWLINE | EdgeDecl NEWLINE )+ DEDENT)?
 
-NodeDec     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
+NodeDecl     ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
 
 Declaration ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER DIMENSION? 'list' 'in' TYPE
 DeclarationInitialization ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression | TYPE_OTHER IDENTIFIER ':=' Expression | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' '[' ListExpression (',' ListExpression)* ']'

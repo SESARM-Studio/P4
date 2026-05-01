@@ -1,4 +1,4 @@
-# This file was generated on Thu Apr 30, 2026 17:12 (UTC+02) by REx v6.2-SNAPSHOT which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
+# This file was generated on Fri May 1, 2026 17:26 (UTC+02) by REx v6.2-SNAPSHOT which is Copyright (c) 1979-2025 by Gunther Rademacher <grd@gmx.net>
 # REx command line: -python -main -tree -lalr 1 .\abstract_syntax_tree\gsl_parser.ebnf
 
 import sys
@@ -1124,16 +1124,16 @@ class gsl_parser:
       "ArrayAccess",
       "AbsoluteValue",
       "Magnitude",
-      "Chaining",
-      "ExprGraph",
+      "ExprChaining",
+      "GraphStatement",
       "ExprNode",
-      "ExprEdge",
+      "EdgeDecl",
       "IdentifierAccess",
       "Algorithm",
       "Parameter",
       "LoopModifier",
       "GraphDecl",
-      "NodeDec",
+      "NodeDecl",
       "Declaration",
       "DeclarationInitialization",
       "ListExpression",
