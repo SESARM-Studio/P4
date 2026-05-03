@@ -1,4 +1,4 @@
-from typesystem.TypeEnv import TypeEnv, TypeEnum
+from typesystem.type_env import TypeEnv, TypeEnum
 
 def test_type_env_binding_found():
     # Arrange
@@ -18,7 +18,7 @@ def test_type_env_binding_found():
 
 def test_type_env_binding_not_found():
     # Arrange
-    expected = None
+    expected = TypeEnum.UNKNOWN
     env = TypeEnv()
 
     # Act
@@ -47,7 +47,7 @@ def test_type_env_binding_found_in_outer_scope():
     actual = env.lookup("weight_sum")
 
     # Assert
-    assert actual is not None, "Binding not found"
+    assert actual is not TypeEnum.UNKNOWN, "Binding not found"
     assert actual == expected, f"actual -> {actual.name} == {expected.name} <- expected"
 
 def test_type_env_scope_destroyed():
@@ -63,7 +63,7 @@ def test_type_env_scope_destroyed():
     actual = env.lookup("graph_num")
 
     # Assert
-    assert actual is None, "Bindings in destroyed scope was not removed"
+    assert actual is TypeEnum.UNKNOWN, "Bindings in destroyed scope was not removed"
 
 def test_type_env_variable_shadowed():
     # Arrange

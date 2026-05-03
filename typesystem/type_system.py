@@ -1,4 +1,4 @@
-from TypeEnv import TypeEnv, TypeEnum
+from typesystem.type_env import TypeEnv, TypeEnum
 from remove_l8ter import *
 
 class TypeError(Exception):

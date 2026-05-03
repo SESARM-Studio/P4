@@ -41,12 +41,12 @@ class TypeEnv():
         self.environment = dict()
         self.outer_scope = outer_scope
 
-    def bind(self, identifier: str, value: TypeEnum) -> None:
+    def bind(self, identifier, value) -> None:
         """Binds an identifier to a type"""
 
         self.environment[identifier] = value
 
-    def lookup(self, identifier: str) -> TypeEnum:
+    def lookup(self, identifier):
         """Search current and outer scopes for the identifier binding"""
 
         scope = self
