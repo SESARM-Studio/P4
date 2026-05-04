@@ -1,8 +1,8 @@
 import sys
 
 from preprocessor.prepro import preprocessor
-from abstract_syntax_tree.ast_builder import AbstractSyntaxTreeBuilder, print_ast
-from abstract_syntax_tree.gsl_parser import gsl_parser
+from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
+from parser.gsl_parser import gsl_parser
 
 def read(arg):
   if arg.startswith("{") and arg.endswith("}"):

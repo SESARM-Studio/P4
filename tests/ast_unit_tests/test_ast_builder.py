@@ -1,7 +1,7 @@
 import pytest
 
-from abstract_syntax_tree.gsl_parser import *
-from abstract_syntax_tree.ast_builder import *
+from parser.gsl_parser import *
+from parser.ast_builder import *
 
 
 def test_base_case_recursive():
