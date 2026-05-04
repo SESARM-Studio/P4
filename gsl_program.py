@@ -3,6 +3,7 @@ import sys
 from preprocessor.prepro import preprocessor
 from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
 from parser.gsl_parser import gsl_parser
+from evaluator.evaluator import *
 
 def read(arg):
   if arg.startswith("{") and arg.endswith("}"):
@@ -26,6 +27,7 @@ def main(args):
         try:
            parser.parse_Program()
            tree = ast.build_tree(b.stack)
+           traverse_program(tree)
            if debug is True:
               print_ast(tree)
         except gsl_parser.ParseException as pe:
