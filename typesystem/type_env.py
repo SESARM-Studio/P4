@@ -1,20 +1,4 @@
-from enum import Enum
-
-class TypeEnum(Enum):
-
-    """Enum of the types from the abstract syntax"""
-
-    UNKNOWN = 0
-    BOOL    = 1
-    TEXT    = 2
-    NODE    = 3
-    EDGE    = 4
-    INT     = 5
-    NAT     = 6
-    REAL    = 7
-    GRAPH   = 8
-    DIGRAPH = 9
-    TREE    = 10
+from typesystem.data_types import TypeEnum
 
 class TypeEnv():
 
