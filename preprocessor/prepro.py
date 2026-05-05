@@ -1,5 +1,5 @@
 import re
-def preprocessor(file_input, file_output="output.gsl"):
+def preprocessor(file_input, return_file=False, file_output="output.gsl"):
     indent_counter = 0
     spaces_or_tabs = 0 # 1 for spaces, 2 for tabs
     spaces_amount = None
@@ -141,5 +141,8 @@ def preprocessor(file_input, file_output="output.gsl"):
     final_string += "$"
 
     # Output to file
-    with open(file_output, "w") as output_file:
-        output_file.write(final_string)
+    if return_file is False:
+        return final_string
+    else:
+        with open(file_output, "w") as output_file:
+            output_file.write(final_string)

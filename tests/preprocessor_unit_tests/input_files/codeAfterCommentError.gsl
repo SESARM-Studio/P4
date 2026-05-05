@@ -1,4 +1,4 @@
-graph G in int
+graph G with int weight
     node a,b,c
     /*
     This graph has three nodes.
