@@ -98,7 +98,7 @@ class GraphStatement(ASTNode):
 class ExprNode(ASTNode):
     def __init__(self, token):
         super().__init__(token)
-        self.identifier = []
+        self.expression = None
         self.direction = None
 
 class EdgeDecl(ASTNode):
@@ -178,7 +178,7 @@ class Magnitude(Expression):
 class ListExpression(ASTNode):
     def __init__(self, token):
         super().__init__(token)
-        self.list_index = []
+        self.expressions = []
 
 def print_ast(node, prefix="", is_last=True):
     connector = "└── " if is_last else "├── "
@@ -267,6 +267,7 @@ class AbstractSyntaxTreeBuilder:
                     for child in symbol_children[then_index+1:]:
                         if_statement.then_statements.append(self.recursive_builder(child))
                 return if_statement
+            
             case "WhileStatement":
                 while_statement = WhileStatement(symbol.name)
                 for child in symbol_children:
@@ -276,6 +277,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Statement":
                             while_statement.statements.append(self.recursive_builder(child))
                 return while_statement
+            
             case "ForEachNormal":
                 for_each_normal = ForEachNormal(symbol.name)
                 for child in symbol_children:
@@ -287,6 +289,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Statement":
                             for_each_normal.statements.append(self.recursive_builder(child))
                 return for_each_normal
+            
             case "ForEachEdge":
                 for_each_edge = ForEachEdge(symbol.name)
                 for index, child in enumerate(symbol_children):
@@ -300,6 +303,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Statement":
                             for_each_edge.statements.append(self.recursive_builder(child))
                 return for_each_edge
+            
             case "RepeatStatement":
                 repeat_statement = RepeatStatement(symbol.name)
                 for child in symbol_children:
@@ -309,6 +313,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Statement":
                             repeat_statement.repeat_statements.append(self.recursive_builder(child))
                 return repeat_statement
+            
             case "GraphDecl":
                 graph_decl = GraphDecl(symbol.name)
                 for child in symbol_children:
@@ -324,18 +329,21 @@ class AbstractSyntaxTreeBuilder:
                         case "EdgeDecl":
                             graph_decl.edges.append(self.recursive_builder(child))
                 return graph_decl
+            
             case "DisplayStatement":
                 display_statement = DisplayStatement(symbol.name)
                 for child in symbol_children:
                     if child.name == "Expression":
                         display_statement.expression = self.recursive_builder(child)
                 return display_statement
+            
             case "ReturnStatement":
                 return_statement = ReturnStatement(symbol.name)
                 for child in symbol_children:
                     if child.name == "Expression":
                         return_statement.expression = self.recursive_builder(child)
                 return return_statement
+            
             case "Expression":
                 expression = Expression(symbol.name)
                 for index, child in enumerate(symbol_children):
@@ -353,7 +361,10 @@ class AbstractSyntaxTreeBuilder:
                             for child1 in symbol_children[index+1:]:
                                 argument_str += self.characters(child1.begin, child1.end)
                             expression.arg1 = argument_str
+                        case "ExprNode":
+                            expression.arg1 =self.recursive_builder(child)
                 return expression
+            
             case "ExprAnd":
                 if len(symbol_children) > 1:
                     expr_and = Expression(symbol.name)
@@ -369,6 +380,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'and'":
                             expr_and.operator = self.characters(child.begin, child.end)
                 return expr_and
+            
             case "ExprEq":
                 if len(symbol_children) > 1:
                     expr_eq = Expression(symbol.name)
@@ -384,6 +396,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'='" | "!=":
                             expr_eq.operator = self.characters(child.begin, child.end)
                 return expr_eq
+            
             case "ExprRel":
                 if len(symbol_children) > 1:
                     expr_rel = Expression(symbol.name)
@@ -399,6 +412,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'<'" | "'>'" | "'<='" | "'>='":
                             expr_rel.operator = self.characters(child.begin, child.end)
                 return expr_rel
+            
             case "ExprPlus":
                 if len(symbol_children) > 1:
                     expr_plus = Expression(symbol.name)
@@ -414,6 +428,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'+'" | "'-'":
                             expr_plus.operator = self.characters(child.begin, child.end)
                 return expr_plus
+            
             case "ExprMult":
                 if len(symbol_children) > 1:
                     expr_mult = Expression(symbol.name)
@@ -429,6 +444,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'*'" | "'/'" | "'%'":
                             expr_mult.operator = self.characters(child.begin, child.end)
                 return expr_mult
+            
             case "ExprExp":
                 if len(symbol_children) > 1:
                     expr_exp = Expression(symbol.name)
@@ -444,6 +460,7 @@ class AbstractSyntaxTreeBuilder:
                         case "'^'":
                             expr_exp.operator = self.characters(child.begin, child.end)
                 return expr_exp
+            
             case "ExprNot":
                 if len(symbol_children) > 1:
                     expr_not = Expression(symbol.name)
@@ -456,19 +473,27 @@ class AbstractSyntaxTreeBuilder:
                         case "'neg'":
                             expr_not.operator = self.characters(child.begin, child.end)
                 return expr_not
+            
             case "ExprCall":
                 for child in symbol_children:
                     return self.recursive_builder(child)
+                
             case "AbsoluteValue":
                 absolute_value = AbsoluteValue(symbol.name)
                 for child in symbol_children:
-                    absolute_value.expression = self.recursive_builder(child)
+                    match child.name:
+                        case "Expression":
+                            magnitude.expression = self.recursive_builder(child)
                 return absolute_value
+            
             case "Magnitude":
                 magnitude = Magnitude(symbol.name)
                 for child in symbol_children:
-                    magnitude.expression = self.recursive_builder(child)
+                    match child.name:
+                        case "Expression":
+                            magnitude.expression = self.recursive_builder(child)
                 return magnitude
+            
             case "ExprChaining":
                 expr_chaining = ExprChaining(symbol.name)
                 identifier_str = ""
@@ -482,12 +507,14 @@ class AbstractSyntaxTreeBuilder:
                 expr_chaining.identifier = identifier_str
                 expr_chaining.chain_part = chain_part
                 return expr_chaining
+            
             case "Term":
                 term = Term(symbol.name)
                 for child in symbol_children:
                     term.type = child.name
                     term.value = self.characters(child.begin, child.end)
                 return term
+            
             case "NodeDecl":
                 node_decl = NodeDecl(symbol.name)
                 for child in symbol_children:
@@ -496,6 +523,7 @@ class AbstractSyntaxTreeBuilder:
                     if child.name == "Expression":
                         node_decl.assignment = self.recursive_builder(child)
                 return node_decl
+            
             case "GraphStatement":
                 graph_statement = GraphStatement(symbol.name)
                 for index, child in enumerate(symbol_children):
@@ -511,14 +539,16 @@ class AbstractSyntaxTreeBuilder:
                     if child.name == "EdgeDecl":
                         graph_statement.argument.append(self.recursive_builder(child))
                 return graph_statement
+            
             case "ExprNode":
                 expr_node = ExprNode(symbol.name)
                 for child in symbol_children:
                     if child.name == "Expression":
-                        expr_node.identifier = self.recursive_builder(child)
+                        expr_node.expression = self.recursive_builder(child)
                     else:
                         expr_node.direction = self.characters(child.begin, child.end).strip(")")
                 return expr_node
+            
             case "EdgeDecl":
                 assigned_first_node = False
                 edge_decl = EdgeDecl(symbol.name)
@@ -535,6 +565,7 @@ class AbstractSyntaxTreeBuilder:
                     if child.name == "Expression":
                         edge_decl.weight.append(self.recursive_builder(child))
                 return edge_decl
+            
             case "Algorithm":
                 algorithm = Algorithm(symbol.name)
                 for child in symbol_children:
@@ -548,6 +579,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Statement":
                             algorithm.statements.append(self.recursive_builder(child))
                 return algorithm
+            
             case "Parameter":
                 parameter = Parameter(symbol.name)
                 for child in symbol_children:
@@ -557,10 +589,12 @@ class AbstractSyntaxTreeBuilder:
                         case "IDENTIFIER":
                             parameter.identifier= self.characters(child.begin, child.end)
                 return parameter
+            
             case "LoopModifier":
                 loop_modifier = LoopModifier(symbol.name)
                 loop_modifier.modifier = self.characters(symbol.begin, symbol.end)
                 return loop_modifier
+            
             case "Declaration":
                 declaration = Declaration(symbol.name)
                 for child in symbol_children:
@@ -574,6 +608,7 @@ class AbstractSyntaxTreeBuilder:
                         case "DIMENSION":
                             declaration.dimension = self.characters(child.begin, child.end)
                 return declaration
+            
             case "DeclarationInit":
                 decl_init = DeclarationInit(symbol.name)
                 for child in symbol_children:
@@ -589,13 +624,15 @@ class AbstractSyntaxTreeBuilder:
                         case "Expression" | "ListExpression":
                             decl_init.expression.append(self.recursive_builder(child))
                 return decl_init
+            
             case "ListExpression":
                 list_expr = ListExpression(symbol.name)
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
-                            list_expr.list_index.append(self.recursive_builder(child))
+                            list_expr.expressions.append(self.recursive_builder(child))
                 return list_expr
+            
             case "Assignment":
                 assignment = Assignment(symbol.name)
                 for child in symbol_children:
@@ -605,6 +642,7 @@ class AbstractSyntaxTreeBuilder:
                         case "Expression":
                             assignment.expression = self.recursive_builder(child)
                 return assignment
+            
             case "AlgorithmCall":
                 algorithm_call = AlgorithmCall(symbol.name)
                 for child in symbol_children:
@@ -614,11 +652,13 @@ class AbstractSyntaxTreeBuilder:
                         case "ArgList":
                             algorithm_call.arguments = self.recursive_builder(child)
                 return algorithm_call
+            
             case "ArgList":
                 arguments = []
                 for child in symbol_children:
                     arguments.append(self.recursive_builder(child))
                 return arguments
+            
             case "ArrayAccess":
                 array_access = ArrayAccess(symbol.name)
                 for child in symbol_children:
