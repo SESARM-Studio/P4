@@ -1,3 +1,5 @@
+from parser.gsl_parser import gsl_parser
+
 class ASTNode:
     def __init__(self, token, children=None, value=None):
         self.token = token
@@ -67,8 +69,6 @@ class AlgorithmCall(ASTNode):
         super().__init__(token)
         self.identifier = None
         self.arguments = None
-
-
 
 class ArrayAccess(ASTNode):
     def __init__(self, token):
@@ -244,6 +244,9 @@ class AbstractSyntaxTreeBuilder:
             if child.name not in self.SKIP_WORDS:
                 symbol_children.append(child)
 
+        if symbol.name == "ExprAnd":
+            print(symbol)
+
         match symbol.name:
             case "IfStatement":
                 if_statement = IfStatement(symbol.name)
@@ -349,7 +352,14 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprAnd":
-                            if index == 0:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expression.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expression.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("Expression",0,0,symbol_children[:last_element-1])
+                                expression.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif index == 0:
                                 expression.arg1 = self.recursive_builder(child)
                             else:
                                 expression.arg2 = self.recursive_builder(child)
@@ -371,9 +381,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprEq":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_and.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_and.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprAnd",0,0,symbol_children[:last_element-1])
+                                expr_and.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_and.arg1 = self.recursive_builder(child)
                             else:
                                 expr_and.arg2 = self.recursive_builder(child)
@@ -387,9 +404,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprRel":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_eq.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_eq.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprEq",0,0,symbol_children[:last_element-1])
+                                expr_eq.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_eq.arg1 = self.recursive_builder(child)
                             else:
                                 expr_eq.arg2 = self.recursive_builder(child)
@@ -403,9 +427,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprPlus":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_rel.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_rel.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprRel",0,0,symbol_children[:last_element-1])
+                                expr_rel.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_rel.arg1 = self.recursive_builder(child)
                             else:
                                 expr_rel.arg2 = self.recursive_builder(child)
@@ -419,9 +450,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprMult":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_plus.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_plus.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprPlus",0,0,symbol_children[:last_element-1])
+                                expr_plus.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_plus.arg1 = self.recursive_builder(child)
                             else:
                                 expr_plus.arg2 = self.recursive_builder(child)
@@ -435,9 +473,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprExp":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_mult.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_mult.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprMult",0,0,symbol_children[:last_element-1])
+                                expr_mult.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_mult.arg1 = self.recursive_builder(child)
                             else:
                                 expr_mult.arg2 = self.recursive_builder(child)
@@ -451,9 +496,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprNot":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_exp.arg1 = self.recursive_builder(symbol_children[index])
+                                expr_exp.operator = self.characters(symbol_children[index+1].begin, symbol_children[index+1].end)
+                                right_argument = gsl_parser.Nonterminal("ExprExp",0,0,symbol_children[index+2:])
+                                expr_exp.arg2 = self.recursive_builder(right_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_exp.arg1 = self.recursive_builder(child)
                             else:
                                 expr_exp.arg2 = self.recursive_builder(child)
@@ -483,7 +535,7 @@ class AbstractSyntaxTreeBuilder:
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
-                            magnitude.expression = self.recursive_builder(child)
+                            absolute_value.expression = self.recursive_builder(child)
                 return absolute_value
             
             case "Magnitude":

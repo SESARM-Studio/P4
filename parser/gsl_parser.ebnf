@@ -36,7 +36,7 @@ ExprRel            ::= ExprPlus (('<' | '>' | '<=' | '>=') ExprPlus)*
 ExprPlus           ::= ExprMult (('+' | '-') ExprMult)*
 ExprMult           ::= ExprExp (('*' | '/' | '%') ExprExp)*
 ExprExp            ::= ExprNot ('^' ExprNot)*
-ExprNot            ::= ('neg' | '-')? ExprCall
+ExprNot            ::= 'neg'? ExprCall
 ExprCall           ::= '(' Expression ')'
                      | AbsoluteValue 
                      | Magnitude 
