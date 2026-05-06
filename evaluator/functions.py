@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from copy import copy
+
 class Location:
     def __init__(self):
         self.number = 0
@@ -12,5 +15,20 @@ class Location:
         l.name = f"l{l.number}"
         return l
 
+    def copy(self):
+        return copy(self)
+
 class Graph:
-    pass
+    def copy(self):
+        return copy(self)
+
+
+@dataclass(init=True)
+class State:
+    env_graph: dict
+    env_var: dict
+    env_algo: dict
+    loc: Location
+    graph_object: Graph
+    store: dict
+
