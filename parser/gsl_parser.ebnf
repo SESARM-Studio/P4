@@ -42,7 +42,7 @@ ExprCall           ::= '(' Expression ')'
                      | Magnitude 
                      | AlgorithmCall
                      | ArrayAccess
-                     | ExprChaining
+                     | IdentifierAccess
                      | ListExpression
                      | Term
 Term               ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
@@ -53,15 +53,14 @@ ArgList            ::= Expression (',' Expression)*
 ArrayAccess        ::= IDENTIFIER ('[' Expression ']')+
 AbsoluteValue      ::= '|' Expression '|'
 Magnitude          ::= '||' Expression '||'
-ExprChaining       ::= IDENTIFIER '.' ExprCall
 
 GraphStatement     ::= IDENTIFIER ('add' | 'remove') (TYPE_NODE IDENTIFIER | EdgeDecl)
 ExprNode           ::= '(' Expression ')---' 
                      | '(' Expression ')-->' 
                      | '(' Expression ')<--'
                      | '(' Expression ')<->'
-EdgeDecl           ::= TYPE_EDGE IdentifierAccess ('---' | '-->' | '<--' | '<->') IdentifierAccess (',' IdentifierAccess)* ('weight' Expression (',' Expression)*)?
-IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)* ('.' AlgorithmCall | '.' ArrayAccess)?
+EdgeDecl           ::= TYPE_EDGE (IdentifierAccess | IDENTIFIER) ('---' | '-->' | '<--' | '<->') (IdentifierAccess | IDENTIFIER) (',' (IdentifierAccess | IDENTIFIER))* ('weight' Expression (',' Expression)*)?
+IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER | '.' AlgorithmCall | '.' ArrayAccess)+
 
 
 Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('return' TYPE)? NEWLINE INDENT Statement+ DEDENT

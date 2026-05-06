@@ -122,11 +122,6 @@ class Assignment(ASTNode):
         self.identifiers = []
         self.expression = None
 
-class IdentifierAccess(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifiers = []
-
 class Expression(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -138,6 +133,11 @@ class Term(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.type = None
+
+class IdentifierAccess(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifiers = []
 
 class AbsoluteValue(Expression):
     def __init__(self, token):
@@ -165,12 +165,6 @@ class ArrayAccess(Expression):
         super().__init__(token)
         self.identifier = None
         self.indexes = []
-
-class ExprChaining(Expression):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.chain_part = None
 
 class ExprNode(Expression):
     def __init__(self, token):
@@ -545,19 +539,18 @@ class AbstractSyntaxTreeBuilder:
                             magnitude.expression = self.recursive_builder(child)
                 return magnitude
             
-            case "ExprChaining":
-                expr_chaining = ExprChaining(symbol.name)
-                identifier_str = ""
-                chain_part = []
+            case "IdentifierAccess":
+                identifier_access = IdentifierAccess(symbol.name)
+
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
-                            identifier_str += self.characters(child.begin, child.end)
-                        case "ExprCall":
-                            chain_part.append(self.recursive_builder(child))
-                expr_chaining.identifier = identifier_str
-                expr_chaining.chain_part = chain_part
-                return expr_chaining
+                            identifier_access.identifiers.append(self.characters(child.begin, child.end))
+                        case "ArrayAccess":
+                            identifier_access.identifiers.append(self.recursive_builder(child))
+                        case "AlgorithmCall":
+                            identifier_access.identifiers.append(self.recursive_builder(child))
+                return identifier_access
             
             case "Term":
                 term = Term(symbol.name)
@@ -605,15 +598,21 @@ class AbstractSyntaxTreeBuilder:
                 edge_decl = EdgeDecl(symbol.name)
                 for child in symbol_children:
                     if child.name == "IdentifierAccess":
-                        identifier = self.identifier_access_helper_function(child)
+                        identifier = self.recursive_builder(child)
                         if assigned_first_node is False:
                             edge_decl.initial_node = identifier
                             assigned_first_node = True
                         else:
                             edge_decl.nodes.append(identifier)
-                    if child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
+                    elif child.name == "IDENTIFIER":
+                        if assigned_first_node is False:
+                            edge_decl.initial_node = self.characters(child.begin, child.end)
+                            assigned_first_node = True
+                        else:
+                            edge_decl.nodes.append(self.characters(child.begin, child.end))
+                    elif child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
                         edge_decl.direction = child.name.strip("'")
-                    if child.name == "Expression":
+                    elif child.name == "Expression":
                         edge_decl.weight.append(self.recursive_builder(child))
                 return edge_decl
             
@@ -733,19 +732,6 @@ class AbstractSyntaxTreeBuilder:
     SKIP_WORDS = [
         "'('", "')'", "','", "'@NEWLINE'", "'@INDENT'", "'@DEDENT'"
     ]
-
-    def identifier_access_helper_function(self, node):
-        identifier_access = IdentifierAccess(node.name)
-
-        for child in node.children:
-            match child.name:
-                case "IDENTIFIER":
-                    identifier_access.identifiers.append(self.characters(child.begin, child.end))
-                case "ArrayAccess":
-                    identifier_access.identifiers.append(self.recursive_builder(child))
-                case "AlgorithmCall":
-                    identifier_access.identifiers.append(self.recursive_builder(child))
-        return identifier_access
 
     def identifier_helper_function(self, node, assignment_class):
         for child in node.children:
