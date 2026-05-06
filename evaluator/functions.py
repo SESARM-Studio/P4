@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from copy import copy
+import networkx as nx
 
 class Location:
     def __init__(self):
@@ -19,6 +20,50 @@ class Location:
         return copy(self)
 
 class Graph:
+
+    def __init__(self):
+        self.graph = None
+
+    def create_graph(self, type):
+        if type == "digraph":
+            self.graph = nx.DiGraph()
+        else:
+            self.graph = nx.Graph()
+    
+    def add_node(self, node):
+        self.graph.add_node(node)
+
+    def add_nodes(self, nodes):
+        self.graph.add_nodes_from(nodes)
+
+    def add_edge(self, src, dst):
+        self.graph.add_edge(src, dst)
+    
+    def add_edges(self, edges):
+        self.graph.add_edges_from(edges)
+
+    def add_weighted_edge(self, src, dst, weight):
+        edge = [src, dst, weight]
+        self.graph.add_weighted_edges_from(edge)
+    
+    def add_weighted_edges(self, edges):
+        self.graph.add_weighted_edges_from(edges)
+
+    def remove_node(self, node):
+        self.graph.remove_node(node)
+    
+    def remove_edge(self, src, dst):
+        self.graph.remove_edge(src, dst)
+
+    def get_nodes(self):
+        return self.graph.nodes
+    
+    def get_edges(self):
+        return self.graph.edges
+    
+    def get_edge_data(self, src, dst):
+        return self.graph.get_edge_data(src, dst)
+
     def copy(self):
         return copy(self)
 
@@ -31,4 +76,3 @@ class State:
     loc: Location
     graph_object: Graph
     store: dict
-
