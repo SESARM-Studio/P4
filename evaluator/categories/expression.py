@@ -1,4 +1,4 @@
-from abstract_syntax_tree.ast_builder import *
+from parser.ast_builder import *
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:

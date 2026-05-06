@@ -1,19 +1,6 @@
-from abstract_syntax_tree.ast_builder import *
+from parser.ast_builder import *
 from .categories import *
-
-class Location:
-    def __init__(self):
-        self.number = 0
-        self.name = f"l{self.number}"
-
-    def next_location(self):
-        l = Location()
-        l.number = self.number + 1
-        l.name = f"l{l.number}"
-        return l
-
-class Graph:
-    pass
+from .functions import *
 
 def traverse_program(program: ASTNode):
     env_graph = dict()
@@ -25,9 +12,6 @@ def traverse_program(program: ASTNode):
 
     if len(program.children) != 1:
         for child in program.children:
-            execute_statement(child, None, None, None, None, None, None)
+            execute_statement(child, env_graph, env_var, env_algo, loc, graph_object, store)
 
-
-
-
-
+    print("")
