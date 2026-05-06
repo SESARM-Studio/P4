@@ -36,7 +36,6 @@ class ForEachNormal(ASTNode):
         self.iterable = None
         self.statements = []
 
-
 class ForEachEdge(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -64,24 +63,6 @@ class ReturnStatement(ASTNode):
         super().__init__(token)
         self.expression = None
 
-class AlgorithmCall(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.arguments = None
-
-class ArrayAccess(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.indexes = []
-
-class ExprChaining(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.chain_part = None
-
 class NodeDecl(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -94,12 +75,6 @@ class GraphStatement(ASTNode):
         self.graph_identifier = None
         self.operator = None
         self.argument = []
-
-class ExprNode(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.expression = None
-        self.direction = None
 
 class EdgeDecl(ASTNode):
     def __init__(self, token):
@@ -159,11 +134,10 @@ class Expression(ASTNode):
         self.arg1 = None
         self.arg2 = None
 
-class Term(ASTNode):
+class Term(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.type = None
-
 
 class AbsoluteValue(Expression):
     def __init__(self, token):
@@ -175,10 +149,35 @@ class Magnitude(Expression):
         super().__init__(token)
         self.expression = None
 
-class ListExpression(ASTNode):
+class ListExpression(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.expressions = []
+
+class AlgorithmCall(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifier = None
+        self.arguments = None
+
+class ArrayAccess(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifier = None
+        self.indexes = []
+
+class ExprChaining(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifier = None
+        self.chain_part = None
+
+class ExprNode(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.expression = None
+        self.direction = None
+
 
 def print_ast(node, prefix="", is_last=True):
     connector = "└── " if is_last else "├── "
