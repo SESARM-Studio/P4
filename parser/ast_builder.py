@@ -1,3 +1,5 @@
+from parser.gsl_parser import gsl_parser
+
 class ASTNode:
     def __init__(self, token, children=None, value=None):
         self.token = token
@@ -34,7 +36,6 @@ class ForEachNormal(ASTNode):
         self.iterable = None
         self.statements = []
 
-
 class ForEachEdge(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -62,26 +63,6 @@ class ReturnStatement(ASTNode):
         super().__init__(token)
         self.expression = None
 
-class AlgorithmCall(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.arguments = None
-
-
-
-class ArrayAccess(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.indexes = []
-
-class ExprChaining(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifier = None
-        self.chain_part = None
-
 class NodeDecl(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -94,12 +75,6 @@ class GraphStatement(ASTNode):
         self.graph_identifier = None
         self.operator = None
         self.argument = []
-
-class ExprNode(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.expression = None
-        self.direction = None
 
 class EdgeDecl(ASTNode):
     def __init__(self, token):
@@ -147,11 +122,6 @@ class Assignment(ASTNode):
         self.identifiers = []
         self.expression = None
 
-class IdentifierAccess(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifiers = []
-
 class Expression(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -159,11 +129,15 @@ class Expression(ASTNode):
         self.arg1 = None
         self.arg2 = None
 
-class Term(ASTNode):
+class Term(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.type = None
 
+class IdentifierAccess(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifiers = []
 
 class AbsoluteValue(Expression):
     def __init__(self, token):
@@ -175,10 +149,29 @@ class Magnitude(Expression):
         super().__init__(token)
         self.expression = None
 
-class ListExpression(ASTNode):
+class ListExpression(Expression):
     def __init__(self, token):
         super().__init__(token)
         self.expressions = []
+
+class AlgorithmCall(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifier = None
+        self.arguments = None
+
+class ArrayAccess(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.identifier = None
+        self.indexes = []
+
+class ExprNode(Expression):
+    def __init__(self, token):
+        super().__init__(token)
+        self.expression = None
+        self.direction = None
+
 
 def print_ast(node, prefix="", is_last=True):
     connector = "└── " if is_last else "├── "
@@ -193,18 +186,23 @@ def print_ast(node, prefix="", is_last=True):
             print_ast(getattr(node, key), new_prefix)
         elif isinstance(value, list) and not getattr(node, key):
             continue
-        elif isinstance(value, list) and isinstance(value[0], ASTNode):
-            if len(getattr(node, key)) > 1:
+        elif isinstance(value, list):
+            if not any(isinstance(x, ASTNode) for x in getattr(node,key)):
+                print(prefix + "    " + connector + str(getattr(node, key)))
+            elif len(getattr(node, key)) > 1:
                 for index, child in enumerate(getattr(node, key)):
-                    if index == len(getattr(node, key))-1:
+                    if not isinstance(child, ASTNode):
+                        print(prefix + "    " + connector + str(child))
+                    elif index == len(getattr(node, key))-1:
                         print_ast(child, new_prefix, True)
                     else:
                         print_ast(child, new_prefix, False)
             else:
                 for child in getattr(node, key):
-                    print_ast(child, new_prefix, True)
-        elif isinstance(value, list) and not isinstance(value[0], ASTNode):
-            print(prefix + "    " + connector + str(getattr(node, key)))
+                    if not isinstance(child, ASTNode):
+                        print(prefix + "    " + connector + str(getattr(node, key)))
+                    else:
+                        print_ast(child, new_prefix, True)
         else:
             if value == None or value == node.token:
                 continue
@@ -349,7 +347,14 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprAnd":
-                            if index == 0:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expression.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expression.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("Expression",0,0,symbol_children[:last_element-1])
+                                expression.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif index == 0:
                                 expression.arg1 = self.recursive_builder(child)
                             else:
                                 expression.arg2 = self.recursive_builder(child)
@@ -371,9 +376,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprEq":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_and.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_and.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprAnd",0,0,symbol_children[:last_element-1])
+                                expr_and.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_and.arg1 = self.recursive_builder(child)
                             else:
                                 expr_and.arg2 = self.recursive_builder(child)
@@ -387,9 +399,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprRel":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_eq.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_eq.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprEq",0,0,symbol_children[:last_element-1])
+                                expr_eq.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_eq.arg1 = self.recursive_builder(child)
                             else:
                                 expr_eq.arg2 = self.recursive_builder(child)
@@ -403,9 +422,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprPlus":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_rel.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_rel.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprRel",0,0,symbol_children[:last_element-1])
+                                expr_rel.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_rel.arg1 = self.recursive_builder(child)
                             else:
                                 expr_rel.arg2 = self.recursive_builder(child)
@@ -419,9 +445,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprMult":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_plus.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_plus.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprPlus",0,0,symbol_children[:last_element-1])
+                                expr_plus.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_plus.arg1 = self.recursive_builder(child)
                             else:
                                 expr_plus.arg2 = self.recursive_builder(child)
@@ -435,9 +468,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprExp":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_mult.arg2 = self.recursive_builder(symbol_children[last_element])
+                                expr_mult.operator = self.characters(symbol_children[last_element-1].begin, symbol_children[last_element-1].end)
+                                left_argument = gsl_parser.Nonterminal("ExprMult",0,0,symbol_children[:last_element-1])
+                                expr_mult.arg1 = self.recursive_builder(left_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_mult.arg1 = self.recursive_builder(child)
                             else:
                                 expr_mult.arg2 = self.recursive_builder(child)
@@ -451,9 +491,16 @@ class AbstractSyntaxTreeBuilder:
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprNot":
-                            if len(symbol_children) == 1:
+                            if len(symbol_children) > 3:
+                                last_element = len(symbol_children)-1
+                                expr_exp.arg1 = self.recursive_builder(symbol_children[index])
+                                expr_exp.operator = self.characters(symbol_children[index+1].begin, symbol_children[index+1].end)
+                                right_argument = gsl_parser.Nonterminal("ExprExp",0,0,symbol_children[index+2:])
+                                expr_exp.arg2 = self.recursive_builder(right_argument)
+                                break
+                            elif len(symbol_children) == 1:
                                 return self.recursive_builder(child)
-                            if index == 0:
+                            elif index == 0:
                                 expr_exp.arg1 = self.recursive_builder(child)
                             else:
                                 expr_exp.arg2 = self.recursive_builder(child)
@@ -483,7 +530,7 @@ class AbstractSyntaxTreeBuilder:
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
-                            magnitude.expression = self.recursive_builder(child)
+                            absolute_value.expression = self.recursive_builder(child)
                 return absolute_value
             
             case "Magnitude":
@@ -494,19 +541,18 @@ class AbstractSyntaxTreeBuilder:
                             magnitude.expression = self.recursive_builder(child)
                 return magnitude
             
-            case "ExprChaining":
-                expr_chaining = ExprChaining(symbol.name)
-                identifier_str = ""
-                chain_part = []
+            case "IdentifierAccess":
+                identifier_access = IdentifierAccess(symbol.name)
+
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
-                            identifier_str += self.characters(child.begin, child.end)
-                        case "ExprCall":
-                            chain_part.append(self.recursive_builder(child))
-                expr_chaining.identifier = identifier_str
-                expr_chaining.chain_part = chain_part
-                return expr_chaining
+                            identifier_access.identifiers.append(self.characters(child.begin, child.end))
+                        case "ArrayAccess":
+                            identifier_access.identifiers.append(self.recursive_builder(child))
+                        case "AlgorithmCall":
+                            identifier_access.identifiers.append(self.recursive_builder(child))
+                return identifier_access
             
             case "Term":
                 term = Term(symbol.name)
@@ -554,15 +600,21 @@ class AbstractSyntaxTreeBuilder:
                 edge_decl = EdgeDecl(symbol.name)
                 for child in symbol_children:
                     if child.name == "IdentifierAccess":
-                        identifier = self.identifier_access_helper_function(child)
+                        identifier = self.recursive_builder(child)
                         if assigned_first_node is False:
                             edge_decl.initial_node = identifier
                             assigned_first_node = True
                         else:
                             edge_decl.nodes.append(identifier)
-                    if child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
+                    elif child.name == "IDENTIFIER":
+                        if assigned_first_node is False:
+                            edge_decl.initial_node = self.characters(child.begin, child.end)
+                            assigned_first_node = True
+                        else:
+                            edge_decl.nodes.append(self.characters(child.begin, child.end))
+                    elif child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
                         edge_decl.direction = child.name.strip("'")
-                    if child.name == "Expression":
+                    elif child.name == "Expression":
                         edge_decl.weight.append(self.recursive_builder(child))
                 return edge_decl
             
@@ -682,19 +734,6 @@ class AbstractSyntaxTreeBuilder:
     SKIP_WORDS = [
         "'('", "')'", "','", "'@NEWLINE'", "'@INDENT'", "'@DEDENT'"
     ]
-
-    def identifier_access_helper_function(self, node):
-        identifier_access = IdentifierAccess(node.name)
-
-        for child in node.children:
-            match child.name:
-                case "IDENTIFIER":
-                    identifier_access.identifiers.append(self.characters(child.begin, child.end))
-                case "ArrayAccess":
-                    identifier_access.identifiers.append(self.recursive_builder(child))
-                case "AlgorithmCall":
-                    identifier_access.identifiers.append(self.recursive_builder(child))
-        return identifier_access
 
     def identifier_helper_function(self, node, assignment_class):
         for child in node.children:
