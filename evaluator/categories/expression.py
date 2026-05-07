@@ -3,6 +3,24 @@ import math
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
+        case Term():
+            match node.type:
+                case 'NATURAL_NUMBER':
+                    return abs(int(node.value)), store
+                case 'INTEGER_NUMBER':
+                    return int(node.value), store
+                case 'REAL_NUMBER':
+                    return float(node.value), store
+                case 'TEXT':
+                    return str(node.value), store
+                case 'BOOL_VALUE':
+                    if node.value == "true":
+                        return True, store
+                    else: return False, store
+                case 'IDENTIFIER':
+                    return env_var["${node.value}"], store
+                case _:
+                    exit("Invalid term type!")
         case Expression():
             match node.operator:
                 case '=':
@@ -73,20 +91,3 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                 case _:
                     print("øv:")
                     return execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
-                
-        case Term():
-            match node.type:
-                case 'NATURAL_NUMBER':
-                    return abs(int(node.value)), store
-                case 'INTEGER_NUMBER':
-                    return int(node.value), store
-                case 'REAL_NUMBER':
-                    return float(node.value), store
-                case 'TEXT':
-                    return str(node.value), store
-                case 'BOOL_VALUE':
-                    if node.value == "true":
-                        return True, store
-                    else: return False, store
-                case _:
-                    exit("Invalid term type!")
