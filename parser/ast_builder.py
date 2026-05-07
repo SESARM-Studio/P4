@@ -74,7 +74,7 @@ class GraphStatement(ASTNode):
         super().__init__(token)
         self.graph_identifier = None
         self.operator = None
-        self.argument = []
+        self.argument = None
 
 class EdgeDecl(ASTNode):
     def __init__(self, token):
@@ -581,9 +581,9 @@ class AbstractSyntaxTreeBuilder:
                         node = Declaration("Declaration")
                         node.type = self.characters(child.begin, child.end)
                         node.identifiers.append(self.characters(symbol_children[index+1].begin, symbol_children[index+1].end))
-                        graph_statement.argument.append(node)
+                        graph_statement.argument = node
                     if child.name == "EdgeDecl":
-                        graph_statement.argument.append(self.recursive_builder(child))
+                        graph_statement.argument = self.recursive_builder(child)
                 return graph_statement
             
             case "ExprNode":
