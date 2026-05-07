@@ -1,6 +1,7 @@
 from parser.ast_builder import *
 from .categories import *
 from .functions import *
+from copy import deepcopy
 
 def traverse_program(program: ASTNode):
     env_graph = dict()
@@ -12,6 +13,7 @@ def traverse_program(program: ASTNode):
 
     if len(program.children) != 1:
         for child in program.children:
-            x = execute_statement(child, env_graph, env_var, env_algo, loc, graph_object, store)
-            print(x)
+            if not child.token == "EOF":
+                store, env_var, env_algo, env_graph, v, loc = execute_statement(child, loc, graph_object, store, env_var, env_algo, env_graph)
+
     print("")
