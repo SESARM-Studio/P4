@@ -186,18 +186,23 @@ def print_ast(node, prefix="", is_last=True):
             print_ast(getattr(node, key), new_prefix)
         elif isinstance(value, list) and not getattr(node, key):
             continue
-        elif isinstance(value, list) and isinstance(value[0], ASTNode):
-            if len(getattr(node, key)) > 1:
+        elif isinstance(value, list):
+            if not any(isinstance(x, ASTNode) for x in getattr(node,key)):
+                print(prefix + "    " + connector + str(getattr(node, key)))
+            elif len(getattr(node, key)) > 1:
                 for index, child in enumerate(getattr(node, key)):
-                    if index == len(getattr(node, key))-1:
+                    if not isinstance(child, ASTNode):
+                        print(prefix + "    " + connector + str(child))
+                    elif index == len(getattr(node, key))-1:
                         print_ast(child, new_prefix, True)
                     else:
                         print_ast(child, new_prefix, False)
             else:
                 for child in getattr(node, key):
-                    print_ast(child, new_prefix, True)
-        elif isinstance(value, list) and not isinstance(value[0], ASTNode):
-            print(prefix + "    " + connector + str(getattr(node, key)))
+                    if not isinstance(child, ASTNode):
+                        print(prefix + "    " + connector + str(getattr(node, key)))
+                    else:
+                        print_ast(child, new_prefix, True)
         else:
             if value == None or value == node.token:
                 continue
@@ -236,9 +241,6 @@ class AbstractSyntaxTreeBuilder:
         for child in symbol.children:
             if child.name not in self.SKIP_WORDS:
                 symbol_children.append(child)
-
-        if symbol.name == "ExprAnd":
-            print(symbol)
 
         match symbol.name:
             case "IfStatement":
