@@ -1,7 +1,7 @@
 from parser.ast_builder import *
 import math
 from copy import deepcopy
-from . import *
+from .categories.statement import execute_statement
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
@@ -20,7 +20,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         return True, store
                     else: return False, store
                 case 'IDENTIFIER':
-                    return env_var[node.value], store
+                    location = env_var.get(node.value)
+                    return store.get(location), store
                 case _:
                     exit("Invalid term type!")
         case AlgorithmCall():
