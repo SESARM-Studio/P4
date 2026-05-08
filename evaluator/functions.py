@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from copy import copy
+from copy import copy, deepcopy
 import networkx as nx
 
 class Location:
@@ -65,14 +64,17 @@ class Graph:
         return self.graph.get_edge_data(src, dst)
 
     def copy(self):
-        return copy(self)
+        return deepcopy(self)
 
+def create_dimensional_array(dim, arr=None):
+    if dim < 1:
+        return
 
-@dataclass(init=True)
-class State:
-    env_graph: dict
-    env_var: dict
-    env_algo: dict
-    loc: Location
-    graph_object: Graph
-    store: dict
+    if arr is None:
+        arr = []
+
+    if dim == 1:
+        return arr
+
+    arr.append(create_dimensional_array(dim - 1, []))
+    return arr

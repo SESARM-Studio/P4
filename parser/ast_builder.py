@@ -68,6 +68,8 @@ class NodeDecl(ASTNode):
         super().__init__(token)
         self.identifiers = []
         self.assignment = None
+        self.is_list = False
+        self.type = 'NODE'
 
 class GraphStatement(ASTNode):
     def __init__(self, token):
