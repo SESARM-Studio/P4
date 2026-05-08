@@ -1,5 +1,7 @@
 from parser.ast_builder import *
 from .categories import *
+from .categories.statement import execute_statement
+from .categories.expression import execute_expression
 from .functions import *
 from copy import deepcopy
 
