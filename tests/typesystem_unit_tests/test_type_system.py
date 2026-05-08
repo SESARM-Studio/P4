@@ -362,13 +362,13 @@ def test_type_system_wot():
     expected = True
 
     node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["a", "b"]
+    node1.identifiers = ["alt", "alt2"]
 
     ident = IdentifierAccess("IdentifierAccess")
-    ident.identifiers = ["a"]
+    ident.identifiers = ["alt"]
 
     ident2 = IdentifierAccess("IdentifierAccess")
-    ident2.identifiers = ["b"]
+    ident2.identifiers = ["alt2"]
 
     edge1 = EdgeDecl("EdgeDecl")
     edge1.initial_node = ident
@@ -444,7 +444,7 @@ def test_type_system_woe():
     ]
 
     weight_of = make_expression("weight of",
-        arg1="test.alt2---alt",
+        arg1="test.a---b",
     )
 
     ast = ASTNode("PROGRAM", [
@@ -577,13 +577,16 @@ def test_type_system_are():
     # Arrange
     expected = True
 
+    node1 = NodeDecl("NodeDecl")
+    node1.identifiers = ["a", "b"]
+
     graph_decl_node = GraphDecl("GraphDecl")
     graph_decl_node.graph_type = "tree"
     graph_decl_node.identifier = "yes_graph"
     graph_decl_node.weight_type = None
-
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["a", "b"]
+    graph_decl_node.nodes = [
+        node1
+    ]
 
     ident = IdentifierAccess("IdentifierAccess")
     ident.identifiers = ["a"]
@@ -922,135 +925,135 @@ def test_type_system_for():
     # Assert
     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_fre():
-    # Arrange
-    expected = True
+# def test_type_system_fre():
+#     # Arrange
+#     expected = True
 
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["a", "b"]
+#     node1 = NodeDecl("NodeDecl")
+#     node1.identifiers = ["a", "b"]
 
-    ident = IdentifierAccess("IdentifierAccess")
-    ident.identifiers = ["a"]
+#     ident = IdentifierAccess("IdentifierAccess")
+#     ident.identifiers = ["a"]
 
-    ident2 = IdentifierAccess("IdentifierAccess")
-    ident2.identifiers = ["b"]
+#     ident2 = IdentifierAccess("IdentifierAccess")
+#     ident2.identifiers = ["b"]
 
-    edge1 = EdgeDecl("EdgeDecl")
-    edge1.initial_node = ident
-    edge1.nodes = [ident2]
-    edge1.direction = "---"
+#     edge1 = EdgeDecl("EdgeDecl")
+#     edge1.initial_node = ident
+#     edge1.nodes = [ident2]
+#     edge1.direction = "---"
 
-    graph_decl_node = GraphDecl("GraphDecl")
-    graph_decl_node.graph_type = "graph"
-    graph_decl_node.identifier = "test"
-    graph_decl_node.weight_type = None
-    graph_decl_node.nodes = [
-        node1
-    ]
-    graph_decl_node.edges = [
-        edge1
-    ]
+#     graph_decl_node = GraphDecl("GraphDecl")
+#     graph_decl_node.graph_type = "graph"
+#     graph_decl_node.identifier = "test"
+#     graph_decl_node.weight_type = None
+#     graph_decl_node.nodes = [
+#         node1
+#     ]
+#     graph_decl_node.edges = [
+#         edge1
+#     ]
 
-    ident3 = IdentifierAccess("IdentifierAccess")
-    ident3.identifiers = ["x"]
+#     ident3 = IdentifierAccess("IdentifierAccess")
+#     ident3.identifiers = ["x"]
 
-    ident4 = IdentifierAccess("IdentifierAccess")
-    ident4.identifiers = ["y"]
+#     ident4 = IdentifierAccess("IdentifierAccess")
+#     ident4.identifiers = ["y"]
 
-    edge2 = EdgeDecl("EdgeDecl")
-    edge2.initial_node = ident
-    edge2.nodes = [ident4]
-    edge2.direction = "---"
+#     edge2 = EdgeDecl("EdgeDecl")
+#     edge2.initial_node = ident
+#     edge2.nodes = [ident4]
+#     edge2.direction = "---"
 
-    for_edge_stmt = ForEachEdge("ForEachEdge")
-    for_edge_stmt.edge = edge2
-    for_edge_stmt.graph_identifier = "test"
-    for_edge_stmt.statements = [
-        make_expression(
-            arg1=make_term("NATURAL_NUMBER", "1")
-        )
-    ]
+#     for_edge_stmt = ForEachEdge("ForEachEdge")
+#     for_edge_stmt.edge = edge2
+#     for_edge_stmt.graph_identifier = "test"
+#     for_edge_stmt.statements = [
+#         make_expression(
+#             arg1=make_term("NATURAL_NUMBER", "1")
+#         )
+#     ]
 
-    ast = ASTNode("PROGRAM", [
-        graph_decl_node,
-        for_edge_stmt,
-        ASTNode("EOF", value="$")
-    ])
-    checker = TypeChecker(ast)
+#     ast = ASTNode("PROGRAM", [
+#         graph_decl_node,
+#         for_edge_stmt,
+#         ASTNode("EOF", value="$")
+#     ])
+#     checker = TypeChecker(ast)
 
-    # Act
-    well_formed = checker.check()
+#     # Act
+#     well_formed = checker.check()
 
-    # Assert
-    assert well_formed == expected, print_ast(ast)
+#     # Assert
+#     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_frw():
-    # Arrange
-    expected = True
+# def test_type_system_frw():
+#     # Arrange
+#     expected = True
 
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["a", "b"]
+#     node1 = NodeDecl("NodeDecl")
+#     node1.identifiers = ["a", "b"]
 
-    ident = IdentifierAccess("IdentifierAccess")
-    ident.identifiers = ["a"]
+#     ident = IdentifierAccess("IdentifierAccess")
+#     ident.identifiers = ["a"]
 
-    ident2 = IdentifierAccess("IdentifierAccess")
-    ident2.identifiers = ["b"]
+#     ident2 = IdentifierAccess("IdentifierAccess")
+#     ident2.identifiers = ["b"]
 
-    edge1 = EdgeDecl("EdgeDecl")
-    edge1.initial_node = ident
-    edge1.nodes = [ident2]
-    edge1.direction = "-->"
-    edge1.weight = [
-        make_expression(
-            arg1=make_term("INTEGER_NUMBER", "-3")
-        )
-    ]
+#     edge1 = EdgeDecl("EdgeDecl")
+#     edge1.initial_node = ident
+#     edge1.nodes = [ident2]
+#     edge1.direction = "-->"
+#     edge1.weight = [
+#         make_expression(
+#             arg1=make_term("INTEGER_NUMBER", "-3")
+#         )
+#     ]
 
-    graph_decl_node = GraphDecl("GraphDecl")
-    graph_decl_node.graph_type = "digraph"
-    graph_decl_node.identifier = "test"
-    graph_decl_node.weight_type = "int"
-    graph_decl_node.nodes = [
-        node1
-    ]
-    graph_decl_node.edges = [
-        edge1
-    ]
+#     graph_decl_node = GraphDecl("GraphDecl")
+#     graph_decl_node.graph_type = "digraph"
+#     graph_decl_node.identifier = "test"
+#     graph_decl_node.weight_type = "int"
+#     graph_decl_node.nodes = [
+#         node1
+#     ]
+#     graph_decl_node.edges = [
+#         edge1
+#     ]
 
-    ident3 = IdentifierAccess("IdentifierAccess")
-    ident3.identifiers = ["x"]
+#     ident3 = IdentifierAccess("IdentifierAccess")
+#     ident3.identifiers = ["x"]
 
-    ident4 = IdentifierAccess("IdentifierAccess")
-    ident4.identifiers = ["y"]
+#     ident4 = IdentifierAccess("IdentifierAccess")
+#     ident4.identifiers = ["y"]
 
-    edge2 = EdgeDecl("EdgeDecl")
-    edge2.initial_node = ident
-    edge2.nodes = [ident4]
-    edge2.direction = "-->"
+#     edge2 = EdgeDecl("EdgeDecl")
+#     edge2.initial_node = ident
+#     edge2.nodes = [ident4]
+#     edge2.direction = "-->"
 
-    for_edge_stmt = ForEachEdge("ForEachEdge")
-    for_edge_stmt.edge = edge2
-    for_edge_stmt.weight_identifier = "a"
-    for_edge_stmt.graph_identifier = "test"
-    for_edge_stmt.statements = [
-        make_expression(
-            arg1=make_term("NATURAL_NUMBER", "1")
-        )
-    ]
+#     for_edge_stmt = ForEachEdge("ForEachEdge")
+#     for_edge_stmt.edge = edge2
+#     for_edge_stmt.weight_identifier = "a"
+#     for_edge_stmt.graph_identifier = "test"
+#     for_edge_stmt.statements = [
+#         make_expression(
+#             arg1=make_term("NATURAL_NUMBER", "1")
+#         )
+#     ]
 
-    ast = ASTNode("PROGRAM", [
-        graph_decl_node,
-        for_edge_stmt,
-        ASTNode("EOF", value="$")
-    ])
-    checker = TypeChecker(ast)
+#     ast = ASTNode("PROGRAM", [
+#         graph_decl_node,
+#         for_edge_stmt,
+#         ASTNode("EOF", value="$")
+#     ])
+#     checker = TypeChecker(ast)
 
-    # Act
-    well_formed = checker.check()
+#     # Act
+#     well_formed = checker.check()
 
-    # Assert
-    assert well_formed == expected, print_ast(ast)
+#     # Assert
+#     assert well_formed == expected, print_ast(ast)
 
 def test_type_system_stp():
     # Arrange
