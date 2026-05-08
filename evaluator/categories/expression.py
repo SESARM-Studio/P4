@@ -1,7 +1,8 @@
 from parser.ast_builder import *
 import math
 from copy import deepcopy
-from . import *
+
+import evaluator.categories.statement
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
@@ -14,7 +15,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                 case 'REAL_NUMBER':
                     return float(node.value), store
                 case 'TEXT':
-                    return str(node.value), store
+                    return str(node.value).strip("\""), store
                 case 'BOOL_VALUE':
                     if node.value == "true":
                         return True, store
@@ -37,24 +38,33 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             parameters, body_statement, env_graph_old, env_var_old, env_algo_old = env_algo.get(node.identifier)
 
             # Update algorithm's algorithm store to contain itself to allow recursive calls
-            env_algo_old.update({node.identifier: env_algo.get(node.identifier)})
+            env_algo_old.update({node.identifier: deepcopy(env_algo.get(node.identifier))})
 
-            # Assign algorithm parameters a location in algorithm's variable environment
-            # Assign algorithm parameters the values passed in as arguments
-            for idx, parameter in enumerate(parameters):
-                if idx == 0:
-                    env_var_old.update({parameter: loc})
-                    algorithm_store.update({loc: argument_values[0]})
-                else:
-                    env_var_old.update({parameter: env_var_old.get(parameter[idx-1]).next_location()})
-                    algorithm_store.update({env_var_old.get(parameter): argument_values[idx]})
-            
             # Not deep-copying next free location as location object fields are never used.
-            free_location = env_var_old.get(parameters[-1]).next_location() # index -1 accesses last element in an array.
+            free_location = loc
 
-            store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = execute_statement(body_statement, env_graph_old, env_var_old, env_algo_old, free_location, deepcopy(graph_object), algorithm_store)
+            # If the function call was given arguments
+            if node.arguments:
+                # Evaluating algorithm arguments
+                for argument in node.arguments:
+                    v, algorithm_store = execute_expression(argument, env_graph, env_var, env_algo, loc, graph_object, algorithm_store)
+                    argument_values.append(v)
 
+                # Assign algorithm parameters a location in algorithm's variable environment
+                # Assign algorithm parameters the values passed in as arguments
+                for idx, parameter in enumerate(parameters):
+                    if idx == 0:
+                        env_var_old.update({parameter.identifier: loc})
+                        algorithm_store.update({loc: argument_values[0]})
+                    else:
+                        env_var_old.update({parameter.identifier: env_var_old.get(parameters[idx-1].identifier).next_location()})
+                        algorithm_store.update({env_var_old.get(parameter.identifier): argument_values[idx]})
+                
+                free_location = env_var_old.get(parameters[-1].identifier).next_location() # index -1 accesses last element in an array.
+
+            store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(body_statement[0],free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
             return v,store_body
+        
         case Expression():
             match node.operator:
                 case '=':
@@ -129,4 +139,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     return not v1, store1
 
                 case _:
+                    print("Øv (Expression node default case)")
                     return execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
+        
+        case _:
+            exit("Error: No execute_Expression case match!")
