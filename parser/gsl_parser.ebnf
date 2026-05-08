@@ -72,10 +72,12 @@ LoopModifier       ::= 'stop'
 
 GraphDecl          ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLINE (INDENT (NodeDecl NEWLINE | EdgeDecl NEWLINE )+ DEDENT)?
 
-NodeDecl           ::= TYPE_NODE (IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER ':=' Expression)
+NodeDecl           ::= TYPE_NODE IDENTIFIER (',' IDENTIFIER)*
 
 Declaration        ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER DIMENSION? 'list' 'in' TYPE
-DeclarationInit    ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression | TYPE_OTHER IDENTIFIER ':=' Expression | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' ListExpression
+DeclarationInit    ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression 
+                     | (TYPE_OTHER | TYPE_NODE) IDENTIFIER ':=' Expression 
+                     | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' ListExpression 
 ListExpression     ::= '[' Expression (',' Expression)* ']'
                      | '[' Expression ']'
 

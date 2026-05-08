@@ -63,13 +63,7 @@ class ReturnStatement(ASTNode):
         super().__init__(token)
         self.expression = None
 
-class NodeDecl(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifiers = []
-        self.assignment = None
-        self.is_list = False
-        self.type = 'NODE'
+
 
 class GraphStatement(ASTNode):
     def __init__(self, token):
@@ -119,6 +113,11 @@ class Declaration(ASTNode):
         self.type = None
         self.is_list = False
         self.dimension = None
+
+class NodeDecl(Declaration):
+    def __init__(self, token):
+        super().__init__(token)
+        self.type = 'node'
 
 class DeclarationInit(Declaration):
     def __init__(self, token):
@@ -575,8 +574,6 @@ class AbstractSyntaxTreeBuilder:
                 for child in symbol_children:
                     if child.name == "IDENTIFIER":
                         node_decl.identifiers.append(self.characters(child.begin, child.end))
-                    if child.name == "Expression":
-                        node_decl.assignment = self.recursive_builder(child)
                 return node_decl
             
             case "GraphStatement":
@@ -700,7 +697,7 @@ class AbstractSyntaxTreeBuilder:
                     match child.name:
                         case "IDENTIFIER":
                             decl_init.identifiers.append(self.characters(child.begin, child.end))
-                        case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE":
+                        case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE" | "'node'":
                             decl_init.type = self.characters(child.begin, child.end)
                         case "'list'":
                             decl_init.is_list = True
