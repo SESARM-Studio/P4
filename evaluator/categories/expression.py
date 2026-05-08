@@ -29,11 +29,6 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             argument_values = []
             algorithm_store = deepcopy(store)
 
-            # Evaluating algorithm arguments
-            for argument in node.arguments:
-                v, algorithm_store = execute_expression(argument, env_graph, env_var, env_algo, loc, graph_object, algorithm_store)
-                argument_values.append(v)
-
             # Retrieve algorithm information
             parameters, body_statement, env_graph_old, env_var_old, env_algo_old = env_algo.get(node.identifier)
 
