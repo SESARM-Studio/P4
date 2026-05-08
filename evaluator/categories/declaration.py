@@ -87,13 +87,7 @@ def execute_list_declaration(node: Declaration, env_graph: dict, env_var: dict, 
 
 def execute_dimension(node: Declaration, env_graph: dict, env_var: dict, env_algo: dict, loc: Location, graph_object: Graph, store: dict):
     # dDim
-    # N only passes the typechecker if it is a natural number, so no need to check here
-    N = int(node.dimension.split('d')[0])
-    term = Term("Term")
-    term.type = "NATURAL_NUMBER"
-    term.value = N
-
-    v, _ = execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    v, _ = execute_expression(node.dimension, env_graph, env_var, env_algo, loc, graph_object, store)
     if v != 0:
         a = create_dimensional_array(v)
         return a

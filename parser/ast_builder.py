@@ -660,7 +660,10 @@ class AbstractSyntaxTreeBuilder:
                         case "'list'":
                             declaration.is_list = True
                         case "DIMENSION":
-                            declaration.dimension = self.characters(child.begin, child.end)
+                            term = Term("Term")
+                            term.type = "NATURAL_NUMBER"
+                            term.value = self.characters(child.begin, child.end).strip("d")
+                            declaration.dimension = term
                 return declaration
             
             case "DeclarationInit":
@@ -674,7 +677,10 @@ class AbstractSyntaxTreeBuilder:
                         case "'list'":
                             decl_init.is_list = True
                         case "DIMENSION":
-                            decl_init.dimension = self.characters(child.begin, child.end)
+                            term = Term("Term")
+                            term.type = "NATURAL_NUMBER"
+                            term.value = self.characters(child.begin, child.end).strip("d")
+                            decl_init.dimension = term
                         case "Expression" | "ListExpression":
                             decl_init.expression.append(self.recursive_builder(child))
                 return decl_init
