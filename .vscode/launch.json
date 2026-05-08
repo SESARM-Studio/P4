@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
-            "args": ["{a + b @NEWLINE $}"]
+            "args": ["{1 + 2 @NEWLINE $}"]
         },
         {
             "name": "Python Debugger: gsl_program_A",
@@ -18,7 +18,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
-            "args": ["{algo rasmus() @NEWLINE @INDENT 1 + 2 @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT algo ahmed() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT $}"],
+            "args": ["{algo rasmus(a in int, b in int) return int @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE return c + d @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT rasmus(2,3) @NEWLINE $}"],
         }
     ]
 }

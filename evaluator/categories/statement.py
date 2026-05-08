@@ -22,7 +22,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case RepeatStatement():
             pass
         case Algorithm():
-            return execute_algorithm(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            ph_env_algo = execute_algorithm(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return store, env_var, ph_env_algo, env_graph, None, loc
         case GraphDecl():
             pass
         case Expression():
