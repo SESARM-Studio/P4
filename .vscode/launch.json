@@ -5,20 +5,54 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python Debugger: gsl_program_I",
+            "name": "Python Debugger: If-multiple",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
-            "args": ["{1 + 2 @NEWLINE $}"]
+            "args": [
+                "{if 1 < 2 then @NEWLINE @INDENT 1 + 2 @NEWLINE 3 + 4 @NEWLINE 5 + 6 @NEWLINE @DEDENT if 1 > 2 then @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT else @NEWLINE @INDENT 5 + 6 @NEWLINE 7 + 8 @NEWLINE 9 + 10 @NEWLINE @DEDENT $}"
+            ]
         },
         {
-            "name": "Python Debugger: gsl_program_A",
+            "name": "Python Debugger: If-false",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
-            "args": ["{algo rasmus(a in int, b in int) return int @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE return c + d @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT rasmus(2,3) @NEWLINE $}"],
+            "args": [
+                "{if 1 > 2 then @NEWLINE @INDENT 1 + 2 @NEWLINE @DEDENT if 1 > 2 then @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT else @NEWLINE @INDENT 5 + 6 @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
+            "name": "Python Debugger: If-true",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{if 1 < 2 then @NEWLINE @INDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT @DEDENT if 1 < 2 then @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT else @NEWLINE @INDENT 5 + 6 @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
+            "name": "Python Debugger: Expression",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{1 + 2 @NEWLINE $}"
+            ]
+        },
+        {
+            "name": "Python Debugger: Algo",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{algo rasmus(a in int, b in int) return int @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE return c + d @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT rasmus(2,3) @NEWLINE $}"
+            ],
         }
     ]
 }

@@ -1,7 +1,7 @@
 from parser.ast_builder import *
 import math
 from copy import deepcopy
-from .categories.statement import execute_statement
+from . import *
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
@@ -129,5 +129,4 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     return not v1, store1
 
                 case _:
-                    print("øv:")
                     return execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)

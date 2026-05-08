@@ -1,4 +1,5 @@
 from parser.ast_builder import *
+from copy import deepcopy
 
 from . import *
 
@@ -12,7 +13,23 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case Assignment():
             pass
         case IfStatement():
-            pass
+            copy_store = deepcopy(store)
+            expression, copy_store = execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph) 
+            match expression:
+                case True:
+                    for i in node.then_statements:
+                        store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
+                    return store, env_var, env_algo, env_graph, v, loc
+                case False:
+                    match node.else_statements:
+                        case []:
+                            return store, env_var, env_algo, env_graph, v, loc
+                        case node.else_statements:
+                            for i in node.else_statements:
+                                store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
+                            return store, env_var, env_algo, env_graph, v, loc
+                              
+
         case WhileStatement():
             pass
         case ForEachNormal():
@@ -27,7 +44,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case GraphDecl():
             pass
         case Expression():
-            v,exp_store = execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            exp_store = execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return exp_store, env_var, env_algo, env_graph, None, loc
         
         case EdgeDecl():
