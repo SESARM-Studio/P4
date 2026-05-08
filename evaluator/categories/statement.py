@@ -6,7 +6,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
     match node:
 
         case Declaration():
-            pass
+            ret = execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return ret
         case DeclarationInit():
             pass
         case Assignment():
@@ -29,11 +30,12 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case Expression():
             v,exp_store = execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return exp_store, env_var, env_algo, env_graph, None, loc
-        
+
         case EdgeDecl():
             pass
         case NodeDecl():
-            pass
+            ret = execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return ret
         case GraphStatement():
             pass
         case LoopModifier():

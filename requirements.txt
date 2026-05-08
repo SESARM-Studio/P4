@@ -6,3 +6,5 @@ Pygments==2.20.0
 pytest==9.0.3
 tomli==2.4.1
 typing_extensions==4.15.0
+
+networkx~=3.6.1
