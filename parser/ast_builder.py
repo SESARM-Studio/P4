@@ -86,6 +86,13 @@ class EdgeDecl(ASTNode):
         self.direction = None
         self.weight = []
 
+class EdgeLoop(ASTNode):
+    def __init__(self, token):
+        super().__init__(token)
+        self.initial_node = None
+        self.last_node = None
+        self.direction = None
+
 class Algorithm(ASTNode):
     def __init__(self, token):
         super().__init__(token)
@@ -294,7 +301,7 @@ class AbstractSyntaxTreeBuilder:
                 for_each_edge = ForEachEdge(symbol.name)
                 for index, child in enumerate(symbol_children):
                     match child.name:
-                        case "EdgeDecl":
+                        case "EdgeLoop":
                             for_each_edge.edge = self.recursive_builder(child)
                         case "'with weight'":
                             for_each_edge.weight_identifier = self.characters(symbol_children[index+1].begin, symbol_children[index+1].end)
@@ -619,6 +626,27 @@ class AbstractSyntaxTreeBuilder:
                     elif child.name == "Expression":
                         edge_decl.weight.append(self.recursive_builder(child))
                 return edge_decl
+            
+            case "EdgeLoop":
+                assigned_first_node = False
+                edge_loop = EdgeLoop(symbol.name)
+                for child in symbol_children:
+                    if child.name == "IdentifierAccess":
+                        identifier = self.recursive_builder(child)
+                        if assigned_first_node is False:
+                            edge_loop.initial_node = identifier
+                            assigned_first_node = True
+                        else:
+                            edge_loop.last_node = (identifier)
+                    elif child.name == "IDENTIFIER":
+                        if assigned_first_node is False:
+                            edge_loop.initial_node = self.characters(child.begin, child.end)
+                            assigned_first_node = True
+                        else:
+                            edge_loop.last_node = (self.characters(child.begin, child.end))
+                    elif child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
+                        edge_loop.direction = child.name.strip("'")
+                return edge_loop
             
             case "Algorithm":
                 algorithm = Algorithm(symbol.name)

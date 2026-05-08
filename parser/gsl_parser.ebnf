@@ -21,9 +21,10 @@ Statement          ::= Declaration NEWLINE
 IfStatement        ::= 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT ('else' NEWLINE INDENT Statement+ DEDENT)?
 WhileStatement     ::= 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
 ForEachNormal      ::= 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
-ForEachEdge        ::= 'for each' EdgeDecl ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
-RepeatStatement    ::= 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
+ForEachEdge        ::= 'for each' EdgeLoop ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
+EdgeLoop           ::= TYPE_EDGE (IdentifierAccess | IDENTIFIER) ('---' | '-->' | '<--' | '<->') (IdentifierAccess | IDENTIFIER)
 
+RepeatStatement    ::= 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
 DisplayStatement   ::= 'display' Expression
 ReturnStatement    ::= 'return' Expression
 
