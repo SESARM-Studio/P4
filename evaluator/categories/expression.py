@@ -1,7 +1,7 @@
 from parser.ast_builder import *
 import math
 from copy import deepcopy
-from .categories.statement import execute_statement
+from . import *
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:

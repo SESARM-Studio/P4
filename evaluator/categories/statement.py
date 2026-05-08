@@ -7,7 +7,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case Declaration():
             ret = execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            return ret
+            return ret.store, ret.env_var, env_algo, env_graph, None, ret.location
         case DeclarationInit():
             pass
         case Assignment():
