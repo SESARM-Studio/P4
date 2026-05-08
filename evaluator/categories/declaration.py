@@ -9,9 +9,7 @@ class DeclarationReturn(NamedTuple):
     location: Location
 
 def execute_declaration(node: Declaration | NodeDecl, env_graph: dict, env_var: dict, env_algo: dict, loc: Location, graph_object: Graph, store: dict) -> DeclarationReturn:
-    print(node.identifiers)
     env_graph_copy = env_graph.copy()
-    loc_copy = loc.copy()
     env_var_copy = env_var.copy()
     env_algo_copy = env_algo.copy()
     store_copy = store.copy()
@@ -21,16 +19,16 @@ def execute_declaration(node: Declaration | NodeDecl, env_graph: dict, env_var: 
             # d2 node node I (med mulighed for flere I'er) - Dette er for notes inde i grafer
             graph_object.add_nodes(node.identifiers)
 
-            return DeclarationReturn(env_var, store, loc_copy)
+            return DeclarationReturn(env_var, store, loc)
 
     if node.is_list:
         if node.dimension is None:
             # d4 (I list in T)
-            d_list2 = execute_list_declaration(node, env_graph_copy, env_var_copy, env_algo_copy, loc_copy, graph_object, store_copy)
+            d_list2 = execute_list_declaration(node, env_graph_copy, env_var_copy, env_algo_copy, loc, graph_object, store_copy)
             return d_list2
         else:
             #d3 (I DIM list in T)
-            d_list1 = execute_list_declaration(node, env_graph_copy, env_var_copy, env_algo_copy, loc_copy, graph_object, store_copy)
+            d_list1 = execute_list_declaration(node, env_graph_copy, env_var_copy, env_algo_copy, loc, graph_object, store_copy)
             return d_list1
 
 
@@ -38,19 +36,19 @@ def execute_declaration(node: Declaration | NodeDecl, env_graph: dict, env_var: 
         if node.type in ("int", "nat", "real"):
             #d1 I in T (med mulighed for flere I'er)
             for iden in node.identifiers:
-                env_var_copy.update({iden: loc_copy})
+                env_var_copy.update({iden: loc})
                 store_copy.update({env_var_copy.get(iden): 0})
-                loc_copy = env_var_copy.get(iden).next_location()
+                loc = env_var_copy.get(iden).next_location()
 
-            return DeclarationReturn(env_var_copy, store_copy, loc_copy)
+            return DeclarationReturn(env_var_copy, store_copy, loc)
 
         else:
             if graph_object.graph is None:
 
                 for iden in node.identifiers:
-                    env_var_copy.update({iden: loc_copy})
-                    loc_copy = env_var_copy.get(iden).next_location()
-                return DeclarationReturn(env_var_copy, store, loc_copy)
+                    env_var_copy.update({iden: loc})
+                    loc = env_var_copy.get(iden).next_location()
+                return DeclarationReturn(env_var_copy, store, loc)
             else:
                 raise RuntimeError("Invalid declaration")
 
@@ -60,7 +58,7 @@ def execute_list_declaration(node: Declaration, env_graph: dict, env_var: dict, 
         raise RuntimeError("Can only declare one array at a time")
 
     env_graph_copy = env_graph.copy()
-    loc_copy = loc.copy()
+    loc = loc.copy()
     env_var_copy = env_var.copy()
     env_algo_copy = env_algo.copy()
     store_copy = store.copy()
@@ -68,20 +66,20 @@ def execute_list_declaration(node: Declaration, env_graph: dict, env_var: dict, 
     if node.dimension is None:
         # dList2 I list in T
         a = create_dimensional_array(1)
-        env_var_copy.update({node.identifiers[0]: loc_copy})
-        store_copy.update({loc_copy: a})
-        loc_copy = loc_copy.next_location()
+        env_var_copy.update({node.identifiers[0]: loc})
+        store_copy.update({loc: a})
+        loc = loc.next_location()
 
-        return DeclarationReturn(env_var_copy, store_copy, loc_copy)
+        return DeclarationReturn(env_var_copy, store_copy, loc)
 
     else:
         # dList1 I DIM list in T
-        a = execute_dimension(node, env_graph_copy, env_var_copy, env_algo_copy, loc_copy, graph_object, store_copy)
-        env_var_copy.update({node.identifiers[0]: loc_copy})
-        store_copy.update({loc_copy: a})
-        loc_copy = loc_copy.next_location()
+        a = execute_dimension(node, env_graph_copy, env_var_copy, env_algo_copy, loc, graph_object, store_copy)
+        env_var_copy.update({node.identifiers[0]: loc})
+        store_copy.update({loc: a})
+        loc = loc.next_location()
 
-        return DeclarationReturn(env_var_copy, store_copy, loc_copy)
+        return DeclarationReturn(env_var_copy, store_copy, loc)
 
 
 

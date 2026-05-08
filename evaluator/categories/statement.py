@@ -7,13 +7,36 @@ import evaluator.categories.declaration
 
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
-        case Declaration():
-            ret = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            return ret.store, ret.env_var, env_algo, env_graph, None, ret.location
         case DeclarationInit():
-            pass
+            # dec-ass
+            if len(node.expression) > 1:
+                raise RuntimeError("Can only assign to 1 expression")
+
+            store_copy = store.copy()
+            env_var_copy = env_var.copy()
+
+            v, store_copy = evaluator.categories.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store_copy)
+            D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            env_var_copy = D.env_var
+            store_copy = D.store
+            loc_prime = D.location
+
+            store_copy.update({loc: v})
+
+            return store_copy, env_var_copy, env_algo, env_graph, None, loc_prime
+
+        case Declaration():
+            D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return D.store, D.env_var, env_algo, env_graph, None, D.location
         case Assignment():
-            pass
+            # ass
+            print("Hejsa")
+            #list-ass
+
+
+            print(node)
+            #if node.children[0].token == 'ArrayAccess':
+            #    print(node.children[0].children[0].token, "Array")
         case IfStatement():
             copy_store = deepcopy(store)
             expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph) 
@@ -63,9 +86,11 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case EdgeDecl():
             pass
+
         case NodeDecl():
-            ret = evaluator.categories.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            return ret.store, ret.env_var, env_algo, env_graph, None, ret.location
+            D = evaluator.categories.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return D.store, D.env_var, env_algo, env_graph, None, D.location
+
         case GraphStatement():
             pass
         case LoopModifier():
