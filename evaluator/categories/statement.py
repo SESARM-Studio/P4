@@ -5,7 +5,6 @@ from . import *
 
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
-
         case Declaration():
             ret = execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return ret.store, ret.env_var, env_algo, env_graph, None, ret.location
@@ -28,11 +27,18 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                         case node.else_statements:
                             for i in node.else_statements:
                                 store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
-                            return store, env_var, env_algo, env_graph, v, loc
-                              
+                            return store, env_var, env_algo, env_graph, v, loc                              
 
         case WhileStatement():
-            pass
+            copy_store = deepcopy(store)
+            expression, copy_store = execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph)
+            match expression:
+                case True:
+                    for i in node.statements:
+                        store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
+                    execute_statement(node, loc, graph_object, copy_store, env_var, env_algo, env_graph)
+                case False:
+                    return store, env_var, env_algo, env_graph, v, loc
         case ForEachNormal():
             pass
         case ForEachEdge():
