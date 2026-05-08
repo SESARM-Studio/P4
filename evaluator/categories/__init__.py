@@ -10,8 +10,8 @@ from .type import execute_type
 __all__ = ["execute_algorithm",
            "execute_declaration",
            "execute_edge_declaration",
-           "execute_expression",
            "execute_graph_statement",
+           "execute_expression",
            "execute_node_expression",
            "execute_statement",
            "execute_type"]
