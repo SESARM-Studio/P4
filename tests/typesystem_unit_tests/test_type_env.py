@@ -7,9 +7,9 @@ def test_type_env_binding_found():
     env = TypeEnv()
 
     # Act
-    env.bind("graph_num", TypeEnum.NAT)
-    env.bind("weight_sum", TypeEnum.REAL)
-    env.bind("node_x", TypeEnum.NODE)
+    env = env.bind("graph_num", TypeEnum.NAT)
+    env = env.bind("weight_sum", TypeEnum.REAL)
+    env = env.bind("node_x", TypeEnum.NODE)
 
     actual = env.lookup("weight_sum")
 
@@ -23,9 +23,9 @@ def test_type_env_binding_not_found():
     env = TypeEnv()
 
     # Act
-    env.bind("graph_num", TypeEnum.NAT)
-    env.bind("weight_sum", TypeEnum.REAL)
-    env.bind("node_x", TypeEnum.NODE)
+    env = env.bind("graph_num", TypeEnum.NAT)
+    env = env.bind("weight_sum", TypeEnum.REAL)
+    env = env.bind("node_x", TypeEnum.NODE)
 
     actual = env.lookup("edges")
 
@@ -38,12 +38,12 @@ def test_type_env_binding_found_in_outer_scope():
     env = TypeEnv()
 
     # Act
-    env.bind("weight_sum", TypeEnum.REAL)
+    env = env.bind("weight_sum", TypeEnum.REAL)
 
     env = env.enter_scope()
-    env.bind("new_sum", TypeEnum.REAL)
-    env.bind("chromatic_color", TypeEnum.TEXT)
-    env.bind("Trie", TypeEnum.TREE)
+    env = env.bind("new_sum", TypeEnum.REAL)
+    env = env.bind("chromatic_color", TypeEnum.TEXT)
+    env = env.bind("Trie", TypeEnum.TREE)
 
     actual = env.lookup("weight_sum")
 
@@ -58,7 +58,7 @@ def test_type_env_scope_destroyed():
 
     # Act
     env = env.enter_scope()
-    env.bind("graph_num", TypeEnum.NAT)
+    env = env.bind("graph_num", TypeEnum.NAT)
     env = env.exit_scope()
 
     actual = env.lookup("graph_num")
@@ -72,10 +72,10 @@ def test_type_env_variable_shadowed():
     env = TypeEnv()
 
     # Act
-    env.bind("node_num", TypeEnum.NAT)
+    env = env.bind("node_num", TypeEnum.NAT)
 
     env = env.enter_scope()
-    env.bind("node_num", TypeEnum.INT)
+    env = env.bind("node_num", TypeEnum.INT)
 
     actual = env.lookup("node_num")
 
@@ -89,10 +89,10 @@ def test_type_env_shadowed_variable_restored():
     env = TypeEnv()
 
     # Act
-    env.bind("node_num", TypeEnum.NAT)
+    env = env.bind("node_num", TypeEnum.NAT)
 
     new_env = env.enter_scope()
-    new_env.bind("node_num", TypeEnum.INT)
+    new_env = new_env.bind("node_num", TypeEnum.INT)
 
     env = new_env.exit_scope()
 
@@ -111,7 +111,7 @@ def test_type_env_static():
     env.bind("node_num", TypeEnum.NAT)
 
     new_env = env.enter_scope()
-    new_env.bind("node_num", TypeEnum.INT)
+    new_env = new_env.bind("node_num", TypeEnum.INT)
 
     env = new_env.exit_scope()
 

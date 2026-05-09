@@ -16,7 +16,7 @@ class TypeCheckError(Exception):
 
     def __str__(self):
         type_rule_function_name = self.type_rule.__name__ # maybe use the id from the inference rules
-        return f"in [{type_rule_function_name}] expected: {self.expected}, got: {self.actual}"
+        return f"[{type_rule_function_name}] expected: {self.expected}, got: {self.actual}"
 
 class TypeChecker():
 
@@ -60,7 +60,8 @@ class TypeChecker():
                 env_i = TypeEnv()
 
                 for statement in node.children[:-1]: # does not follow rule, but (com) doesn't exist
-                    self.parse_statement(statement, env_v, env_a, env_g, env_i, None, None, False)
+                    env_v, env_a, env_g, env_i = self.parse_statement(statement, env_v, env_a, env_g, env_i,
+                                                                      None, None, False)
 
                 well_formed = True
 
@@ -150,21 +151,18 @@ class TypeChecker():
                 if algo_type is None:
                     raise TypeCheckError(self.parse_expression, "bound algorithm", "unknown algorithm")
 
-                parameter_types_index = 0
-                return_type_index = 1
                 arguments = node.arguments if node.arguments is not None else []
 
-                if len(algo_type[parameter_types_index]) != len(arguments):
+                if len(algo_type["parameters"]) != len(arguments):
                     raise TypeCheckError(self.parse_expression, "same number of parameters and arguments", "not that")
 
-                for param_type, arg in zip(algo_type[parameter_types_index], arguments):
+                for param_type, arg in zip(algo_type["parameters"], arguments):
                     arg_type = self.parse_expression(arg, env_v, env_a, env_g, env_i)
 
-                    # algo_type = tuple[tuple[arg_type], return_type]
                     if arg_type != param_type:
                         raise TypeCheckError(self.parse_expression, param_type, arg_type)
 
-                kind = algo_type[return_type_index]
+                kind = algo_type["return_type"]
 
             case ArrayAccess(): # (arr)
                 for index in node.indexes:
@@ -380,9 +378,9 @@ class TypeChecker():
                 if graph is TypeEnum.UNKNOWN:
                     raise TypeCheckError(self.parse_graph_statement, "A known graph", graph)
 
-                env_v.enter_scope() # E' should not be parsed up the tree
-                env_v, env_g, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i, node.graph_identifier)
-                env_v.exit_scope()
+                env_v1, env_g1, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i, node.graph_identifier)
+
+                env_g = env_g1
 
                 if decl_type is not TypeEnum.NODE:
                     raise TypeCheckError(self.parse_graph_statement, TypeEnum.NODE, decl_type)
@@ -397,9 +395,9 @@ class TypeChecker():
                 if ident2_type is not TypeEnum.NODE:
                     raise TypeCheckError(self.parse_graph_statement, TypeEnum.NODE, ident2_type)
 
-                env_v.enter_scope() # E' should not be parsed up the tree
-                env_v, env_g, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i, node.graph_identifier)
-                env_v.exit_scope()
+                env_v1, env_g1, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i, node.graph_identifier)
+
+                env_g = env_g1
 
                 if decl_type is not TypeEnum.NODE:
                     raise TypeCheckError(self.parse_graph_statement, TypeEnum.NODE, decl_type)
@@ -610,9 +608,7 @@ class TypeChecker():
 
     def parse_edge_loop(self, node: ASTNode, env_v: TypeEnv) -> TypeEnv:
         # (eel)
-        env_v.bind(node.children[0], TypeEnum.NODE)
-        env_v.bind(node.children[1], TypeEnum.NODE)
-        return env_v
+        return env_v.bind(node.children[0], TypeEnum.NODE).bind(node.children[1], TypeEnum.NODE)
 
     def parse_statement(self,
                         node: ASTNode,
@@ -629,19 +625,24 @@ class TypeChecker():
 
             case DeclarationInit():
                 if not isinstance(node.expression, list) or len(node.expression) != 1: # (dcl)
-                    env_v, env_g, decl_type = self.parse_declaration(node, env_v, env_g, env_i, curr_graph)
-                    expr_type = self.parse_expression(node.expression, env_v, env_a, env_g, env_i)
+                    env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_g, env_i, curr_graph)
+                    expr_type = self.parse_expression(node.expression, env_v1, env_a, env_g1, env_i)
 
                     if expr_type != decl_type:
                         raise TypeCheckError(self.parse_statement, decl_type, expr_type)
+
+                    env_v = env_v1
+                    env_g = env_g1
                 else: # (las) # not sure if i check matching length :/
-                    env_v, env_g, decl_type = self.parse_declaration(node, env_v, env_g, env_i, curr_graph)
+                    env_v1, decl_type = self.parse_declaration_list(node, env_v)
 
                     for expr in node.expression:
-                        expr_type = self.parse_expression(expr, env_v, env_a, env_g, env_i)
+                        expr_type = self.parse_expression(expr, env_v1, env_a, env_g, env_i)
 
                         if expr_type != decl_type:
                             raise TypeCheckError(self.parse_statement, decl_type, expr_type)
+
+                    env_v = env_v1
 
             case Assignment(): # (ass)
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g, env_i)
@@ -653,7 +654,9 @@ class TypeChecker():
                         raise TypeCheckError(self.parse_statement, ident_type, expr_type)
 
             case Declaration() | NodeDecl(): # (std)
-                env_v, env_g, _ = self.parse_declaration(node, env_v, env_g, env_i, curr_graph)
+                env_v1, env_g1, _ = self.parse_declaration(node, env_v, env_g, env_i, curr_graph)
+                env_v = env_v1
+                env_g = env_g1
 
             case IfStatement():
                 if len(node.else_statements) == 0: # (ift)
@@ -662,40 +665,25 @@ class TypeChecker():
                     if if_kind != TypeEnum.BOOL:
                         raise TypeCheckError(self.parse_statement, TypeEnum.BOOL, if_kind)
 
-                    env_v.enter_scope()
-                    env_a.enter_scope() # objects are passed by reference so i use scope to avoid the updated env
-                    env_i.enter_scope()
                     for statement in node.then_statements:
-                        envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop)
-                        env_g = envs[2]
-                    env_v.exit_scope()
-                    env_a.exit_scope()
-                    env_i.exit_scope()
+                        env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v, env_a, env_g, env_i,
+                                                                              curr_algo, curr_graph, inside_loop)
+                        env_g = env_g1 # only update env_g as rule states
                 else: # (ife)
                     if_kind = self.parse_expression(node.condition, env_v, env_a, env_g, env_i)
 
                     if if_kind != TypeEnum.BOOL:
                         raise TypeCheckError(self.parse_statement, TypeEnum.BOOL, if_kind)
 
-                    env_v.enter_scope()
-                    env_a.enter_scope() # objects are passed by reference so i use scope to avoid the updated env
-                    env_i.enter_scope()
+                    env_g1 = TypeEnv()
                     for statement in node.then_statements:
-                        envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop)
-                        env_g = envs[2]
-                    env_v.exit_scope()
-                    env_a.exit_scope()
-                    env_i.exit_scope()
+                        env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v, env_a, env_g, env_i,
+                                                                              curr_algo, curr_graph, inside_loop)
 
-                    env_v.enter_scope()
-                    env_a.enter_scope()
-                    env_i.enter_scope()
                     for statement in node.else_statements:
-                        envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop)
-                        env_g = envs[2]
-                    env_v.exit_scope()
-                    env_a.exit_scope()
-                    env_i.exit_scope()
+                        env_v2, env_a2, env_g2, env_i2 = self.parse_statement(statement, env_v, env_a, env_g1, env_i,
+                                                                              curr_algo, curr_graph, inside_loop)
+                        env_g = env_g2 # only update env_g as rule states
 
             case WhileStatement(): # (whl)
                 cond_kind = self.parse_expression(node.condition, env_v, env_a, env_g, env_i)
@@ -703,15 +691,10 @@ class TypeChecker():
                 if cond_kind != TypeEnum.BOOL:
                     raise TypeCheckError(self.parse_statement, TypeEnum.BOOL, cond_kind)
 
-                env_v.enter_scope()
-                env_a.enter_scope()
-                env_i.enter_scope()
                 for statement in node.statements:
-                    envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
-                    env_g = envs[2]
-                env_v.exit_scope()
-                env_a.exit_scope()
-                env_i.exit_scope()
+                    env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v, env_a, env_g, env_i,
+                                                                          curr_algo, curr_graph, inside_loop=True)
+                    env_g = env_g1 # only update env_g as rule states
 
             case RepeatStatement(): # (rpt)
                 repeat_expression = self.parse_expression(node.repeat_expression, env_v, env_a, env_g, env_i)
@@ -719,15 +702,10 @@ class TypeChecker():
                 if repeat_expression != TypeEnum.NAT:
                     raise TypeCheckError(self.parse_statement, TypeEnum.NAT, repeat_expression)
 
-                env_v.enter_scope()
-                env_a.enter_scope()
-                env_i.enter_scope()
                 for statement in node.repeat_statements:
-                    envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
-                    env_g = envs[2]
-                env_v.exit_scope()
-                env_a.exit_scope()
-                env_i.exit_scope()
+                    env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v, env_a, env_g, env_i,
+                                                                          curr_algo, curr_graph, inside_loop=True)
+                    env_g = env_g1 # only update env_g as rule states
 
             case ForEachNormal(): # (for)
                 iterable_type = self.parse_expression(node.iterable, env_v, env_a, env_g, env_i)
@@ -738,16 +716,11 @@ class TypeChecker():
                 ):
                     raise TypeCheckError(self.parse_statement, "iterable type", iterable_type)
 
-                env_v.enter_scope()
-                env_a.enter_scope()
-                env_i.enter_scope()
-                env_v.bind(node.loop_identifier, iterable_type)
                 for statement in node.statements:
-                    envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
-                    env_g = envs[2]
-                env_v.exit_scope()
-                env_a.exit_scope()
-                env_i.exit_scope()
+                    env_v1, env_a1, env_g1, env_i1 = self.parse_statement(
+                        statement, env_v.bind(node.loop_identifier, iterable_type),
+                        env_a, env_g, env_i,curr_algo, curr_graph, inside_loop=True)
+                    env_g = env_g1 # only update env_g as rule states
 
             case ForEachEdge():
                 if node.weight_identifier is None: # (fre)
@@ -756,17 +729,12 @@ class TypeChecker():
                     if graph is TypeEnum.UNKNOWN:
                         raise TypeCheckError(self.parse_statement, "bound graph", "unbound graph")
 
-                    env_v = self.parse_edge_loop(node.edge, env_v)
+                    env_v1 = self.parse_edge_loop(node.edge, env_v)
 
-                    env_v.enter_scope()
-                    env_a.enter_scope()
-                    env_i.enter_scope()
                     for statement in node.statements:
-                        envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
-                        env_g = envs[2]
-                    env_v.exit_scope()
-                    env_a.exit_scope()
-                    env_i.exit_scope()
+                        env_v2, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a, env_g, env_i,
+                                                                              curr_algo, curr_graph, inside_loop=True)
+                        env_g = env_g1 # only update env_g as rule states
                 else: # (frw)
                     graph_type, graph_weight_type, graph_env_v = env_g.lookup(env_i.lookup(node.graph_identifier))
 
@@ -776,31 +744,27 @@ class TypeChecker():
                     if graph_weight_type not in self.arit_types:
                         raise TypeCheckError(self.parse_statement, self.arit_types, graph_weight_type)
 
-                    env_v = self.parse_edge_loop(node.edge, env_v)
+                    env_v1 = self.parse_edge_loop(node.edge, env_v)
 
-                    env_v.enter_scope()
-                    env_a.enter_scope()
-                    env_i.enter_scope()
-                    env_v.bind(node.weight_identifier, graph_weight_type)
                     for statement in node.statements:
-                        envs = self.parse_statement(statement, env_v, env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
-                        env_g = envs[2]
-                    env_v.exit_scope()
-                    env_a.exit_scope()
-                    env_i.exit_scope()
+                        env_v2, env_a1, env_g1, env_i1 = self.parse_statement(
+                            statement, env_v1.bind(node.weight_identifier, graph_weight_type),
+                            env_a, env_g, env_i, curr_algo, curr_graph, inside_loop=True)
+                        env_g = env_g1 # only update env_g as rule states
 
             case ReturnStatement(): # (ret)
                 if curr_algo is None:
                     raise TypeCheckError(self.parse_statement, "inside function", "outside function")
 
-                _, expected_return_type = env_a.lookup(curr_algo)
+                algorithm = env_a.lookup(curr_algo)
                 return_type = self.parse_expression(node.expression, env_v, env_a, env_g, env_i)
 
-                if expected_return_type != return_type:
-                    raise TypeCheckError(self.parse_statement, expected_return_type, return_type)
+                if algorithm["return_type"] != return_type:
+                    raise TypeCheckError(self.parse_statement, algorithm["return_type"], return_type)
 
             case Algorithm(): # (alg)
-                env_a = self.parse_algorithm(node, env_a)
+                env_a1 = self.parse_algorithm(node, env_a)
+                env_a = env_a1
 
             case Expression(): # (exp)
                 self.parse_expression(node, env_v, env_a, env_g, env_i)
@@ -809,7 +773,9 @@ class TypeChecker():
                 self.parse_loop_modifier(node, inside_loop)
 
             case GraphDecl(): # (grt)
-                env_g, env_i = self.parse_graph_declaration(node, env_g, env_i)
+                env_g1, env_i1 = self.parse_graph_declaration(node, env_g, env_i)
+                env_g = env_g1
+                env_i = env_i1
 
             case EdgeDecl(): # (edc)
                 edge_decl_type = self.parse_edge_declaration(node, env_g, env_i, curr_graph)
@@ -818,7 +784,8 @@ class TypeChecker():
                     raise TypeCheckError(self.parse_expression, TypeEnum.EDGE, edge_decl_type)
 
             case GraphStatement(): # (gst)
-                env_g = self.parse_graph_statement(node, env_v, env_g, env_i)
+                env_g1 = self.parse_graph_statement(node, env_v, env_g, env_i)
+                env_g = env_g1
 
             case DisplayStatement(): # (dis)
                 display_expr = self.parse_expression(node.expression, env_v, env_a, env_g, env_i)
@@ -917,11 +884,12 @@ class TypeChecker():
                 env_v, env_g, decl_type = self.parse_declaration(param, env_v, env_g, env_i, None)
                 parameter_types.append(decl_type)
 
-            env_a.bind(node.identifier, (tuple(parameter_types), None))
-            env_a.enter_scope()
+            env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
+                                                  "return_type": None})
             for statement in node.statements:
-                self.parse_statement(statement, env_v, env_a, env_g, env_i, node.identifier, None, False)
-            env_a.exit_scope()
+                env_v1, env_a2, env_g1, env_i1 = self.parse_statement(statement, env_v, env_a1, env_g, env_i,
+                                                                      node.identifier, None, False)
+            env_a = env_a1
         else: # (alr)
             env_v = TypeEnv()
             env_g = TypeEnv()
@@ -931,16 +899,17 @@ class TypeChecker():
 
             for param in node.parameters:
                 env_v, env_g, decl_type = self.parse_declaration(param, env_v, env_g, env_i, None)
-                env_v, env_g, decl_type = self.parse_declaration(param, env_v, env_g, env_i, None)
 
             if not self.parse_type(return_type):
                 raise TypeCheckError(self.parse_statement, "valid return type", "Invalid return type")
 
-            env_a.bind(node.identifier, (tuple(parameter_types), return_type))
-            env_a.enter_scope()
+            env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
+                                                  "return_type": return_type})
             for statement in node.statements:
-                self.parse_statement(statement, env_v, env_a, env_g, env_i, node.identifier, None, False)
-            env_a.exit_scope()
+                env_v2, env_a2, env_g, env_i = self.parse_statement(statement, env_v, env_a1, env_g, env_i,
+                                                                    node.identifier, None, False)
+
+            env_a = env_a1
 
         return env_a
 
@@ -969,34 +938,37 @@ class TypeChecker():
 
             if self.parse_type_arithmetic(node.type): # (dca)
                 decl_type = resolve_type(node.type)
+
                 for identifier in node.identifiers:
-                    env_v.bind(identifier, decl_type)
+                    env_v = env_v.bind(identifier, decl_type)
             else:
                 if env_i.lookup(curr_graph) == TypeEnum.UNKNOWN: # (dti)
-                    if not self.parse_type(node.type):
-                        raise TypeCheckError(self.parse_declaration, "valid type", "invalid type")
-
                     decl_type = resolve_type(node.type)
+
+                    if not self.parse_type(decl_type):
+                        raise TypeCheckError(self.parse_declaration, "valid type", "invalid type")
 
                     if decl_type not in { TypeEnum.NODE, TypeEnum.TEXT }:
                         raise TypeCheckError(self.parse_declaration, { TypeEnum.NODE, TypeEnum.TEXT }, decl_type)
 
                     for identifier in node.identifiers:
-                        env_v.bind(identifier, decl_type)
+                        env_v = env_v.bind(identifier, decl_type)
                 else: # (dtg)
                     graph_type, graph_weight_type, graph_env_v = env_g.lookup(env_i.lookup(curr_graph))
 
                     decl_type = resolve_type(node.type)
+
                     if decl_type is not TypeEnum.NODE:
-                        raise TypeCheckError(self.parse_declaration, { TypeEnum.NODE, TypeEnum.TEXT }, decl_type)
+                        raise TypeCheckError(self.parse_declaration, TypeEnum.NODE, decl_type)
 
                     for identifier in node.identifiers:
-                        graph_env_v.bind(identifier, decl_type)
+                        graph_env_v = graph_env_v.bind(identifier, decl_type)
 
-                    env_g.bind(curr_graph, (graph_type, graph_weight_type, graph_env_v))
+                    env_g = env_g.bind(curr_graph, (graph_type, graph_weight_type, graph_env_v))
 
         else: # (dlt)
-            env_v, decl_type = self.parse_declaration_list(node, env_v)
+            env_v1, decl_type = self.parse_declaration_list(node, env_v)
+            env_v = env_v1
 
         return (env_v, env_g, decl_type)
 
@@ -1013,8 +985,8 @@ class TypeChecker():
         if not self.parse_type(resolved_type):
             raise TypeCheckError(self.parse_declaration_list, "valid type", "invalid type")
 
-        for identifier in node.identifiers:
-            env_v.bind(identifier, resolved_type)
+        for identifier in node.identifiers: # should only be one (what abstract syntax shows)
+            env_v = env_v.bind(identifier, resolved_type)
 
         return (env_v, resolved_type)
 
@@ -1049,15 +1021,15 @@ class TypeChecker():
         if not isinstance(node, GraphDecl):
             raise Exception("parse_graph_declaration: Implementation error")
 
-        if node.nodes is None and node.edges is None:
+        if len(node.nodes) == 0 and len(node.edges) == 0:
             if node.weight_type is None: # (ghd)
                 graph_type = resolve_type(node.graph_type)
 
                 if not self.parse_graph_type(graph_type):
                     raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
 
-                env_g.bind(node.identifier, (graph_type, None, TypeEnv()))
-                env_i.bind(node.identifier, node.identifier)
+                env_g = env_g.bind(node.identifier, (graph_type, None, TypeEnv()))
+                env_i = env_i.bind(node.identifier, node.identifier)
             else: # (gdw)
                 graph_type = resolve_type(node.graph_type)
                 weight_type = resolve_type(node.weight_type)
@@ -1068,8 +1040,8 @@ class TypeChecker():
                 if not self.parse_type_arithmetic(weight_type):
                     raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
 
-                env_g.bind(node.identifier, (graph_type, weight_type, TypeEnv()))
-                env_i.bind(node.identifier, node.identifier)
+                env_g = env_g.bind(node.identifier, (graph_type, weight_type, TypeEnv()))
+                env_i = env_i.bind(node.identifier, node.identifier)
         else:
             if node.weight_type is None: # (gdi)
                 graph_type = resolve_type(node.graph_type)
@@ -1077,13 +1049,14 @@ class TypeChecker():
                 if not self.parse_graph_type(graph_type):
                     raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
 
-                env_g.bind(node.identifier, (graph_type, None, TypeEnv()))
-                env_i.bind(node.identifier, node.identifier)
+                env_g = env_g.bind(node.identifier, (graph_type, None, TypeEnv()))
+                env_i = env_i.bind(node.identifier, node.identifier)
 
                 env_v = TypeEnv()
                 env_a = TypeEnv()
-                for _node in [*node.nodes, *node.edges]:
-                    env_v, env_a, env_g, env_i = self.parse_statement(_node, env_v, env_a, env_g, env_i, None, node.identifier, False)
+                for _node in [*node.nodes, *node.edges]: # doesn't look like rule because (com doesn't have node)
+                    env_v, env_a, env_g, env_i = self.parse_statement(_node, env_v, env_a, env_g, env_i,
+                                                                      None, node.identifier, False)
             else: # (gwi)
                 graph_type = resolve_type(node.graph_type)
                 weight_type = resolve_type(node.weight_type)
@@ -1094,13 +1067,14 @@ class TypeChecker():
                 if not self.parse_type_arithmetic(weight_type):
                     raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
 
-                env_g.bind(node.identifier, (graph_type, weight_type, TypeEnv()))
-                env_i.bind(node.identifier, node.identifier)
+                env_g = env_g.bind(node.identifier, (graph_type, weight_type, TypeEnv()))
+                env_i = env_i.bind(node.identifier, node.identifier)
 
                 env_v = TypeEnv()
                 env_a = TypeEnv()
-                for _node in [*node.nodes, *node.edges]:
-                    env_v, env_a, env_g, env_i = self.parse_statement(_node, env_v, env_a, env_g, env_i, None, node.identifier, False)
+                for _node in [*node.nodes, *node.edges]: # doesn't look like rule because (com doesn't have node)
+                    env_v, env_a, env_g, env_i = self.parse_statement(_node, env_v, env_a, env_g, env_i,
+                                                                      None, node.identifier, False)
 
         return env_g, env_i
 

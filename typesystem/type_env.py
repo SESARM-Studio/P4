@@ -9,7 +9,7 @@ class TypeEnv():
 
     ```python
         env = TypeEnv()
-        env.bind("test", TypeEnum.INT)
+        env = env.bind("test", TypeEnum.INT)
 
         identifier = env.lookup("test")
         if identifer is not None:
@@ -25,10 +25,17 @@ class TypeEnv():
         self.environment = dict()
         self.outer_scope = outer_scope
 
-    def bind(self, identifier, value) -> None:
+    def bind(self, identifier, value) -> "TypeEnv":
         """Binds an identifier to a type"""
 
-        self.environment[identifier] = value
+        # To match the formal type system the typeenv should be immutable
+        # To achieve this with a mutable object like dict,
+        # a copy of the current scope's environment is created, updated and returned
+        # changing outer scopes never happen, so is not coppied
+        new_env = TypeEnv(outer_scope=self)
+        new_env.environment = self.environment.copy()
+        new_env.environment[identifier] = value
+        return new_env
 
     def lookup(self, identifier):
         """Search current and outer scopes for the identifier binding"""
