@@ -293,7 +293,7 @@ class TypeChecker():
                 graph = env_g.lookup(env_i.lookup(node.graph_identifier))
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement)
 
-                env_v1, env_g1, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i,
+                env_v1, env_g1, decl_type = self.parse_declaration(node.argument, env_v, env_g, env_i,
                                                                    node.graph_identifier)
                 env_g = env_g1
 
@@ -302,10 +302,10 @@ class TypeChecker():
                 graph_type, graph_weight_type, graph_env_v = env_g.lookup(env_i.lookup(node.graph_identifier))
                 self.expect_type_one_of(graph_type, self.graph_types, self.parse_graph_statement)
 
-                ident2_type = graph_env_v.lookup(node.argument[0])
+                ident2_type = graph_env_v.lookup(node.argument)
                 self.expect_type(ident2_type, TypeEnum.NODE, self.parse_graph_statement)
 
-                env_v1, env_g1, decl_type = self.parse_declaration(node.argument[0], env_v, env_g, env_i,
+                env_v1, env_g1, decl_type = self.parse_declaration(node.argument, env_v, env_g, env_i,
                                                                    node.graph_identifier)
                 env_g = env_g1
 
@@ -465,8 +465,10 @@ class TypeChecker():
         return kind
 
     def parse_edge_loop(self, node: ASTNode, env_v: TypeEnv) -> TypeEnv:
+        if not isinstance(node, EdgeLoop):
+            raise Exception("parse_expression: Implementation error")
         # (eel)
-        return env_v.bind(node.children[0], TypeEnum.NODE).bind(node.children[1], TypeEnum.NODE)
+        return env_v.bind(node.initial_node, TypeEnum.NODE).bind(node.last_node, TypeEnum.NODE)
 
     def parse_statement(self,
                         node: ASTNode,
@@ -587,7 +589,7 @@ class TypeChecker():
 
                     env_v1 = self.parse_edge_loop(node.edge, env_v)
 
-                    env_v2 = env_v.bind(node.loop_identifier, iterable_type)
+                    env_v2 = env_v.bind(node.weight_identifier, graph_weight_type)
                     env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
                     for statement in node.statements:
                         env_v2, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v2, env_a1, env_g1, env_i1,
@@ -768,8 +770,6 @@ class TypeChecker():
         if getattr(node, "is_list", False) is False:
             if isinstance(node, Parameter): # parameter is not a list type like normal decl's, so it is converted
                 setattr(node, "identifiers", [node.identifier])
-            if isinstance(node, NodeDecl): # NodeDecl does not have type so its added
-                setattr(node, "type", "node")
 
             if self.parse_type_arithmetic(node.type): # (dca)
                 decl_type = resolve_type(node.type)
@@ -821,23 +821,10 @@ class TypeChecker():
 
         return (env_v, resolved_type)
 
-    def parse_dimensions(self, dimensions: str) -> bool:
+    def parse_dimensions(self, dimensions: ASTNode) -> bool:
         well_formed = False
         if dimensions is not None: # (dim)
-            dimension = dimensions.strip("d")
-            dimension_type = ""
-            try:
-                dimension = int(dimension)
-                if dimension >= 0:
-                    dimension_type ="NATURAL_NUMBER"
-            except Exception: # lazy catch of all errors from the trying the int() function
-                raise TypeCheckError(self.parse_dimensions, "dimension is nat", "not nat")
-            #^^ no node for the dimension and rule said to pass to expression, so faked ^^#
-
-            fake_dimension_node = Term("Dimension")
-            fake_dimension_node.type = dimension_type
-            kind = self.parse_expression(fake_dimension_node, TypeEnv(), TypeEnv(), TypeEnv(), TypeEnv())
-
+            kind = self.parse_expression(dimensions, TypeEnv(), TypeEnv(), TypeEnv(), TypeEnv())
             if kind != TypeEnum.NAT:
                 return False
 
