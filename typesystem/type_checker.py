@@ -515,7 +515,10 @@ class TypeChecker():
                     if_kind = self.parse_expression(node.condition, env_v, env_a, env_g, env_i)
                     self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement)
 
-                    env_v1 = env_v; env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                    env_v1 = env_v.enter_scope()
+                    env_a1 = env_a.enter_scope()
+                    env_g1 = env_g # global
+                    env_i1 = env_i.enter_scope()
                     for statement in node.then_statements:
                         env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a1, env_g1, env_i1,
                                                                               curr_algo, curr_graph, inside_loop)
@@ -524,35 +527,62 @@ class TypeChecker():
                     if_kind = self.parse_expression(node.condition, env_v, env_a, env_g, env_i)
                     self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement)
 
-                    env_v1 = env_v; env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                    env_v1 = env_v.enter_scope()
+                    env_a1 = env_a.enter_scope()
+                    env_g1 = env_g # global
+                    env_i1 = env_i.enter_scope()
                     for statement in node.then_statements:
                         env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a1, env_g1, env_i1,
                                                                               curr_algo, curr_graph, inside_loop)
+                    env_v1 = env_v1.exit_scope()
+                    env_a1 = env_a1.exit_scope()
+                    env_i1 = env_i1.exit_scope()
 
-                    env_v2 = env_v; env_a2 = env_a; env_g2 = env_g1; env_i2 = env_i
+                    env_v2 = env_v.enter_scope()
+                    env_a2 = env_a.enter_scope()
+                    env_g2 = env_g # global
+                    env_i2 = env_i.enter_scope()
                     for statement in node.else_statements:
                         env_v2, env_a2, env_g2, env_i2 = self.parse_statement(statement, env_v2, env_a2, env_g2, env_i2,
                                                                               curr_algo, curr_graph, inside_loop)
+                    env_v2 = env_v2.exit_scope()
+                    env_a2 = env_a2.exit_scope()
+                    env_i2 = env_i2.exit_scope()
+
                     env_g = env_g2 # only update env_g as rule states
 
             case WhileStatement(): # (whl)
                 cond_kind = self.parse_expression(node.condition, env_v, env_a, env_g, env_i)
                 self.expect_type(cond_kind, TypeEnum.BOOL, self.parse_statement)
 
-                env_v1 = env_v; env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                env_v1 = env_v.enter_scope()
+                env_a1 = env_a.enter_scope()
+                env_g1 = env_g # global
+                env_i1 = env_i.enter_scope()
                 for statement in node.statements:
                     env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a1, env_g1, env_i1,
                                                                           curr_algo, curr_graph, inside_loop=True)
+                env_v1 = env_v1.exit_scope()
+                env_a1 = env_a1.exit_scope()
+                env_i1 = env_i1.exit_scope()
+
                 env_g = env_g1 # only update env_g as rule states
 
             case RepeatStatement(): # (rpt)
                 repeat_expression = self.parse_expression(node.repeat_expression, env_v, env_a, env_g, env_i)
                 self.expect_type(repeat_expression, TypeEnum.NAT, self.parse_statement)
 
-                env_v1 = env_v; env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                env_v1 = env_v.enter_scope()
+                env_a1 = env_a.enter_scope()
+                env_g1 = env_g # global
+                env_i1 = env_i.enter_scope()
                 for statement in node.repeat_statements:
                     env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a1, env_g1, env_i1,
                                                                           curr_algo, curr_graph, inside_loop=True)
+                env_v1 = env_v1.exit_scope()
+                env_a1 = env_a1.exit_scope()
+                env_i1 = env_i1.exit_scope()
+
                 env_g = env_g1 # only update env_g as rule states
 
             case ForEachNormal(): # (for)
@@ -563,11 +593,17 @@ class TypeChecker():
                 ):
                     raise TypeCheckError(self.parse_statement, "iterable type", iterable_type)
 
-                env_v1 = env_v.bind(node.loop_identifier, iterable_type)
-                env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                env_v1 = env_v.enter_scope().bind(node.loop_identifier, iterable_type)
+                env_a1 = env_a.enter_scope()
+                env_g1 = env_g # global
+                env_i1 = env_i.enter_scope()
                 for statement in node.statements:
                     env_v1, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a1, env_g1, env_i1,
                                                                           curr_algo, curr_graph, inside_loop=True)
+                env_v1 = env_v1.exit_scope()
+                env_a1 = env_a1.exit_scope()
+                env_i1 = env_i1.exit_scope()
+
                 env_g = env_g1 # only update env_g as rule states
 
             case ForEachEdge():
@@ -576,11 +612,17 @@ class TypeChecker():
                     self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_statement)
 
                     env_v1 = self.parse_edge_loop(node.edge, env_v)
-
-                    env_v2 = env_v1; env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                    env_v2 = env_v1.enter_scope()
+                    env_a1 = env_a.enter_scope()
+                    env_g1 = env_g # global
+                    env_i1 = env_i.enter_scope()
                     for statement in node.statements:
                         env_v2, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v2, env_a1, env_g1, env_i1,
                                                                               curr_algo, curr_graph, inside_loop=True)
+                    env_v1 = env_v1.exit_scope()
+                    env_a1 = env_a1.exit_scope()
+                    env_i1 = env_i1.exit_scope()
+
                     env_g = env_g1 # only update env_g as rule states
                 else: # (frw)
                     graph_type, graph_weight_type, graph_env_v = env_g.lookup(env_i.lookup(node.graph_identifier))
@@ -588,12 +630,17 @@ class TypeChecker():
                     self.expect_type_one_of(graph_weight_type, self.arit_types, self.parse_statement)
 
                     env_v1 = self.parse_edge_loop(node.edge, env_v)
-
-                    env_v2 = env_v.bind(node.weight_identifier, graph_weight_type)
-                    env_a1 = env_a; env_g1 = env_g; env_i1 = env_i
+                    env_v2 = env_v1.enter_scope().bind(node.weight_identifier, graph_weight_type)
+                    env_a1 = env_a.enter_scope()
+                    env_g1 = env_g # global
+                    env_i1 = env_i.enter_scope()
                     for statement in node.statements:
                         env_v2, env_a1, env_g1, env_i1 = self.parse_statement(statement, env_v2, env_a1, env_g1, env_i1,
                                                                               curr_algo, curr_graph, inside_loop=True)
+                    env_v1 = env_v1.exit_scope()
+                    env_a1 = env_a1.exit_scope()
+                    env_i1 = env_i1.exit_scope()
+
                     env_g = env_g1 # only update env_g as rule states
 
             case ReturnStatement(): # (ret)
@@ -721,10 +768,17 @@ class TypeChecker():
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
                                                   "return_type": TypeEnum.UNKNOWN})
 
-            env_v1 = env_vi; env_a2 = env_a1; env_g1 = env_gi; env_i1 = env_i
+            env_v1 = env_vi.enter_scope()
+            env_a2 = env_a1.enter_scope()
+            env_g1 = env_gi
+            env_i1 = env_i.enter_scope()
             for statement in node.statements:
                 env_v1, env_a2, env_g1, env_i1 = self.parse_statement(statement, env_v1, env_a2, env_g1, env_i1,
                                                                       node.identifier, None, False)
+            env_v1 = env_v1.exit_scope()
+            env_a2 = env_a2.exit_scope()
+            env_i1 = env_i1.exit_scope()
+
             env_a = env_a1
         else: # (alr)
             env_v = TypeEnv()
@@ -744,10 +798,17 @@ class TypeChecker():
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
                                                   "return_type": return_type})
 
-            env_v2 = env_v1; env_a2 = env_a1; env_g2 = env_g1; env_i1 = env_i
+            env_v2 = env_v1.enter_scope()
+            env_a2 = env_a1.enter_scope()
+            env_g2 = env_g1
+            env_i1 = env_i.enter_scope()
             for statement in node.statements:
                 env_v2, env_a2, env_g2, env_i1 = self.parse_statement(statement, env_v2, env_a2, env_g2, env_i1,
                                                                       node.identifier, None, False)
+            env_v2 = env_v2.exit_scope()
+            env_a2 = env_a2.exit_scope()
+            env_i1 = env_i1.exit_scope()
+
             env_a = env_a1
 
         return env_a
@@ -866,10 +927,17 @@ class TypeChecker():
                 env_g1= env_g.bind(node.identifier, (graph_type, TypeEnum.UNKNOWN, TypeEnv()))
                 env_i = env_i.bind(node.identifier, node.identifier)
 
-                env_v1 = TypeEnv(); env_a1 = TypeEnv(); env_g2 = env_g1; env_i1 = env_i
+                env_v1 = TypeEnv().enter_scope()
+                env_a1 = TypeEnv().enter_scope()
+                env_g2 = env_g1
+                env_i1 = env_i.enter_scope()
                 for _node in [*node.nodes, *node.edges]: # doesn't look like rule because (com doesn't have node)
                     env_v1, env_a1, env_g2, env_i1 = self.parse_statement(_node, env_v1, env_a1, env_g2, env_i1,
                                                                           None, node.identifier, False)
+                env_v1 = env_v1.exit_scope()
+                env_a1 = env_a1.exit_scope()
+                env_i1 = env_i1.exit_scope()
+
                 env_g = env_g2
                 env_i = env_i1
             else: # (gwi)
@@ -884,10 +952,17 @@ class TypeChecker():
                 env_g1 = env_g.bind(node.identifier, (graph_type, weight_type, TypeEnv()))
                 env_i = env_i.bind(node.identifier, node.identifier)
 
-                env_v1 = TypeEnv(); env_a1 = TypeEnv(); env_g2 = env_g1; env_i1 = env_i
+                env_v1 = TypeEnv().enter_scope()
+                env_a1 = TypeEnv().enter_scope()
+                env_g2 = env_g1
+                env_i1 = env_i.enter_scope()
                 for _node in [*node.nodes, *node.edges]: # doesn't look like rule because (com doesn't have node)
                     env_v1, env_a1, env_g2, env_i1 = self.parse_statement(_node, env_v1, env_a1, env_g2, env_i1,
                                                                           None, node.identifier, False)
+                env_v1 = env_v1.exit_scope()
+                env_a1 = env_a1.exit_scope()
+                env_i1 = env_i1.exit_scope()
+
                 env_g = env_g2
                 env_i = env_i1
 
