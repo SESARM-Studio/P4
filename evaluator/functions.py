@@ -9,6 +9,12 @@ class Location:
     def __repr__(self):
         return f"{self.name}"
 
+    def __eq__(self, other):
+        return (isinstance(other, type(self)) and (self.number, self.name) == (other.number, other.name))
+
+    def __hash__(self):
+        return hash((self.number, self.name))
+
     def next_location(self):
         l = Location()
         l.number = self.number + 1
