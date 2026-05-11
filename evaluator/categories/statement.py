@@ -77,7 +77,26 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             pass
 
         case RepeatStatement():
-            pass
+            copy_env_var = deepcopy(env_var)
+            copy_env_algo = deepcopy(env_algo)
+            copy_env_graph = deepcopy(env_graph)
+            copy_loc = deepcopy(loc)
+            v, modified_store = evaluator.categories.expression.execute_expression(node.repeat_expression, env_graph, env_var, env_algo, loc, graph_object, store)
+            
+            if v > 0:
+                while v > 0:
+                    for statement in node.repeat_statements:
+                        modified_store, env_var, env_algo, env_graph, modified_v, loc  = execute_statement(statement, loc, graph_object, modified_store, env_var, env_algo, env_graph)
+                    env_var = copy_env_var
+                    env_algo = copy_env_algo
+                    env_graph = copy_env_graph
+                    loc = copy_loc
+                    v -= 1
+                modified_store2 = modified_store
+                return modified_store2, copy_env_var, copy_env_algo, copy_env_graph, modified_v, loc
+            else:
+                v = None
+                return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v, loc 
 
         case Algorithm():
             ph_env_algo = evaluator.categories.algorithm.execute_algorithm(node, env_graph, env_var, env_algo, loc, graph_object, store)
