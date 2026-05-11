@@ -58,14 +58,14 @@ def test_scoped_type_env_shadowed_variable_restored():
     env = ScopedTypeEnvironment()
 
     # Act
-    env.current_scope = env.current_scope.bind("node_num", TypeEnum.NAT)
+    env = env.bind("node_num", TypeEnum.NAT)
 
     env = env.enter_scope()
-    env.current_scope = env.current_scope.bind("node_num", TypeEnum.INT)
+    env = env.bind("node_num", TypeEnum.INT)
 
     env = env.exit_scope()
 
-    actual = env.current_scope.lookup("node_num")
+    actual = env.lookup("node_num")
 
     # Assert
     assert actual is not None, "Binding not found"
@@ -77,14 +77,14 @@ def test_scoped_type_env_static():
     env = ScopedTypeEnvironment()
 
     # Act
-    env.current_scope = env.current_scope.bind("node_num", TypeEnum.NAT)
+    env = env.bind("node_num", TypeEnum.NAT)
 
     new_env = env.enter_scope()
-    new_env.current_scope = new_env.current_scope.bind("node_num", TypeEnum.INT)
+    new_env = new_env.bind("node_num", TypeEnum.INT)
 
     env = new_env.exit_scope()
 
-    actual = new_env.current_scope.lookup("node_num")
+    actual = new_env.lookup("node_num")
 
     # Assert
     assert actual is not None, "Binding not found"

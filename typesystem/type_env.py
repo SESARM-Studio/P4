@@ -1,4 +1,7 @@
-from typing import Any
+from typing import (
+    Any, # allows to type annotate that the value can be anything: Here, mostly to be consistent with type hints.
+    cast # allows type hinting that a value is cast to another
+)
 
 from typesystem.data_types import TypeEnum
 
@@ -12,6 +15,11 @@ class TypeEnv():
         """The empty function of a symbol table"""
 
         self.environment: dict[str, Any] = dict()
+
+    def in_domain(self, identifier: str) -> bool:
+        """The function for `in dom()` and `notin dom()` from the type system"""
+
+        return identifier in self.environment
 
     def bind(self, identifier: str, value: Any) -> "TypeEnv":
         """Binds an identifier to a type"""
@@ -27,7 +35,7 @@ class TypeEnv():
     def lookup(self, identifier: str) -> Any:
         """Search current and outer scopes for the identifier binding"""
 
-        if identifier in self.environment:
+        if self.in_domain(identifier):
             return self.environment[identifier]
 
         return TypeEnum.UNKNOWN
@@ -57,6 +65,12 @@ class ScopedTypeEnvironment():
 
         return lookup_type
 
+    def bind(self, identifier: str, value: Any) -> "ScopedTypeEnvironment":
+        """Bind identifier to value in current scope"""
+
+        self.current_scope = self.current_scope.bind(identifier, value)
+        return self
+
     def enter_scope(self) -> "ScopedTypeEnvironment":
         """Creates a new scope the references the outer scope"""
 
@@ -79,10 +93,14 @@ class AlgorithmEnv(ScopedTypeEnvironment):
     pass
 
 class GraphEnv(ScopedTypeEnvironment):
+    """The scoped graph environment"""
 
     def __init__(self, outer_scope: "GraphEnv | None" = None, current_scope: TypeEnv = TypeEnv()) -> None:
         super().__init__(outer_scope, current_scope)
         self.outer_scope: "GraphEnv | None" = outer_scope
+
+    def bind(self, identifier: str, value: Any) -> "GraphEnv":
+        return cast("GraphEnv", super().bind(identifier, value))
 
     def enter_scope(self) -> "GraphEnv":
         return GraphEnv(outer_scope=self)
@@ -116,3 +134,32 @@ class GraphEnv(ScopedTypeEnvironment):
 
         return self.update_node_set(identifier, node_set)
 
+    @staticmethod
+    def merge(graph_env1: TypeEnv, graph_env2: TypeEnv):
+        """Merges the node sets from two of the same graph bindings into one"""
+
+        new_graph_env = TypeEnv()
+        graphs = set(graph_env1.environment).union(graph_env2.environment)
+
+        for i in graphs:
+            if graph_env1.in_domain(i) and graph_env2.in_domain(i):
+                new_graph_env = new_graph_env.bind(i, GraphEnv.combine(graph_env1.lookup(i), graph_env2.lookup(i)))
+
+            elif graph_env1.in_domain(i):
+                new_graph_env = new_graph_env.bind(i, graph_env1.lookup(i))
+
+            elif graph_env2.in_domain(i):
+                new_graph_env = new_graph_env.bind(i, graph_env2.lookup(i))
+
+            else:
+                pass # varepsilon from rule = don not add binding
+
+        return new_graph_env
+
+    @staticmethod
+    def combine(graph1: tuple[TypeEnum, TypeEnum, set],
+                graph2: tuple[TypeEnum, TypeEnum, set]
+                ) -> tuple[TypeEnum, TypeEnum, set]:
+        """Helper function for the merge method"""
+
+        return (graph1[0], graph1[1], graph1[2].union(graph2[2]))
