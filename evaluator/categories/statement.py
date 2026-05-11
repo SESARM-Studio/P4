@@ -5,6 +5,8 @@ import evaluator.categories.algorithm
 import evaluator.categories.expression
 import evaluator.categories.declaration
 import evaluator.categories.graph_declaration
+import evaluator.categories.edge_declaration
+import evaluator.categories.graph_statement
 
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
@@ -110,14 +112,17 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return exp_store, env_var, env_algo, env_graph, None, loc
 
         case EdgeDecl():
-            pass
+            v = evaluator.categories.edge_declaration.execute_edge_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return exp_store, env_var, env_algo, env_graph, v, loc
 
         case NodeDecl():
             D = evaluator.categories.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
         case GraphStatement():
-            pass
+            evaluator.categories.graph_statement.execute_graph_statement(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            v = None
+            return store, env_var, env_algo, env_graph, v, loc
 
         case LoopModifier():
             pass
