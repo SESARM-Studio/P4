@@ -4,6 +4,7 @@ from copy import deepcopy
 import evaluator.categories.algorithm
 import evaluator.categories.expression
 import evaluator.categories.declaration
+import evaluator.categories.graph_declaration
 
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
@@ -83,8 +84,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return store, env_var, ph_env_algo, env_graph, None, loc
         
         case GraphDecl():
-            pass
-
+            env_graph_new, store_new = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
+            return store_new, env_var, env_algo, env_graph_new, None, loc
         case Expression():
             v,exp_store = evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return exp_store, env_var, env_algo, env_graph, None, loc
