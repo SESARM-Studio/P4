@@ -5,6 +5,26 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "foor_loop",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{arr 1d list in int := [1, 2, 3] @NEWLINE for each ident in arr @NEWLINE @INDENT 1 + ident @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
+            "name": "dec&ass",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{a, b, c in int @NEWLINE $}"
+            ]
+        },
+        {
             "name": "While",
             "type": "debugpy",
             "request": "launch",
@@ -61,7 +81,17 @@
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
             "args": [
-                "{algo rasmus(a in int, b in int) return int @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE return c + d @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT rasmus(2,3) @NEWLINE $}"
+                "{algo rasmus(a in int, b in int) return int @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE return c + d @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT $}"
+            ],
+        },
+        {
+            "name": "Algo-call",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{algo rasmus(a in int, b in int) @NEWLINE @INDENT c,d in int @NEWLINE c := a @NEWLINE d := b @NEWLINE  display(a + b) @NEWLINE @DEDENT algo martin() @NEWLINE @INDENT 3 + 4 @NEWLINE @DEDENT rasmus(2,3) @NEWLINE $}"
             ],
         }
     ]
