@@ -1,6 +1,6 @@
 from parser.ast_builder import *
 from evaluator.functions import *
-from evaluator.categories.edge_declaration import *
+import evaluator.categories.edge_declaration
 
 def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_algo, loc, graph_object: Graph, store):
     match tree_node.operator:
@@ -10,9 +10,9 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                     if isinstance(env_graph.get(tree_node.graph_identifier), Graph):
                         graph = env_graph.get(tree_node.graph_identifier)
                         if tree_node.argument.weight != []:
-                            graph.add_weighted_edges(execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
+                            graph.add_weighted_edges(evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
                         else:
-                            graph.add_edges(execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
+                            graph.add_edges(evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
                     else:
                         print("Cant add edge to not graph object")
 
@@ -29,7 +29,7 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                 case EdgeDecl():
                     if isinstance(env_graph.get(tree_node.graph_identifier), Graph):
                         graph = env_graph.get(tree_node.graph_identifier)
-                        edges_to_remove = execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
+                        edges_to_remove = evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
                         for edge in edges_to_remove:
                             graph.remove_edge(edge[0], edge[1])
                     else:
@@ -41,4 +41,4 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                         graph = env_graph.get(tree_node.graph_identifier)
                         graph.remove_node(tree_node.argument.identifiers[0])
                     else:
-                        print("Cant add node to not graph object")
+                        print("Can't remove node from not graph object")
