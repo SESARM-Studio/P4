@@ -48,7 +48,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 case False:
                     match node.else_statements:
                         case []:
-                            return store, env_var, env_algo, env_graph, v, loc
+                            return store, env_var, env_algo, env_graph, None, loc
                         case node.else_statements:
                             for i in node.else_statements:
                                 store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
@@ -56,14 +56,14 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case WhileStatement():
             copy_store = deepcopy(store)
-            expression, copy_store = execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph)
+            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph)
             match expression:
                 case True:
                     for i in node.statements:
                         store, env_var, env_algo, env_graph, v, loc = execute_statement(i, loc, graph_object, copy_store, env_var, env_algo, env_graph)
                     execute_statement(node, loc, graph_object, copy_store, env_var, env_algo, env_graph)
                 case False:
-                    return store, env_var, env_algo, env_graph, v, loc
+                    return store, env_var, env_algo, env_graph, None, loc
         case ForEachNormal():
             pass
         case ForEachEdge():
