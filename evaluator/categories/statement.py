@@ -1,3 +1,4 @@
+import parser.ast_builder
 from parser.ast_builder import *
 from copy import deepcopy
 
@@ -11,43 +12,73 @@ import evaluator.categories.graph_statement
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
         case DeclarationInit():
-            # dec-ass
-            if len(node.expression) > 1:
-                raise RuntimeError("Can only assign to 1 expression")
+            if node.is_list:
+                # dec-ass-list
+                print("dec-ass-list")
+                #D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+                #D.store.update({loc: })
 
-            store_copy = store.copy()
-            env_var_copy = env_var.copy()
+            else:
+                print("dec-ass")
+                # dec-ass
+                if len(node.expression) > 1: #  Ligegyldigt hvis type-checkeren tjekker det?
+                    raise RuntimeError("Can only assign to 1 expression")
 
-            v, store_copy = evaluator.categories.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store_copy)
-            D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            env_var_copy = D.env_var
-            store_copy = D.store
-            loc_prime = D.location
+                store_copy = store.copy()
+                env_var_copy = env_var.copy()
 
-            store_copy.update({loc: v})
+                v, store_copy = evaluator.categories.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store_copy)
+                D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+                env_var_copy = D.env_var
+                store_copy = D.store
+                loc_prime = D.location
 
-            return store_copy, env_var_copy, env_algo, env_graph, None, loc_prime
+                store_copy.update({loc: v})
+
+                return store_copy, env_var_copy, env_algo, env_graph, None, loc_prime
 
         case Declaration():
             D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
         case Assignment():
-            if len(node.identifiers) > 1:
+            if len(node.identifiers) > 1: # Ligegyldigt hvis type-checkeren gør det?
                 raise RuntimeError("Can only assign one identifier at a time")
-            # ass
 
-            print("Hejsa")
-            #list-ass
+            if isinstance(node.identifiers[0], parser.ast_builder.ArrayAccess):
+                # list-index-ass
+                store_copy = store.copy()
+                indexes = []
+
+                for term in node.identifiers[0].indexes:
+                    v, store_copy = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, store_copy)
+                    indexes.append(v-1) # Minus 1, beacuse GSL indexes from 1 instead of 0, as python does
+
+                v, store_copy = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, store_copy)
+                map = store_copy.get(env_var.get(node.identifiers[0].identifier))
+                ref = map
+                #TODO: Add index out of range / catch exception
+                for index in indexes[:-1]:
+                    ref = ref[index]
+                ref[indexes[-1]] = v
+                store_copy.update({env_var.get(node.identifiers[0].identifier): map})
+                return store_copy, env_var, env_algo, env_graph, None, loc
+
+            else:
+                # list-ass
+                # ass
+                v, exp_store = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                # Formoder at typecheckeren tjekker at identifieren allerede er erklæret
+                exp_store.update({env_var.get(node.identifiers[0]): v})
+                return exp_store, env_var, env_algo, env_graph, None, loc
 
 
-            print(node)
             #if node.children[0].token == 'ArrayAccess':
             #    print(node.children[0].children[0].token, "Array")
 
         case IfStatement():
             copy_store = deepcopy(store)
-            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph) 
+            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
             match expression:
                 case True:
                     for i in node.then_statements:
@@ -64,7 +95,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case WhileStatement():
             copy_store = deepcopy(store)
-            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph)
+            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
             match expression:
                 case True:
                     for i in node.statements:
@@ -135,6 +166,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case ReturnStatement():
             v,exp_store = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
             return exp_store, env_var, env_algo, env_graph, v, loc
+
         case _:
             print("Error: No statement case match!")
             return store, env_var, env_algo, env_graph, None, loc
