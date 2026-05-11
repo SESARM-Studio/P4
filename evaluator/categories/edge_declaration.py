@@ -1,6 +1,6 @@
 from parser.ast_builder import *
 from evaluator.functions import *
-from evaluator.categories.expression import *
+import evaluator.categories.expression
 
 def execute_edge_declaration(tree_node: EdgeDecl, env_graph, env_var, env_algo, loc, graph_object: Graph, store):
     if tree_node.weight != []:
@@ -77,24 +77,24 @@ def get_edges_to_add(tree_node: EdgeDecl, env_graph, env_var, env_algo, loc, gra
         edge = []
         if left_to_right is True:
             if isinstance(tree_node.initial_node, Expression):
-                edge.append(execute_expression(tree_node.initial_node, env_graph, env_var, env_algo, loc, graph_object, store))
+                edge.append(evaluator.categories.expression.execute_expression(tree_node.initial_node, env_graph, env_var, env_algo, loc, graph_object, store))
             else:
                 edge.append(tree_node.initial_node)
             if isinstance(node, Expression):
-                edge.append(execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store))
+                edge.append(evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store))
             else:
                 edge.append(node)
         else:
             if isinstance(node, Expression):
-                edge.append(execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store))
+                edge.append(evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store))
             else:
                 edge.append(node)
             if isinstance(tree_node.initial_node, Expression):
-                edge.append(execute_expression(tree_node.initial_node, env_graph, env_var, env_algo, loc, graph_object, store))
+                edge.append(evaluator.categories.expression.execute_expression(tree_node.initial_node, env_graph, env_var, env_algo, loc, graph_object, store))
             else:
                 edge.append(tree_node.initial_node)
         if tree_node.weight != []:
-            value, store = execute_expression(tree_node.weight[index], env_graph, env_var, env_algo, loc, graph_object, store)
+            value, store = evaluator.categories.expression.execute_expression(tree_node.weight[index], env_graph, env_var, env_algo, loc, graph_object, store)
             edge.append(value)
         added_edges.append(tuple(edge))
     return added_edges
