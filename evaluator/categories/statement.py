@@ -144,7 +144,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case EdgeDecl():
             v = evaluator.categories.edge_declaration.execute_edge_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            return exp_store, env_var, env_algo, env_graph, v, loc
+            return store, env_var, env_algo, env_graph, v, loc
 
         case NodeDecl():
             D = evaluator.categories.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
