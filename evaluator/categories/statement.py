@@ -39,7 +39,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             #    print(node.children[0].children[0].token, "Array")
         case IfStatement():
             copy_store = deepcopy(store)
-            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph) 
+            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store) 
             match expression:
                 case True:
                     for i in node.then_statements:
@@ -56,7 +56,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case WhileStatement():
             copy_store = deepcopy(store)
-            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, loc, graph_object, store, env_var, env_algo, env_graph)
+            expression, copy_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
             match expression:
                 case True:
                     for i in node.statements:
@@ -65,7 +65,13 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 case False:
                     return store, env_var, env_algo, env_graph, None, loc
         case ForEachNormal():
-            pass
+            v, store = evaluator.categories.expression.execute_expression(node.iterable, env_graph, env_var, env_algo, loc, graph_object, store)
+            #Thought that v = env_var.get(node.iterable.arg1.value) after the line above, but it is just v = [].
+            for i1 in v:
+                for i2 in node.statements:
+                    store, env_var, env_algo, env_graph, v, loc = execute_statement(i2, loc, graph_object, store, env_var, env_algo, env_graph)
+                store, env_var, env_algo, env_graph, v, loc = execute_statement(i2, loc, graph_object, store, env_var, env_algo, env_graph)
+            return store, env_var, env_algo, env_graph, v, loc
         case ForEachEdge():
             pass
         case RepeatStatement():
