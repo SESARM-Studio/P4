@@ -70,11 +70,49 @@ class ScopedTypeEnvironment():
 
         return self.outer_scope
 
-class VariableEnv(TypeEnv):
+class VariableEnv(ScopedTypeEnvironment):
+    """The scoped variable environment"""
     pass
 
-class AlgorithmEnv(TypeEnv):
+class AlgorithmEnv(ScopedTypeEnvironment):
+    """The scoped algorithm environment"""
     pass
 
-class GraphEnv(TypeEnv):
-    pass
+class GraphEnv(ScopedTypeEnvironment):
+
+    def __init__(self, outer_scope: "GraphEnv | None" = None, current_scope: TypeEnv = TypeEnv()) -> None:
+        super().__init__(outer_scope, current_scope)
+        self.outer_scope: "GraphEnv | None" = outer_scope
+
+    def enter_scope(self) -> "GraphEnv":
+        return GraphEnv(outer_scope=self)
+
+    def update_node_set(self, identifier: str, node_set: set) -> "GraphEnv":
+        """
+        Follows the rule of the function in the report
+        but with the difference that instead of checking that `Sigma_g` = G
+        this function checks that the next `Sigma_g'` is not None
+        """
+
+        graph = self.current_scope.lookup(identifier)
+
+        if graph != TypeEnum.UNKNOWN:
+            graph_type, graph_weight_type, graph_node_set = graph
+
+            self.current_scope = self.current_scope.bind(
+                identifier, (graph_type, graph_weight_type, graph_node_set.union(node_set))
+            )
+            return self
+
+        if self.outer_scope is not None:
+            graph = self.outer_scope.current_scope.lookup(identifier)
+
+            if graph != TypeEnum.UNKNOWN:
+                graph_type, graph_weight_type, graph_node_set = graph
+                self.outer_scope.current_scope = self.outer_scope.current_scope.bind(
+                    identifier, (graph_type, graph_weight_type, graph_node_set.union(node_set))
+                )
+                return self
+
+        return self.update_node_set(identifier, node_set)
+
