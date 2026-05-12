@@ -26,9 +26,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                             return graph_object.get_nodes(), store
                         else:
                             return node.value, store
-                            
-                    location = env_var.get(node.value)
-                    return store.get(location), store
+                    else:      
+                        location = env_var.get(node.value)
+                        return store.get(location), store
                 case _:
                     exit("Invalid term type!")
         case AlgorithmCall():
