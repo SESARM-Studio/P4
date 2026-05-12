@@ -67,9 +67,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
         case ListExpression():
             v2 = []
             for i in node.expressions:
-                v1, store = execute_expression(i, env_graph, env_var, env_algo, loc, graph_object, store)
+                v1, store1 = execute_expression(i, env_graph, env_var, env_algo, loc, graph_object, store)
                 v2.append(v1)
-            return v2, store
+            return v2, store1
         
         case AbsoluteValue():
             v, store1 = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
