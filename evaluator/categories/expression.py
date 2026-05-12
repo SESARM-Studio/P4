@@ -74,7 +74,29 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return len(v), store1
 
+        case DotAccess():
+         
+            object_identifier = node.identifiers[0]   # I
+            field_identifier = node.identifiers[1]    # X
+            # outside any graph object (go_inside = empty)
+            if graph_object is None:
+                go = env_graph.get(object_identifier)
 
+                if go is None:
+                    raise RuntimeError(f"Unknown graph object: {object_identifier}")
+                
+            field_loc = env_var.get(f"{go}.{field_identifier}")
+
+            # insde graph object
+            else
+            field_loc = env_var.get(f"{graph_object}.{field_identifier}")
+
+             if field_loc is None:
+                raise RuntimeError(f"Unknown Node: {field_identifier}")
+
+            return store.get(field_loc), store
+
+        
 
         case Expression():
             match node.operator:
