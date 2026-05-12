@@ -105,14 +105,27 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 case False:
                     return store, env_var, env_algo, env_graph, None, loc
         case ForEachNormal():
-            v, store = evaluator.categories.expression.execute_expression(node.iterable, env_graph, env_var, env_algo, loc, graph_object, store)
-            #Thought that v = env_var.get(node.iterable.arg1.value) after the line above, but it is just v = [].
-            for i1 in v:
+            cpy_env_graph = deepcopy(env_graph)
+            cpy_env_var = deepcopy(env_var)
+            cpy_env_algo= deepcopy(env_algo)
+            cpy_loc = deepcopy(loc)
+
+            v1, store = evaluator.categories.expression.execute_expression(node.iterable, cpy_env_graph, cpy_env_var, cpy_env_algo, loc, graph_object, store)
+            for i1 in v1:
+                cpy_env_var.update({node.loop_identifier:loc})
+                loc = loc.next_location()
+                store.update({cpy_env_var.get(node.loop_identifier):i1})
+
                 for i2 in node.statements:
-                    store, env_var, env_algo, env_graph, v, loc = execute_statement(i2, loc, graph_object, store, env_var, env_algo, env_graph)
-                store, env_var, env_algo, env_graph, v, loc = execute_statement(i2, loc, graph_object, store, env_var, env_algo, env_graph)
-            return store, env_var, env_algo, env_graph, v, loc
+                    store, cpy_env_var, cpy_env_algo, cpy_env_graph, v2, loc = execute_statement(i2, loc, graph_object, store, cpy_env_var, cpy_env_algo, cpy_env_graph)
+                loc = cpy_loc                            
+            return store, env_var, env_algo, env_graph, v2, cpy_loc
+        
         case ForEachEdge():
+            cpy_env_graph = deepcopy(env_graph)
+            cpy_env_var = deepcopy(env_var)
+            cpy_env_algo= deepcopy(env_algo)
+            cpy_loc = deepcopy(loc)
             pass
 
         case RepeatStatement():
