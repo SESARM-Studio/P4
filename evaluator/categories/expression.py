@@ -97,15 +97,13 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
                 if go is None:
                     raise RuntimeError(f"Unknown graph object: {object_identifier}")
-                
-            field_loc = env_var.get(f"{go}.{field_identifier}")
+            
+                field_loc = env_var.get(f"{go}.{field_identifier}")
+            else:
+                field_loc = env_var.get(f"{graph_object}.{field_identifier}")
 
-            # insde graph object
-            else
-            field_loc = env_var.get(f"{graph_object}.{field_identifier}")
-
-             if field_loc is None:
-                raise RuntimeError(f"Unknown Node: {field_identifier}")
+                if field_loc is None:
+                    raise RuntimeError(f"Unknown Node: {field_identifier}")
 
             return store.get(field_loc), store
 
