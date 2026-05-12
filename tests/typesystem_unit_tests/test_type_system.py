@@ -154,8 +154,8 @@ def test_type_system_arr():
     ]
 
     decl_init_node = DeclarationInit("DeclarationInit")
-    decl_init_node.is_list = False
-    decl_init_node.dimension = "1d"
+    decl_init_node.is_list = True
+    decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
     decl_init_node.identifiers = ["mrts"]
     decl_init_node.type = "int"
     decl_init_node.expression = list_expr
@@ -741,13 +741,32 @@ def test_type_system_las():
         )
     ]
 
+    list_expr2 = ListExpression("ListExpression")
+    list_expr2.expressions = [
+        make_expression(
+            arg1=make_term("INTEGER_NUMBER", "-2")
+        ),
+        make_expression(
+            arg1=make_term("INTEGER_NUMBER", "2")
+        )
+    ]
+
+    list_expr3 = ListExpression("ListExpression")
+    list_expr3.expressions = [
+        make_expression(
+            arg1=list_expr
+        ),
+        make_expression(
+            arg1=list_expr2
+        )
+    ]
+
     decl_init_node = DeclarationInit("DeclarationInit")
-    decl_init_node.is_list = False
+    decl_init_node.is_list = True
     decl_init_node.dimension = make_term("NATURAL_NUMBER", "2")
     decl_init_node.identifiers = ["mrts"]
     decl_init_node.type = "int"
-    decl_init_node.expression = list_expr
-
+    decl_init_node.expression = list_expr3
 
     ast = ASTNode("PROGRAM", [
         decl_init_node,
@@ -1212,7 +1231,7 @@ def test_type_system_dli_din():
     expected = True
 
     list_decl_node = Declaration("Declaration")
-    list_decl_node.is_list = True
+    list_decl_node.is_list = False
     list_decl_node.identifiers = ["x"]
     list_decl_node.type = "int"
 

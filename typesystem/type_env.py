@@ -83,17 +83,44 @@ class ScopedTypeEnvironment():
         """Exits the current scope if it is not the outermost"""
 
         if isinstance(self.outer_scope, TypeEnv):
-            raise Exception("No scope to exit")
+            return ScopedTypeEnvironment(outer_scope=self.outer_scope, current_scope=self.outer_scope)
 
         return self.outer_scope
 
 class VariableEnv(ScopedTypeEnvironment):
     """The scoped variable environment"""
-    pass
+
+    def __init__(self, outer_scope: "VariableEnv | TypeEnv" = TypeEnv(), current_scope: TypeEnv = TypeEnv()) -> None:
+        super().__init__(outer_scope, current_scope)
+        self.outer_scope: "VariableEnv | TypeEnv" = outer_scope
+
+    def bind(self, identifier: str, value: TypeEnum) -> "VariableEnv":
+        return cast("VariableEnv", super().bind(identifier, value))
+
+    def enter_scope(self) -> "VariableEnv":
+        return VariableEnv(outer_scope=self)
+
+    def exit_scope(self) -> "VariableEnv":
+        if isinstance(self.outer_scope, TypeEnv):
+            raise Exception("No scope to exit")
+
+        return self.outer_scope
 
 class AlgorithmEnv(ScopedTypeEnvironment):
     """The scoped algorithm environment"""
-    pass
+
+    def __init__(self, outer_scope: "AlgorithmEnv | TypeEnv" = TypeEnv(), current_scope: TypeEnv = TypeEnv()) -> None:
+        super().__init__(outer_scope, current_scope)
+        self.outer_scope: "AlgorithmEnv | TypeEnv" = outer_scope
+
+    def bind(self, identifier: str, value: dict) -> "AlgorithmEnv":
+        return cast("AlgorithmEnv", super().bind(identifier, value))
+
+    def enter_scope(self) -> "AlgorithmEnv":
+        return AlgorithmEnv(outer_scope=self)
+
+    def exit_scope(self) -> "AlgorithmEnv":
+        return cast("AlgorithmEnv", super().exit_scope())
 
 class GraphEnv(ScopedTypeEnvironment):
     """The scoped graph environment"""
@@ -107,6 +134,9 @@ class GraphEnv(ScopedTypeEnvironment):
 
     def enter_scope(self) -> "GraphEnv":
         return GraphEnv(outer_scope=self)
+
+    def exit_scope(self) -> "GraphEnv":
+        return cast("GraphEnv", super().exit_scope())
 
     def update_node_set(self, identifier: str, node_set: set) -> "GraphEnv":
         """Follows the rule of the function named the same in the report"""
