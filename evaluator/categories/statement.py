@@ -14,7 +14,6 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case DeclarationInit():
             if node.is_list:
                 # dec-list-ass
-                print("dec-ass-list")
                 env_var_copy = env_var.copy()
                 store_copy = store.copy()
 
@@ -25,7 +24,6 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 return D.store, D.env_var, env_algo, env_graph, v, D.location
 
             else:
-                print("dec-ass")
                 # dec-ass
                 store_copy = store.copy()
                 env_var_copy = env_var.copy()
@@ -59,9 +57,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 ref = map
 
                 for num in indexes:
-                    print(num)
                     if num < 0:
-                        raise IndexError("Indexing starts from 1, and cannot be smaller than 1")
+                        raise IndexError("Indexing starts from 1")
 
                 try:
                     for index in indexes[:-1]:
@@ -69,7 +66,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     ref[indexes[-1]] = v
                 except(IndexError, TypeError):
                     raise RuntimeError(
-                        f"Invalid indexing {indexes}"
+                        f"Invalid indexing {indexes} out of range"
                     )
 
                 store_copy.update({env_var.get(node.identifiers[0].identifier): map})
@@ -179,6 +176,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case GraphDecl():
             env_graph_new, store_new = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
             return store_new, env_var, env_algo, env_graph_new, None, loc
+
         case Expression():
             v,exp_store = evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return exp_store, env_var, env_algo, env_graph, None, loc
