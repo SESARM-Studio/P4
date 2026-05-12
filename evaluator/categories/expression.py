@@ -64,16 +64,15 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return v,store_body
         
-        case AbselouteValue()
+        case AbsoluteValue():
             v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
                     
             return abs(v), store1
 
-        case Magnitude()
+        case Magnitude():
             v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
             return len(v), store1
-
 
 
         case Expression():
