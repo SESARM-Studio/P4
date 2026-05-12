@@ -65,12 +65,12 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             return v,store_body
         
         case AbsoluteValue():
-            v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
+            v, store1 = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
                     
             return abs(v), store1
 
         case Magnitude():
-            v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
+            v, store1 = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
             return len(v), store1
         
