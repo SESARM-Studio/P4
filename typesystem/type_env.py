@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import (
     Any, # allows to type annotate that the value can be anything: Here, mostly to be consistent with type hints.
     cast # allows type hinting that a value is cast to another
@@ -47,29 +48,31 @@ class ScopedTypeEnvironment():
     and the two common operations for them: Enter scope and Exit scope
     """
 
-    def __init__(self, outer_scope: "ScopedTypeEnvironment | None" = None,
+    def __init__(self, outer_scope: "ScopedTypeEnvironment | TypeEnv" = TypeEnv(),
                  current_scope: TypeEnv = TypeEnv()
                  ) -> None:
         """The empty function of a symbol table"""
 
         self.current_scope: TypeEnv = current_scope
-        self.outer_scope: "ScopedTypeEnvironment | None" = outer_scope
+        self.outer_scope: "ScopedTypeEnvironment | TypeEnv" = outer_scope
 
     def lookup(self, identifier: str) -> Any:
         """Search the current scope and the outer scopes for the identifier binding"""
 
-        lookup_type = self.current_scope.lookup(identifier)
-
-        if lookup_type == TypeEnum.UNKNOWN: # identifier not found in the current scope
-            lookup_type = self.outer_scope.lookup(identifier) if self.outer_scope else TypeEnum.UNKNOWN
+        lookup_type = TypeEnum.UNKNOWN
+        if self.current_scope.in_domain(identifier):
+            lookup_type = self.current_scope.lookup(identifier)
+        else:
+            lookup_type = self.outer_scope.lookup(identifier)
 
         return lookup_type
 
     def bind(self, identifier: str, value: Any) -> "ScopedTypeEnvironment":
         """Bind identifier to value in current scope"""
 
-        self.current_scope = self.current_scope.bind(identifier, value)
-        return self
+        new_scoped_env = deepcopy(self)
+        new_scoped_env.current_scope = new_scoped_env.current_scope.bind(identifier, value)
+        return new_scoped_env
 
     def enter_scope(self) -> "ScopedTypeEnvironment":
         """Creates a new scope the references the outer scope"""
@@ -79,7 +82,7 @@ class ScopedTypeEnvironment():
     def exit_scope(self) -> "ScopedTypeEnvironment":
         """Exits the current scope if it is not the outermost"""
 
-        if self.outer_scope is None:
+        if isinstance(self.outer_scope, TypeEnv):
             raise Exception("No scope to exit")
 
         return self.outer_scope
@@ -95,44 +98,37 @@ class AlgorithmEnv(ScopedTypeEnvironment):
 class GraphEnv(ScopedTypeEnvironment):
     """The scoped graph environment"""
 
-    def __init__(self, outer_scope: "GraphEnv | None" = None, current_scope: TypeEnv = TypeEnv()) -> None:
+    def __init__(self, outer_scope: "GraphEnv | TypeEnv" = TypeEnv(), current_scope: TypeEnv = TypeEnv()) -> None:
         super().__init__(outer_scope, current_scope)
-        self.outer_scope: "GraphEnv | None" = outer_scope
+        self.outer_scope: "GraphEnv | TypeEnv" = outer_scope
 
-    def bind(self, identifier: str, value: Any) -> "GraphEnv":
+    def bind(self, identifier: str, value: tuple[TypeEnum, TypeEnum, set]) -> "GraphEnv":
         return cast("GraphEnv", super().bind(identifier, value))
 
     def enter_scope(self) -> "GraphEnv":
         return GraphEnv(outer_scope=self)
 
     def update_node_set(self, identifier: str, node_set: set) -> "GraphEnv":
-        """
-        Follows the rule of the function in the report
-        but with the difference that instead of checking that `Sigma_g` = G
-        this function checks that the next `Sigma_g'` is not None
-        """
+        """Follows the rule of the function named the same in the report"""
 
-        graph = self.current_scope.lookup(identifier)
+        if self.current_scope.in_domain(identifier):
+            graph_type, graph_weight_type, graph_node_set = self.current_scope.lookup(identifier)
+            self = self.bind(identifier, (graph_type, graph_weight_type, graph_node_set.union(node_set)))
+            return self
 
-        if graph != TypeEnum.UNKNOWN:
-            graph_type, graph_weight_type, graph_node_set = graph
-
-            self.current_scope = self.current_scope.bind(
+        elif isinstance(self.outer_scope, TypeEnv) and self.outer_scope.in_domain(identifier):
+            graph_type, graph_weight_type, graph_node_set = self.outer_scope.lookup(identifier)
+            self.outer_scope = self.outer_scope.bind(
                 identifier, (graph_type, graph_weight_type, graph_node_set.union(node_set))
             )
             return self
 
-        if self.outer_scope is not None:
-            graph = self.outer_scope.current_scope.lookup(identifier)
+        elif isinstance(self.outer_scope, TypeEnv):
+            return self
 
-            if graph != TypeEnum.UNKNOWN:
-                graph_type, graph_weight_type, graph_node_set = graph
-                self.outer_scope.current_scope = self.outer_scope.current_scope.bind(
-                    identifier, (graph_type, graph_weight_type, graph_node_set.union(node_set))
-                )
-                return self
-
-        return self.update_node_set(identifier, node_set)
+        else:
+            self.outer_scope = self.outer_scope.update_node_set(identifier, node_set)
+            return self
 
     @staticmethod
     def merge(graph_env1: TypeEnv, graph_env2: TypeEnv):
