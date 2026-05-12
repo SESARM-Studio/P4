@@ -21,6 +21,12 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         return True, store
                     else: return False, store
                 case 'IDENTIFIER':
+                    if graph_object.graph is not None:
+                        if node.value == "nodes":
+                            return graph_object.get_nodes(), store
+                        else:
+                            return node.value, store
+                            
                     location = env_var.get(node.value)
                     return store.get(location), store
                 case _:
