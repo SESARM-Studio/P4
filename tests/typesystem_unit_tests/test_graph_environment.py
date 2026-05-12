@@ -8,7 +8,7 @@ def test_graph_environment_update_node_set_current_environment():
 
     # Act
     env = env.bind("graph1", (TypeEnum.GRAPH, TypeEnum.INT, { "node1" }))
-    env.update_node_set("graph1", { "node2" })
+    env = env.update_node_set("graph1", { "node2" })
 
     actual = env.lookup("graph1")
 
@@ -16,6 +16,28 @@ def test_graph_environment_update_node_set_current_environment():
     assert actual is not TypeEnum.UNKNOWN, "Binding not found"
     node_set = actual[2]
     assert node_set == expected, f"actual -> {node_set} == {expected} <- expected"
+
+def test_graph_environment_update_node_set_current_branch():
+    # Arrange
+    expected = { "node1" }
+    graph_id = "graph1"
+    env = GraphEnv()
+    env = env.bind("graph1", (TypeEnum.GRAPH, TypeEnum.INT, { "node1" }))
+    env1 = env
+    env2 = env
+
+    # Act
+    # then branch:
+    env1 = env1.enter_scope()
+    env1 = env1.update_node_set(graph_id, { "node2" })
+    # else branch:
+    env2 = env2.enter_scope()
+    not_updated = env2.lookup(graph_id)
+    env2 = env2.update_node_set(graph_id, { "node3" })
+
+    # Assert
+    node_set = not_updated[2]
+    assert node_set == expected, "env1 updates env2"
 
 def test_graph_environment_merge():
     # Arrange
@@ -29,8 +51,8 @@ def test_graph_environment_merge():
     # Act
     env1 = env1.enter_scope()
     env2 = env2.enter_scope()
-    env1.update_node_set(graph_id, { "node2" })
-    env2.update_node_set(graph_id, { "node3" })
+    env1 = env1.update_node_set(graph_id, { "node2" })
+    env2 = env2.update_node_set(graph_id, { "node3" })
     env1 = env1.exit_scope()
     env2 = env2.exit_scope()
 
