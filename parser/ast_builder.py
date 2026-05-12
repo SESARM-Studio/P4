@@ -63,18 +63,14 @@ class ReturnStatement(ASTNode):
         super().__init__(token)
         self.expression = None
 
-class NodeDecl(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
-        self.identifiers = []
-        self.assignment = None
+
 
 class GraphStatement(ASTNode):
     def __init__(self, token):
         super().__init__(token)
         self.graph_identifier = None
         self.operator = None
-        self.argument = []
+        self.argument = None
 
 class EdgeDecl(ASTNode):
     def __init__(self, token):
@@ -83,6 +79,13 @@ class EdgeDecl(ASTNode):
         self.nodes = []
         self.direction = None
         self.weight = []
+
+class EdgeLoop(ASTNode):
+    def __init__(self, token):
+        super().__init__(token)
+        self.initial_node = None
+        self.last_node = None
+        self.direction = None
 
 class Algorithm(ASTNode):
     def __init__(self, token):
@@ -110,6 +113,11 @@ class Declaration(ASTNode):
         self.type = None
         self.is_list = False
         self.dimension = None
+
+class NodeDecl(Declaration):
+    def __init__(self, token):
+        super().__init__(token)
+        self.type = 'node'
 
 class DeclarationInit(Declaration):
     def __init__(self, token):
@@ -292,7 +300,7 @@ class AbstractSyntaxTreeBuilder:
                 for_each_edge = ForEachEdge(symbol.name)
                 for index, child in enumerate(symbol_children):
                     match child.name:
-                        case "EdgeDecl":
+                        case "EdgeLoop":
                             for_each_edge.edge = self.recursive_builder(child)
                         case "'with weight'":
                             for_each_edge.weight_identifier = self.characters(symbol_children[index+1].begin, symbol_children[index+1].end)
@@ -566,8 +574,6 @@ class AbstractSyntaxTreeBuilder:
                 for child in symbol_children:
                     if child.name == "IDENTIFIER":
                         node_decl.identifiers.append(self.characters(child.begin, child.end))
-                    if child.name == "Expression":
-                        node_decl.assignment = self.recursive_builder(child)
                 return node_decl
             
             case "GraphStatement":
@@ -581,9 +587,9 @@ class AbstractSyntaxTreeBuilder:
                         node = Declaration("Declaration")
                         node.type = self.characters(child.begin, child.end)
                         node.identifiers.append(self.characters(symbol_children[index+1].begin, symbol_children[index+1].end))
-                        graph_statement.argument.append(node)
+                        graph_statement.argument = node
                     if child.name == "EdgeDecl":
-                        graph_statement.argument.append(self.recursive_builder(child))
+                        graph_statement.argument = self.recursive_builder(child)
                 return graph_statement
             
             case "ExprNode":
@@ -617,6 +623,27 @@ class AbstractSyntaxTreeBuilder:
                     elif child.name == "Expression":
                         edge_decl.weight.append(self.recursive_builder(child))
                 return edge_decl
+            
+            case "EdgeLoop":
+                assigned_first_node = False
+                edge_loop = EdgeLoop(symbol.name)
+                for child in symbol_children:
+                    if child.name == "IdentifierAccess":
+                        identifier = self.recursive_builder(child)
+                        if assigned_first_node is False:
+                            edge_loop.initial_node = identifier
+                            assigned_first_node = True
+                        else:
+                            edge_loop.last_node = (identifier)
+                    elif child.name == "IDENTIFIER":
+                        if assigned_first_node is False:
+                            edge_loop.initial_node = self.characters(child.begin, child.end)
+                            assigned_first_node = True
+                        else:
+                            edge_loop.last_node = (self.characters(child.begin, child.end))
+                    elif child.name in ["'-->'", "'<--'", "'<->'", "'---'"]:
+                        edge_loop.direction = child.name.strip("'")
+                return edge_loop
             
             case "Algorithm":
                 algorithm = Algorithm(symbol.name)
@@ -658,7 +685,10 @@ class AbstractSyntaxTreeBuilder:
                         case "'list'":
                             declaration.is_list = True
                         case "DIMENSION":
-                            declaration.dimension = self.characters(child.begin, child.end)
+                            term = Term("Term")
+                            term.type = "NATURAL_NUMBER"
+                            term.value = self.characters(child.begin, child.end).strip("d")
+                            declaration.dimension = term
                 return declaration
             
             case "DeclarationInit":
@@ -667,12 +697,15 @@ class AbstractSyntaxTreeBuilder:
                     match child.name:
                         case "IDENTIFIER":
                             decl_init.identifiers.append(self.characters(child.begin, child.end))
-                        case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE":
+                        case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE" | "'node'":
                             decl_init.type = self.characters(child.begin, child.end)
                         case "'list'":
                             decl_init.is_list = True
                         case "DIMENSION":
-                            decl_init.dimension = self.characters(child.begin, child.end)
+                            term = Term("Term")
+                            term.type = "NATURAL_NUMBER"
+                            term.value = self.characters(child.begin, child.end).strip("d")
+                            decl_init.dimension = term
                         case "Expression" | "ListExpression":
                             decl_init.expression.append(self.recursive_builder(child))
                 return decl_init
