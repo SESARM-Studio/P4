@@ -73,7 +73,26 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
             return len(v), store1
+        
+        case ArrayAccess():
+            array_location = env_var.get(node.identifier)
+            array = store.get(array_location)
 
+            # Evaluate given array indices
+            access_indices = []
+            idx_value, idx_store = execute_expression(node.indexes[0], env_graph, env_var, env_algo, loc, graph_object, store)
+            access_indices.append(idx_value)
+
+            for index in node.indexes[1:]:
+                idx_value, idx_store = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, idx_store)
+                access_indices.append(idx_value)
+
+            # Retrieve array element with evaluated indices and retrieved array
+            v = array
+            for idx in access_indices:
+                v = v[idx-1] # -1 as GSL indexes from 1
+
+            return v, idx_store
 
         case Expression():
             match node.operator:
