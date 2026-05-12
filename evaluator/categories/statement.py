@@ -102,6 +102,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             match v1:
                 case True:
                     for i in node.statements:
+
                         modified_store, env_var, env_algo, env_graph, v2, loc = execute_statement(i, loc, graph_object, modified_store, env_var, env_algo, env_graph)
                         if v2 == "stop":
                             v2 = None
@@ -114,6 +115,9 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 case False:
                     v2 = None
                     return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
+                
+            return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
+        
         case ForEachNormal():
             v, store = evaluator.categories.expression.execute_expression(node.iterable, env_graph, env_var, env_algo, loc, graph_object, store)
             #Thought that v = env_var.get(node.iterable.arg1.value) after the line above, but it is just v = [].
