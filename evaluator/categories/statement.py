@@ -43,9 +43,31 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case Assignment():
             if len(node.identifiers) > 1: # Ligegyldigt hvis type-checkeren gør det?
-                raise RuntimeError("Can only assign one identifier at a time")
+                graph_identifier = node.identifiers[0]
+                field_identifier = node.identifiers[1]
 
-            if isinstance(node.identifiers[0], parser.ast_builder.ArrayAccess):
+                 v, exp_store = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+
+                 if graph_object is None:
+                    go = env_graph.get(graph_identifier)
+
+                    if go is None:
+                        raise RuntimeError(f"Ukendt objekt: {graph_identifier}")
+
+                    field_loc = env_var.get(f"{go}.{field_identifier}")
+
+                # DOT-ASS2: already inside graph object
+                else:
+                    field_loc = env_var.get(f"{graph_object}.{field_identifier}")
+
+                if field_loc is None:
+                    raise RuntimeError(f"Unknown graph field: {field_identifier}")
+
+                exp_store.update({field_loc: v})
+
+                return exp_store, env_var, env_algo, env_graph, None, loc
+
+            elif isinstance(node.identifiers[0], parser.ast_builder.ArrayAccess):
                 # list-index-ass
                 store_copy = store.copy()
                 indexes = []
