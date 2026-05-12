@@ -64,6 +64,13 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return v,store_body
         
+        case ListExpression():
+            v2 = []
+            for i in node.expressions:
+                v1, store = execute_expression(i, env_graph, env_var, env_algo, loc, graph_object, store)
+                v2.append(v1)
+            return v2, store
+        
         case Expression():
             match node.operator:
                 case '=':
