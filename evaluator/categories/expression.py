@@ -21,8 +21,14 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         return True, store
                     else: return False, store
                 case 'IDENTIFIER':
-                    location = env_var.get(node.value)
-                    return store.get(location), store
+                    if graph_object.graph is not None:
+                        if node.value == "nodes":
+                            return graph_object.get_nodes(), store
+                        else:
+                            return node.value, store
+                    else:      
+                        location = env_var.get(node.value)
+                        return store.get(location), store
                 case _:
                     exit("Invalid term type!")
         case AlgorithmCall():
@@ -64,16 +70,23 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return v,store_body
         
-        case AbselouteValue()
-            v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
+        case ListExpression():
+            v2 = []
+            for i in node.expressions:
+                v1, store1 = execute_expression(i, env_graph, env_var, env_algo, loc, graph_object, store)
+                v2.append(v1)
+            return v2, store1
+        
+        case AbsoluteValue():
+            v, store1 = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
                     
             return abs(v), store1
 
-        case Magnitude()
-            v, store1 = execute_expression(node.Expression, env_graph, env_var, env_algo, loc, graph_object, store)
+        case Magnitude():
+            v, store1 = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
             return len(v), store1
-
+        
         case DotAccess():
          
             object_identifier = node.identifiers[0]   # I
@@ -96,7 +109,25 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return store.get(field_loc), store
 
-        
+        case ArrayAccess():
+            array_location = env_var.get(node.identifier)
+            array = store.get(array_location)
+
+            # Evaluate given array indices
+            access_indices = []
+            idx_value, idx_store = execute_expression(node.indexes[0], env_graph, env_var, env_algo, loc, graph_object, store)
+            access_indices.append(idx_value)
+
+            for index in node.indexes[1:]:
+                idx_value, idx_store = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, idx_store)
+                access_indices.append(idx_value)
+
+            # Retrieve array element with evaluated indices and retrieved array
+            v = array
+            for idx in access_indices:
+                v = v[idx-1] # -1 as GSL indexes from 1
+
+            return v, idx_store
 
         case Expression():
             match node.operator:

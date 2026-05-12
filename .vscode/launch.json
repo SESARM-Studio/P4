@@ -5,7 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "foor_loop",
+            "name": "foor_loop_dec-list_and_ass-list",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{a in int @NEWLINE arr 1d list in int @NEWLINE arr := [1, 2, 3] @NEWLINE for each ident in arr @NEWLINE @INDENT b in int @NEWLINE a := 1 + ident @NEWLINE b := 2 + ident @NEWLINE display a @NEWLINE display b @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
+            "name": "foor_loop_dec-ass-list",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
