@@ -98,7 +98,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case WhileStatement():
             copy_env_var = deepcopy(env_var)
             copy_env_algo = deepcopy(env_algo)
-            copy_env_graph = deepcopy(env_graph)
+            copy_env_graph = env_graph.copy()
             copy_loc = deepcopy(loc)
             v1, modified_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
             match v1:
@@ -121,7 +121,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
 
         case ForEachNormal():
-            cpy_env_graph = deepcopy(env_graph)
+            cpy_env_graph = env_graph.copy
             cpy_env_var = deepcopy(env_var)
             cpy_env_algo= deepcopy(env_algo)
             cpy_loc = deepcopy(loc)
@@ -147,7 +147,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case RepeatStatement():
             copy_env_var = deepcopy(env_var)
             copy_env_algo = deepcopy(env_algo)
-            copy_env_graph = deepcopy(env_graph)
+            copy_env_graph = env_graph.copy()
             copy_loc = deepcopy(loc)
             v1, modified_store = evaluator.categories.expression.execute_expression(node.repeat_expression, env_graph, env_var, env_algo, loc, graph_object, store)
             
