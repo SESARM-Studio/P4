@@ -87,8 +87,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             return len(v), store1
         
-        case DotAccess():
-         
+        case IdentifierAccess():
             object_identifier = node.identifiers[0]   # I
             field_identifier = node.identifiers[1]    # X
             # outside any graph object (go_inside = empty)
