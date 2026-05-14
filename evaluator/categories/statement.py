@@ -9,6 +9,18 @@ import evaluator.categories.graph_declaration
 import evaluator.categories.edge_declaration
 import evaluator.categories.graph_statement
 
+class LoopException(Exception):
+    pass
+
+class ReturnException(Exception):
+    def __init__(self, store, env_var, env_algo, env_graph, v, loc):
+        self.store = store
+        self.env_var = env_var
+        self.env_algo = env_algo
+        self.env_graph = env_graph
+        self.v = v
+        self.loc = loc
+
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
         case DeclarationInit():
@@ -101,41 +113,40 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             copy_env_graph = env_graph.copy()
             copy_loc = deepcopy(loc)
             v1, modified_store = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
-            match v1:
-                case True:
-                    for i in node.statements:
-
-                        modified_store, env_var, env_algo, env_graph, v2, loc = execute_statement(i, loc, graph_object, modified_store, env_var, env_algo, env_graph)
-                        if v2 == "stop":
-                            v2 = None
-                            return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
-                    env_var = copy_env_var
-                    env_algo = copy_env_algo
-                    env_graph = copy_env_graph
-                    loc = copy_loc
-                    execute_statement(node, loc, graph_object, modified_store, env_var, env_algo, env_graph)
-                case False:
-                    v2 = None
-                    return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
-
-            return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
-
+            try:
+                match v1:
+                    case True:
+                        for i in node.statements:
+                            modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc = execute_statement(i, copy_loc, graph_object, modified_store, copy_env_var, copy_env_algo, copy_env_graph)
+                        
+                        modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc = execute_statement(node, loc, graph_object, modified_store, env_var, env_algo, env_graph)
+                        return modified_store, env_var, env_algo, env_graph, v2, loc
+                    case False:
+                        v2 = None
+                        return modified_store, env_var, env_algo, env_graph, v2, loc
+            except LoopException:
+                v2 = None
+                return modified_store, env_var, env_algo, env_graph, v2, loc
         case ForEachNormal():
-            cpy_env_graph = env_graph.copy
-            cpy_env_var = deepcopy(env_var)
-            cpy_env_algo= deepcopy(env_algo)
-            cpy_loc = deepcopy(loc)
+            copy_env_graph = env_graph.copy()
+            copy_env_var = deepcopy(env_var)
+            copy_env_algo= deepcopy(env_algo)
+            copy_loc = deepcopy(loc)
 
-            v1, store = evaluator.categories.expression.execute_expression(node.iterable, cpy_env_graph, cpy_env_var, cpy_env_algo, loc, graph_object, store)
-            for i1 in v1:
-                cpy_env_var.update({node.loop_identifier:loc})
-                loc = loc.next_location()
-                store.update({cpy_env_var.get(node.loop_identifier):i1})
+            v1, modified_store = evaluator.categories.expression.execute_expression(node.iterable, copy_env_graph, copy_env_var, copy_env_algo, copy_loc, graph_object, store)
+            try:
+                for i1 in v1:
+                    copy_env_var.update({node.loop_identifier:loc})
+                    copy_loc = loc.next_location()
+                    modified_store.update({copy_env_var.get(node.loop_identifier):i1})
 
-                for i2 in node.statements:
-                    store, cpy_env_var, cpy_env_algo, cpy_env_graph, v2, loc = execute_statement(i2, loc, graph_object, store, cpy_env_var, cpy_env_algo, cpy_env_graph)
-                loc = cpy_loc
-            return store, env_var, env_algo, env_graph, v2, cpy_loc
+                    for i2 in node.statements:
+                        modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc = execute_statement(i2, copy_loc, graph_object, modified_store, copy_env_var, copy_env_algo, copy_env_graph)
+            except LoopException:
+                v2 = None
+                return modified_store, env_var, env_algo, env_graph, v2, loc
+
+            return modified_store, env_var, env_algo, env_graph, v2, loc
 
         case ForEachEdge():
             #cpy_env_graph = deepcopy(env_graph)
@@ -196,29 +207,26 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         
 
         case RepeatStatement():
-            copy_env_var = deepcopy(env_var)
-            copy_env_algo = deepcopy(env_algo)
-            copy_env_graph = env_graph.copy()
-            copy_loc = deepcopy(loc)
             v1, modified_store = evaluator.categories.expression.execute_expression(node.repeat_expression, env_graph, env_var, env_algo, loc, graph_object, store)
             
             if v1 > 0:
                 while v1 > 0:
-                    for statement in node.repeat_statements:
-                        modified_store, env_var, env_algo, env_graph, v2, loc  = execute_statement(statement, loc, graph_object, modified_store, env_var, env_algo, env_graph)
-                        if v2 == "stop":
-                            v1 = 0
-                            break
-                    env_var = copy_env_var
-                    env_algo = copy_env_algo
-                    env_graph = copy_env_graph
-                    loc = copy_loc
+                    copy_env_var = deepcopy(env_var)
+                    copy_env_algo = deepcopy(env_algo)
+                    copy_env_graph = env_graph.copy()
+                    copy_loc = deepcopy(loc)
+                    try:
+                        for statement in node.repeat_statements:
+                            modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc  = execute_statement(statement, copy_loc, graph_object, modified_store, copy_env_var, copy_env_algo, copy_env_graph)
+                    except LoopException:
+                        v2 = None
+                        return modified_store, env_var, env_algo, env_graph, v2, loc
                     v1 -= 1
                 modified_store2 = modified_store
-                return modified_store2, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
+                return modified_store2, env_var, env_algo, env_graph, v2, loc
             else:
                 v2 = None
-                return modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc
+                return modified_store, env_var, env_algo, env_graph, v2, loc
 
         case Algorithm():
             ph_env_algo = evaluator.categories.algorithm.execute_algorithm(node, env_graph, env_var, env_algo, loc, graph_object, store)
@@ -246,8 +254,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return store, env_var, env_algo, env_graph, v, loc
 
         case LoopModifier():
-            v = node.modifier
-            return store, env_var, env_algo, env_graph, v, loc
+            raise LoopException()
 
         case DisplayStatement():
             v,exp_store = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
@@ -256,7 +263,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case ReturnStatement():
             v,exp_store = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-            return exp_store, env_var, env_algo, env_graph, v, loc
+            raise ReturnException(exp_store, env_var, env_algo, env_graph, v, loc)
 
         case _:
             exit("Error: No statement case match!")

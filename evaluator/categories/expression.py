@@ -3,6 +3,7 @@ import math
 from copy import deepcopy
 
 import evaluator.categories.statement
+from evaluator.categories.statement import ReturnException
 
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
@@ -63,12 +64,15 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                 
                 free_location = env_var_old.get(parameters[-1].identifier).next_location() # index -1 accesses last element in an array.
 
-            store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(body_statement[0],free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
+            try: 
+                store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(body_statement[0],free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
 
-            for statement in body_statement[1:]:
-                store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(statement,loc_body, graph_object, store_body, env_var_body, env_algo_body, env_graph_body)
+                for statement in body_statement[1:]:
+                    store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(statement,loc_body, graph_object, store_body, env_var_body, env_algo_body, env_graph_body)
 
-            return v,store_body
+                return v,store_body
+            except ReturnException as e:
+                return e.v, e.store
         
         case ListExpression():
             v2 = []
