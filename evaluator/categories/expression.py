@@ -120,7 +120,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             else:
                 raise RuntimeError("Invalid graph identifier access. Use G.X outside a graph context or X inside a graph context.")
 
-        case ArrayAccess():
+        case ArrayAccess(): # (IDX)
             array_location = env_var.get(node.identifier)
             array = store.get(array_location)
 
@@ -217,13 +217,13 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     v1, store1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     v2, store2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, store1)
 
-                    return v1 and v2
+                    return v1 and v2, store2
                 
                 case 'or':
                     v1, store1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     v2, store2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, store1)
 
-                    return v1 or v2
+                    return v1 or v2, store2
                 
                 case 'weight of':
                     graph_identifier = node.arg1.split(".")[0]
