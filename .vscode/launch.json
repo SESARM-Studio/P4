@@ -11,7 +11,7 @@
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
             "args": [
-                "{graph G @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e @NEWLINE @DEDENT for each edge x-->y in G @NEWLINE @INDENT G add edge y-->x @NEWLINE @DEDENT $}"
+                "{digraph G @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e @NEWLINE @DEDENT for each edge x-->y in G @NEWLINE @INDENT G add edge y-->c,x @NEWLINE G remove edge y-->x,c @NEWLINE @DEDENT $}"
             ]
         },
         {

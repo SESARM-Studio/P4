@@ -143,26 +143,51 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             cpy_env_var = deepcopy(env_var)
             cpy_env_algo= deepcopy(env_algo)
             cpy_loc = deepcopy(loc)
-            
-
+            flag11 = []
+            flag12 = []
+            flag21 = []
+            flag22 = []
+            first_i = True
             
             graph_object = cpy_env_graph.get(node.graph_identifier)
-            edges = graph_object.get_edges()
+            edges = deepcopy(graph_object.get_edges())
 
             for i1 in edges:
+                for i_statement in range(0, len(node.statements)):
+                    for i_node in range(0,len(node.statements[i_statement].argument.nodes)):
+                        if first_i == False:    
+                            for i_flag in range(0,len(flag12)):
+                                if flag12[i_flag] == (i_statement, i_node):
+                                    node.statements[i_statement].argument.nodes[i_node], node2 = i1
+
+                            for i_flag in range(0,len(flag22)):
+                                if flag22[i_flag] == (i_statement, i_node):
+                                    node2, node.statements[i_statement].argument.nodes[i_node] = i1
+                            
+                            for i_flag in range(0,len(flag11)):
+                                if flag11[i_flag] == (i_statement, i_node):
+                                    node.statements[i_statement].argument.initial_node, node2 = i1
+                            
+                            for i_flag in range(0,len(flag21)):
+                                if flag21[i_flag] == (i_statement, i_node):
+                                    node2, node.statements[i_statement].argument.initial_node = i1
+                        
+                        if first_i == True:
+                            if node.edge.last_node == node.statements[i_statement].argument.nodes[i_node]:
+                                    node2, node.statements[i_statement].argument.nodes[i_node] = i1
+                                    flag22.append((i_statement, i_node))
+                            if node.edge.initial_node == node.statements[i_statement].argument.nodes[i_node]:
+                                    node.statements[i_statement].argument.nodes[i_node], node2 = i1
+                                    flag12.append((i_statement, i_node))
+                            if node.edge.last_node == node.statements[i_statement].argument.initial_node:
+                                    node2, node.statements[i_statement].argument.initial_node = i1
+                                    flag21.append((i_statement, i_node))
+                            if node.edge.initial_node == node.statements[i_statement].argument.initial_node:
+                                    node.statements[i_statement].argument.initial_node, node2 = i1
+                                    flag11.append((i_statement, i_node))
                 
-                if node.edge.initial_node == node.statements[0].argument.initial_node:
-                    node.statements[0].argument.initial_node, node2 = i1
-                for node1 in node.statements[0].argument.nodes:
-                    if node.edge.initial_node == node1:
-                        node.statements[0].argument.nodes[0], node2 = i1
-                
-                if node.edge.last_node == node.statements[0].argument.initial_node:
-                    node2, node.statements[0].argument.initial_node = i1
-                for node1 in node.statements[0].argument.nodes:
-                    if node.edge.last_node == node1:
-                        node2, node.statements[0].argument.nodes[0] = i1
-                
+                first_i = False
+
                 for i2 in node.statements:
                     store, cpy_env_var, cpy_env_algo, cpy_env_graph, v2, loc = execute_statement(i2, loc, graph_object, store, cpy_env_var, cpy_env_algo, cpy_env_graph)
                 loc = cpy_loc
