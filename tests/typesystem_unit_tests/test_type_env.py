@@ -14,7 +14,7 @@ def test_type_env_binding_found():
     actual = env.lookup("weight_sum")
 
     # Assert
-    assert actual is not None, "Binding not found"
+    assert actual is not TypeEnum.UNKNOWN, "Binding not found"
     assert actual == expected, f"actual -> {actual.name} == {expected.name} <- expected"
 
 def test_type_env_binding_not_found():
@@ -30,7 +30,7 @@ def test_type_env_binding_not_found():
     actual = env.lookup("edges")
 
     # Assert
-    assert actual is expected, "Binding found"
+    assert actual == expected, "Binding found"
 
 def test_type_env_in_domain():
     # Arrange

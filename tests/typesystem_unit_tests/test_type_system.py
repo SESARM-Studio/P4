@@ -78,7 +78,7 @@ def test_type_system_mag():
     # Arrange
     expected = True
 
-    magnitude_node = Magnitude("Magnutude")
+    magnitude_node = Magnitude("Magnitude")
     magnitude_node.expression = make_expression(
         arg1=make_term("TEXT", "\"hello\"")
     )
@@ -158,7 +158,7 @@ def test_type_system_arr():
     decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
     decl_init_node.identifiers = ["mrts"]
     decl_init_node.type = "int"
-    decl_init_node.expression = list_expr
+    decl_init_node.expression = [list_expr]
 
     array_access = ArrayAccess("ArrayAccess")
     array_access.identifier = "mrts"
@@ -225,7 +225,11 @@ def test_type_system_dt2():
     # Arrange
     expected = True
 
+    node1 = NodeDecl("NodeDecl")
+    node1.identifiers = ["ez"]
+
     ast = ASTNode("PROGRAM", [
+        node1,
         ASTNode("EOF", value="$")
     ])
     checker = TypeChecker(ast)
@@ -301,7 +305,10 @@ def test_type_system_ope():
                         arg1=make_term("NATURAL_NUMBER", "14"),
                         arg2=make_term("NATURAL_NUMBER", "3")
                     ),
-                    arg2=make_term("INTEGER_NUMBER", "200")
+                    arg2=make_expression("^", token="ExprMult",
+                        arg1=make_term("REAL_NUMBER", "64.0"),
+                        arg2=make_term("NATURAL_NUMBER", "2")
+                    )
                 )
             )
         ),
@@ -324,27 +331,6 @@ def test_type_system_mod():
             arg1=make_expression("%", token="ExprMult",
                 arg1=make_term("INTEGER_NUMBER", "-1"),
                 arg2=make_term("NATURAL_NUMBER", "13")
-            )
-        ),
-        ASTNode("EOF", value="$")
-    ])
-    checker = TypeChecker(ast)
-
-    # Act
-    well_formed = checker.check()
-
-    # Assert
-    assert well_formed == expected, print_ast(ast)
-
-def test_type_system_pow():
-    # Arrange
-    expected = True
-
-    ast = ASTNode("PROGRAM", [
-        make_expression(
-            arg1=make_expression("^", token="ExprMult",
-                arg1=make_term("REAL_NUMBER", "64.0"),
-                arg2=make_term("NATURAL_NUMBER", "2")
             )
         ),
         ASTNode("EOF", value="$")
@@ -542,7 +528,7 @@ def test_type_system_orc():
     # Assert
     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_arn():
+def test_type_system_gan_dtg():
     # Arrange
     expected = True
 
@@ -562,6 +548,40 @@ def test_type_system_arn():
 
     ast = ASTNode("PROGRAM", [
         graph_decl_node,
+        graph_stmt,
+        ASTNode("EOF", value="$")
+    ])
+    checker = TypeChecker(ast)
+
+    # Act
+    well_formed = checker.check()
+
+    # Assert
+    assert well_formed == expected, print_ast(ast)
+
+def test_type_system_grn():
+    # Arrange
+    expected = True
+
+    node1 = NodeDecl("NodeDecl")
+    node1.identifiers = ["a", "b", "c"]
+
+    graph_decl_node = GraphDecl("GraphDecl")
+    graph_decl_node.graph_type = "tree"
+    graph_decl_node.identifier = "yes_graph"
+    graph_decl_node.weight_type = None
+    graph_decl_node.nodes = [
+        node1
+    ]
+
+    graph_stmt = GraphStatement("GraphStatement")
+    graph_stmt.graph_identifier = "yes_graph"
+    graph_stmt.operator = "remove"
+    graph_stmt.argument = "c"
+
+    ast = ASTNode("PROGRAM", [
+        graph_decl_node,
+
         graph_stmt,
         ASTNode("EOF", value="$")
     ])
@@ -682,9 +702,9 @@ def test_type_system_dcl():
     decl_init_node.is_list = False
     decl_init_node.identifiers = ["y"]
     decl_init_node.type = "text"
-    decl_init_node.expression = make_expression(
+    decl_init_node.expression = [make_expression(
         arg1=make_term("TEXT", "\"he did it\"")
-    )
+    )]
 
 
     ast = ASTNode("PROGRAM", [
@@ -711,7 +731,7 @@ def test_type_system_ass():
     assignment = Assignment("Assignment")
     assignment.identifiers = ["y"]
     assignment.expression = make_expression(
-        arg1=make_term("REAL_NUMBER", "3.14")
+        arg1=make_term("NATURAL_NUMBER", "3")
     )
 
     ast = ASTNode("PROGRAM", [
@@ -766,7 +786,7 @@ def test_type_system_las():
     decl_init_node.dimension = make_term("NATURAL_NUMBER", "2")
     decl_init_node.identifiers = ["mrts"]
     decl_init_node.type = "int"
-    decl_init_node.expression = list_expr3
+    decl_init_node.expression = [list_expr3]
 
     ast = ASTNode("PROGRAM", [
         decl_init_node,
@@ -1183,7 +1203,7 @@ def test_type_system_dca():
     # Assert
     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_dti():
+def test_type_system_dlt_dti():
     # Arrange
     expected = True
 

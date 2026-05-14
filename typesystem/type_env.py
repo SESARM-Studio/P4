@@ -34,7 +34,7 @@ class TypeEnv():
         return new_env
 
     def lookup(self, identifier: str) -> Any:
-        """Search current and outer scopes for the identifier binding"""
+        """Search the environment for the identifier binding"""
 
         if self.in_domain(identifier):
             return self.environment[identifier]
@@ -101,10 +101,7 @@ class VariableEnv(ScopedTypeEnvironment):
         return VariableEnv(outer_scope=self)
 
     def exit_scope(self) -> "VariableEnv":
-        if isinstance(self.outer_scope, TypeEnv):
-            raise Exception("No scope to exit")
-
-        return self.outer_scope
+        return cast("VariableEnv", super().exit_scope())
 
 class AlgorithmEnv(ScopedTypeEnvironment):
     """The scoped algorithm environment"""
