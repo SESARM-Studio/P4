@@ -149,11 +149,37 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return modified_store, env_var, env_algo, env_graph, v2, loc
 
         case ForEachEdge():
-            cpy_env_graph = deepcopy(env_graph)
+            #cpy_env_graph = deepcopy(env_graph)
+            cpy_env_graph = env_graph.copy()
             cpy_env_var = deepcopy(env_var)
             cpy_env_algo= deepcopy(env_algo)
             cpy_loc = deepcopy(loc)
-            pass
+            
+
+            
+            graph_object = cpy_env_graph.get(node.graph_identifier)
+            edges = graph_object.get_edges()
+
+            for i1 in edges:
+                
+                if node.edge.initial_node == node.statements[0].argument.initial_node:
+                    node.statements[0].argument.initial_node, node2 = i1
+                for node1 in node.statements[0].argument.nodes:
+                    if node.edge.initial_node == node1:
+                        node.statements[0].argument.nodes[0], node2 = i1
+                
+                if node.edge.last_node == node.statements[0].argument.initial_node:
+                    node2, node.statements[0].argument.initial_node = i1
+                for node1 in node.statements[0].argument.nodes:
+                    if node.edge.last_node == node1:
+                        node2, node.statements[0].argument.nodes[0] = i1
+                
+                for i2 in node.statements:
+                    store, cpy_env_var, cpy_env_algo, cpy_env_graph, v2, loc = execute_statement(i2, loc, graph_object, store, cpy_env_var, cpy_env_algo, cpy_env_graph)
+                loc = cpy_loc
+                print(graph_object.get_edges())    
+            return store, env_var, env_algo, env_graph, v2, cpy_loc
+        
 
         case RepeatStatement():
             v1, modified_store = evaluator.categories.expression.execute_expression(node.repeat_expression, env_graph, env_var, env_algo, loc, graph_object, store)

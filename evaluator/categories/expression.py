@@ -92,23 +92,33 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             return len(v), store1
         
         case IdentifierAccess():
-            object_identifier = node.identifiers[0]   # I
-            field_identifier = node.identifiers[1]    # X
-            # outside any graph object (go_inside = empty)
-            if graph_object is None:
-                go = env_graph.get(object_identifier)
+            identifiers = node.identifiers
+            if graph_object is None and len(identifiers) == 2:
+                graph_identifier = identifiers[0] #I
+                node_identifier = identifiers[1] #X
 
-                if go is None:
-                    raise RuntimeError(f"Unknown graph object: {object_identifier}")
-            
-                field_loc = env_var.get(f"{go}.{field_identifier}")
+                if graph_identifier not in env_graph:
+                    raise RuntimeError("'{graph_identifier}' is an unknown graph object")
+                
+                go = env_graph[graph_identifier]
+
+                if node_identifier not in go:
+                    raise RuntimeError ("Node '{node_identifier}' not a part of graph '{go}'")
+                
+                return go[node_identifier], store
+                
+
+            elif graph_object is not None and len(identifiers) == 1:
+                node_identifier = identifiers[0] #X
+
+                if node_identifier not in graph_object:
+                    raise RuntimeError ("Node '{node_identifier}' not a part of graph '{graph_object}'")
+                
+                return graph_object[node_identifier], store
+
+
             else:
-                field_loc = env_var.get(f"{graph_object}.{field_identifier}")
-
-                if field_loc is None:
-                    raise RuntimeError(f"Unknown Node: {field_identifier}")
-
-            return store.get(field_loc), store
+                raise RuntimeError("Invalid graph identifier access. Use G.X outside a graph context or X inside a graph context.")
 
         case ArrayAccess():
             array_location = env_var.get(node.identifier)
@@ -202,6 +212,18 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     v1, store1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
 
                     return not v1, store1
+
+                case 'and':
+                    v1, store1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
+                    v2, store2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, store1)
+
+                    return v1 and v2
+                
+                case 'or':
+                    v1, store1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
+                    v2, store2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, store1)
+
+                    return v1 or v2
                 
                 case 'weight of':
                     graph_identifier = node.arg1.split(".")[0]

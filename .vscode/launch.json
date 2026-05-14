@@ -5,6 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "graph",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{graph G @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e @NEWLINE @DEDENT for each edge x-->y in G @NEWLINE @INDENT G add edge y-->x @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
             "name": "foor_loop_dec-list_and_ass-list",
             "type": "debugpy",
             "request": "launch",
@@ -22,16 +32,6 @@
             "console": "integratedTerminal",
             "args": [
                 "{arr 1d list in int := [1, 2, 3] @NEWLINE for each ident in arr @NEWLINE @INDENT 1 + ident @NEWLINE @DEDENT $}"
-            ]
-        },
-        {
-            "name": "dec&ass",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/gsl_program.py",
-            "console": "integratedTerminal",
-            "args": [
-                "{a, b, c in int @NEWLINE $}"
             ]
         },
         {
