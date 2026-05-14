@@ -3,11 +3,10 @@ from parser.ast_builder import *
 # this will maybe be split up into each category
 
 ### AST tree helpers ###
-def make_term(_type=None, value=None, children=None, token="Term"):
+def make_term(_type=None, value=None, token="Term"):
     term = Term(token)
     term.type = _type
     term.value = value
-    term.children = children
     return term
 
 def make_expression(operator=None, arg1=None, arg2=None, token="Expression"):
