@@ -176,20 +176,37 @@ class TypeChecker():
                 kind = elem_type
 
             case IdentifierAccess():
-                for identifier in node.identifiers:
-                    if isinstance(identifier, str):
-                        if env_v.lookup(identifier) is not TypeEnum.NODE: # (dt1)
-                            graph = env_g.lookup(identifier)
-                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+                if len(node.identifiers) == 3: # (gna)
+                    graph = env_g.lookup(node.identifiers[0])
+                    self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
-                            kind = graph[0] # GT
-                        else: # (dt2)
-                            node_type = env_v.lookup(identifier)
-                            self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
+                    graph_type, weight_type, node_set = graph
+                    self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
+                    self.reject_type(weight_type, TypeEnum.UNKNOWN, self.parse_expression)
 
-                            kind = node_type
-                    elif isinstance(identifier, AlgorithmCall) or isinstance(identifier, ArrayAccess):
-                        kind = self.parse_expression(identifier, env_v, env_a, env_g)
+                    self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+
+                    expr_type = self.parse_expression(node.identifiers[2], env_v, env_a, env_g)
+                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                else:
+                    if (graph := env_g.lookup(node.identifiers[0])) != TypeEnum.UNKNOWN: # (nac)
+                        graph_type, weight_type, node_set = graph
+                        self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
+                        self.expect_type_one_of(
+                            weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
+                        )
+
+                        self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+
+                        kind = TypeEnum.NODE
+                    else: # (acc)
+                        node = env_v.lookup(node.identifiers[0])
+                        self.expect_type(graph, TypeEnum.NODE, self.parse_expression)
+
+                        expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+
+                        kind = expr_type
 
             case ListExpression(): # (arl)
                 list_types = []
@@ -527,8 +544,7 @@ class TypeChecker():
 
             case Assignment(): # (ass)
                 ident_type = TypeEnum.UNKNOWN
-                for identifier in node.identifiers:
-                    ident_type = env_v.lookup(identifier)
+                ident_type = env_v.lookup(node.identifiers[0])
 
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, ident_type, self.parse_statement)

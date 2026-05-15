@@ -182,53 +182,29 @@ def test_type_system_arr():
     # Assert
     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_dt1():
+def test_type_system_nac():
     # Arrange
     expected = True
 
-    algo = Algorithm("Algorithm")
-    algo.identifier = "test"
+    node0 = NodeDecl("NodeDecl")
+    node0.identifiers = ["ez"]
 
     graph_decl_node = GraphDecl("GraphDecl")
     graph_decl_node.graph_type = "tree"
     graph_decl_node.identifier = "ze"
     graph_decl_node.weight_type = "int"
-
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["ez"]
-
-    algo_call = AlgorithmCall("AlgorithmCall")
-    algo_call.identifier = "test"
+    graph_decl_node.nodes = [
+        node0
+    ]
 
     id_access = IdentifierAccess("IdentifierAccess")
-    id_access.identifiers = ["ze", "ez", algo_call]
+    id_access.identifiers = ["ze", "ez"]
 
     ast = ASTNode("PROGRAM", [
-        algo,
         graph_decl_node,
-        node1,
         make_expression(
             arg1=id_access
         ),
-        ASTNode("EOF", value="$")
-    ])
-    checker = TypeChecker(ast)
-
-    # Act
-    well_formed = checker.check()
-
-    # Assert
-    assert well_formed == expected, print_ast(ast)
-
-def test_type_system_dt2():
-    # Arrange
-    expected = True
-
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["ez"]
-
-    ast = ASTNode("PROGRAM", [
-        node1,
         ASTNode("EOF", value="$")
     ])
     checker = TypeChecker(ast)
