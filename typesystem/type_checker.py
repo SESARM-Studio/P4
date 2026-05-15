@@ -542,12 +542,25 @@ class TypeChecker():
 
                     env_v = env_v1
 
-            case Assignment(): # (ass)
-                ident_type = TypeEnum.UNKNOWN
-                ident_type = env_v.lookup(node.identifiers[0])
+            case Assignment():
+                if len(node.identifiers) == 1: # (ass)
+                    ident_type = TypeEnum.UNKNOWN
+                    ident_type = env_v.lookup(node.identifiers[0])
 
-                expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
-                self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
+                    expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
+                    self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
+                elif isinstance(node.identifiers[1], IdentifierAccess): # (aas)
+                    identifier_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
+                    self.reject_type(identifier_access_type, TypeEnum.UNKNOWN, self.parse_statement)
+
+                    expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
+                    self.expect_type_compatable(expr_type, identifier_access_type, self.parse_statement)
+                else: # (ara)
+                    array_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
+                    self.reject_type(array_access_type, TypeEnum.UNKNOWN, self.parse_statement)
+
+                    expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
+                    self.expect_type_compatable(expr_type, array_access_type, self.parse_statement)
 
             case Declaration() | NodeDecl(): # (std)
                 env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
