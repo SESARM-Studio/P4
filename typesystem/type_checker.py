@@ -101,10 +101,21 @@ class TypeChecker():
                     case "BOOL_VALUE" | TypeEnum.BOOL: # (boo)
                         kind = TypeEnum.BOOL
 
-                    case "IDENTIFIER": # (var)
-                        ident_type = env_v.lookup(node.value)
-                        self.reject_type(ident_type, TypeEnum.UNKNOWN, self.parse_expression)
-                        kind = ident_type
+                    case "IDENTIFIER":
+                        if (ident_type := env_v.lookup(node.value)) != TypeEnum.UNKNOWN: # (var1)
+                            # check purely to match rule
+                            self.reject_type(ident_type, TypeEnum.UNKNOWN, self.parse_expression)
+
+                            kind = ident_type
+                        else: # (var2)
+                            ident_type = env_g.lookup(node.value)
+                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+
+                            graph_type, weight_type, node_set = graph
+                            self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
+                            self.expect_type_one_of(
+                                weight_type, { self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
+                            )
 
                     case _:
                         raise Exception("Unknown term type")
@@ -150,7 +161,19 @@ class TypeChecker():
                 array_type = env_v.lookup(node.identifier)
                 self.reject_type(array_type, TypeEnum.UNKNOWN, self.parse_expression)
 
-                kind = array_type
+                elem_type = array_type
+                list_access_size = 0
+                for _ in range(len(node.indexes)):
+                    if isinstance(elem_type, list):
+                        elem_type = elem_type[0]
+                        list_access_size += 1
+
+                if len(node.indexes) > list_access_size:
+                    raise TypeCheckError(
+                        self.parse_expression, f"list access in {list_access_size}d list", f"{len(node.indexes)}d list"
+                    )
+
+                kind = elem_type
 
             case IdentifierAccess():
                 for identifier in node.identifiers:
@@ -294,7 +317,9 @@ class TypeChecker():
                 graph = env_g.lookup(node.graph_identifier)
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement)
 
-                env_v1, env_g1, decl_type = self.parse_declaration(node.argument, env_v, env_g, node.graph_identifier)
+                env_v1, env_g1, decl_type = self.parse_declaration(
+                    node.argument, env_v, env_a, env_g, node.graph_identifier
+                )
                 env_g = env_g1
 
                 self.expect_type(decl_type, TypeEnum.NODE, self.parse_graph_statement)
@@ -485,7 +510,7 @@ class TypeChecker():
 
             case DeclarationInit():
                 if getattr(node, "is_list", False) is False: # (dcl)
-                    env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_g, curr_graph)
+                    env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
 
                     expr_type = self.parse_expression(node.expression[0], env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, decl_type, self.parse_statement)
@@ -493,7 +518,7 @@ class TypeChecker():
                     env_v = env_v1
                     env_g = env_g1
                 else: # (las)
-                    env_v1, decl_type = self.parse_declaration_list(node, env_v)
+                    env_v1, decl_type = self.parse_declaration_list(node, env_v, env_a, env_g)
                     for expr in node.expression:
                         expr_type = self.parse_expression(expr, env_v, env_a, env_g)
                         self.expect_type_compatable(expr_type, decl_type, self.parse_statement)
@@ -509,7 +534,7 @@ class TypeChecker():
                 self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
 
             case Declaration() | NodeDecl(): # (std)
-                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_g, curr_graph)
+                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
                 env_v = env_v1
                 env_g = env_g1
 
@@ -663,7 +688,7 @@ class TypeChecker():
                 self.parse_loop_modifier(node, inside_loop)
 
             case GraphDecl(): # (grt)
-                env_g1 = self.parse_graph_declaration(node, env_g)
+                env_g1 = self.parse_graph_declaration(node, env_v, env_a, env_g)
                 env_g = env_g1
 
             case EdgeDecl(): # (edc)
@@ -759,14 +784,18 @@ class TypeChecker():
             raise Exception("parse_algorithm: Implementation error")
 
         if node.return_type is None: # (alg)
+            if env_v.current_scope.in_domain(node.identifier):
+                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
             if env_a.current_scope.in_domain(node.identifier):
+                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
+            if env_g.current_scope.in_domain(node.identifier):
                 raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
 
             parameter_types = []
 
             env_vi = env_v; env_gi = env_g
             for param in node.parameters:
-                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_gi, None)
+                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_a, env_gi, None)
                 parameter_types.append(decl_type)
 
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
@@ -784,7 +813,11 @@ class TypeChecker():
 
             env_a = env_a1
         else: # (alr)
+            if env_v.current_scope.in_domain(node.identifier):
+                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
             if env_a.current_scope.in_domain(node.identifier):
+                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
+            if env_g.current_scope.in_domain(node.identifier):
                 raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
 
             parameter_types = []
@@ -792,7 +825,7 @@ class TypeChecker():
 
             env_vi = env_v; env_gi = env_g
             for param in node.parameters:
-                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_gi, None)
+                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_a, env_gi, None)
                 parameter_types.append(decl_type)
 
             if not self.parse_type(return_type):
@@ -818,6 +851,7 @@ class TypeChecker():
     def parse_declaration(self,
                           node: ASTNode,
                           env_v: VariableEnv,
+                          env_a: AlgorithmEnv,
                           env_g: GraphEnv,
                           curr_graph: str | None
                           ) -> tuple[VariableEnv, GraphEnv, TypeEnum]:
@@ -836,6 +870,10 @@ class TypeChecker():
                 for identifier in node.identifiers:
                     if env_v.current_scope.in_domain(identifier):
                         raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                    if env_a.current_scope.in_domain(identifier):
+                        raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                    if env_g.current_scope.in_domain(identifier):
+                        raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
 
                     env_v = env_v.bind(identifier, decl_type)
 
@@ -845,6 +883,10 @@ class TypeChecker():
 
                     for identifier in node.identifiers:
                         if env_v.current_scope.in_domain(identifier):
+                            raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                        if env_a.current_scope.in_domain(identifier):
+                            raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                        if env_g.current_scope.in_domain(identifier):
                             raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
 
                         env_v = env_v.bind(identifier, decl_type)
@@ -874,12 +916,17 @@ class TypeChecker():
                     env_g = env_g.update_node_set(curr_graph, set(node.identifiers))
 
         else: # (dlt)
-            env_v1, decl_type = self.parse_declaration_list(node, env_v)
+            env_v1, decl_type = self.parse_declaration_list(node, env_v, env_a, env_g)
             env_v = env_v1
 
         return (env_v, env_g, decl_type)
 
-    def parse_declaration_list(self, node: ASTNode, env_v: VariableEnv) -> tuple[VariableEnv, TypeEnum]:
+    def parse_declaration_list(self,
+                               node: ASTNode,
+                               env_v: VariableEnv,
+                               env_a: AlgorithmEnv,
+                               env_g: GraphEnv
+                               ) -> tuple[VariableEnv, TypeEnum]:
         if not isinstance(node, (Declaration, DeclarationInit)) or node.is_list is False:
             raise Exception("parse_declaration_list: Implementation error")
 
@@ -897,6 +944,10 @@ class TypeChecker():
 
         # abstract syntax only allows one identifier for list declarations
         if env_v.current_scope.in_domain(node.identifiers[0]):
+            raise TypeCheckError(self.parse_declaration_list, "not in domain", "double declaration")
+        if env_a.current_scope.in_domain(node.identifiers[0]):
+            raise TypeCheckError(self.parse_declaration_list, "not in domain", "double declaration")
+        if env_g.current_scope.in_domain(node.identifiers[0]):
             raise TypeCheckError(self.parse_declaration_list, "not in domain", "double declaration")
 
         env_v = env_v.bind(node.identifiers[0], dimension_type)
@@ -917,7 +968,12 @@ class TypeChecker():
 
         return well_formed
 
-    def parse_graph_declaration(self, node: ASTNode, env_g: GraphEnv) -> GraphEnv:
+    def parse_graph_declaration(self,
+                                node: ASTNode,
+                                env_v: VariableEnv,
+                                env_a: AlgorithmEnv,
+                                env_g: GraphEnv
+                                ) -> GraphEnv:
         if not isinstance(node, GraphDecl):
             raise Exception("parse_graph_declaration: Implementation error")
 
@@ -927,6 +983,10 @@ class TypeChecker():
                 if not self.parse_graph_type(graph_type):
                     raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
 
+                if env_v.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                if env_a.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
                 if env_g.current_scope.in_domain(node.identifier):
                     raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
 
@@ -940,6 +1000,10 @@ class TypeChecker():
                 if not self.parse_type_arithmetic(weight_type):
                     raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
 
+                if env_v.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                if env_a.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
                 if env_g.current_scope.in_domain(node.identifier):
                     raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
 
@@ -950,6 +1014,10 @@ class TypeChecker():
                 if not self.parse_graph_type(graph_type):
                     raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
 
+                if env_v.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                if env_a.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
                 if env_g.current_scope.in_domain(node.identifier):
                     raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
 
@@ -975,6 +1043,10 @@ class TypeChecker():
                 if not self.parse_type_arithmetic(weight_type):
                     raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
 
+                if env_v.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                if env_a.current_scope.in_domain(node.identifier):
+                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
                 if env_g.current_scope.in_domain(node.identifier):
                     raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
 
@@ -1078,7 +1150,7 @@ class TypeChecker():
 
         if first_type in self.arit_types:
             return all( # arithmetic types: allow widening/equal types
-                elem in self.arit_types
+                not isinstance(elem, list) and elem in self.arit_types
                 for elem in actual[1:]
             )
 
