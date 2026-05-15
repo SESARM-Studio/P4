@@ -1,6 +1,7 @@
 import parser.ast_builder
 from parser.ast_builder import *
 from copy import deepcopy
+from evaluator.functions import assign_nested_attribute
 
 import evaluator.categories.algorithm
 import evaluator.categories.expression
@@ -55,31 +56,104 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
         case Assignment():
-            if isinstance(node.identifiers[0], parser.ast_builder.ArrayAccess):
+            if len(node.identifiers) > 1:
+                v, exp_store = evaluator.categories.expression.execute_expression(
+                    node.expression,
+                    env_graph,
+                    env_var,
+                    env_algo,
+                    loc,
+                    graph_object,
+                    store,
+                )
+
+                # Outside graph object: G.x or G.x.a.b
+                if graph_object is None:
+                    graph_identifier = node.identifiers[0]
+                    node_identifier = node.identifiers[1]
+                    attribute_path = node.identifiers[2:]
+
+                    if graph_identifier not in env_graph:
+                        raise RuntimeError(f"Unknown graph object: {graph_identifier}")
+
+                    go = env_graph[graph_identifier]
+
+                    if node_identifier not in go:
+                        raise RuntimeError(
+                            f"Unknown node/member '{node_identifier}' "
+                            f"in graph '{graph_identifier}'"
+                        )
+
+                    # G.x := v
+                    if not attribute_path:
+                        raise RuntimeError(
+                            f"A node cannot be assigned, only its attributes"
+                        )
+
+                    # G.x.a.b := v
+                    else:
+                        assign_nested_attribute(
+                            go[node_identifier],
+                            attribute_path,
+                            v,
+                        )
+
+                # Inside graph object: x or x.a.b
+                else:
+                    go = graph_object
+                    node_identifier = node.identifiers[0]
+                    attribute_path = node.identifiers[1:]
+
+                    if node_identifier not in go:
+                        raise RuntimeError(
+                            f"Unknown node/member '{node_identifier}' "
+                            f"in current graph object"
+                        )
+
+                    # x := v
+                    if not attribute_path:
+                        raise RuntimeError(
+                            f"A node cannot be assigned, only its attributes"
+                        )
+
+                    # x.a.b := v
+                    else:
+                        assign_nested_attribute(
+                            go[node_identifier],
+                            attribute_path,
+                            v,
+                        )
+
+                return exp_store, env_var, env_algo, env_graph, None, loc
+
+            elif isinstance(node.identifiers[-1], parser.ast_builder.ArrayAccess):
                 # list-index-ass
                 store_copy = store.copy()
                 indexes = []
 
                 for term in node.identifiers[0].indexes:
                     v, store_copy = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, store_copy)
-                    indexes.append(v-1) # Minus 1, beacuse GSL indexes from 1 instead of 0, as python does
+                    indexes.append(v)
 
                 v, store_copy = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, store_copy)
                 map = store_copy.get(env_var.get(node.identifiers[0].identifier))
                 ref = map
 
-                for num in indexes:
-                    if num < 0:
+                for index in indexes[:-1]:
+                    if index < 1:
                         raise IndexError("Indexing starts from 1")
 
-                try:
-                    for index in indexes[:-1]:
-                        ref = ref[index]
-                    ref[indexes[-1]] = v
-                except(IndexError, TypeError):
-                    raise RuntimeError(
-                        f"Invalid indexing {indexes} out of range"
-                    )
+                    if index > len(ref):
+                        for i in range(len(ref), index):
+                            ref.append([])
+
+                    ref = ref[index -1] # Minus 1, because Python indexes from 0, and GSL do from 1
+
+
+                if indexes[-1] > len(ref):
+                    for i in range(len(ref), indexes[-1]):
+                        ref.append(None)
+                ref[indexes[-1] -1] = v # Minus 1, because Python indexes from 0, and GSL do from 1
 
                 store_copy.update({env_var.get(node.identifiers[0].identifier): map})
                 return store_copy, env_var, env_algo, env_graph, None, loc

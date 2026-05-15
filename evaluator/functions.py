@@ -84,3 +84,40 @@ def create_dimensional_array(dim, arr=None):
 
     arr.append(create_dimensional_array(dim - 1, []))
     return arr
+
+def assign_nested_attribute(target, path, value):
+    """
+    Assign value to a nested attribute path.
+
+    Example:
+        target = x
+        path = ["a", "b", "c"]
+
+    Means:
+        x.a.b.c := value
+    """
+
+    if not path:
+        raise RuntimeError("Missing attribute path")
+
+    current_key = path[0]
+
+    # Base case: final attribute
+    if len(path) == 1:
+        if isinstance(target, dict):
+            target[current_key] = value
+        else:
+            setattr(target, current_key, value)
+        return
+
+    # Recursive case: move deeper
+    if isinstance(target, dict):
+        if current_key not in target:
+            raise RuntimeError(f"Unknown attribute: {current_key}")
+        next_target = target[current_key]
+    else:
+        if not hasattr(target, current_key):
+            raise RuntimeError(f"Unknown attribute: {current_key}")
+        next_target = getattr(target, current_key)
+
+    assign_nested_attribute(next_target, path[1:], value)
