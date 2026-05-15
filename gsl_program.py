@@ -3,6 +3,7 @@ import sys
 from preprocessor.prepro import preprocessor
 from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
 from parser.gsl_parser import gsl_parser
+from typesystem.type_checker import TypeChecker
 
 def read(arg):
   if arg.startswith("{") and arg.endswith("}"):
@@ -26,8 +27,12 @@ def main(args):
         try:
            parser.parse_Program()
            tree = ast.build_tree(b.stack)
+           type_checker = TypeChecker(ast=tree)
+           if type_checker.check():
+              print("Yay program is well formed: tree annotated")
            if debug is True:
               print_ast(tree)
+
         except gsl_parser.ParseException as pe:
             raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
         
