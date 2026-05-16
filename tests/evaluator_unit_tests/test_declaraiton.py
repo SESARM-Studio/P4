@@ -2,11 +2,9 @@ from evaluator.functions import Location, Graph
 from parser.ast_builder import *
 from evaluator.categories.declaration import execute_declaration
 
-def make_declaration(identifiers: list[str], _type: str, is_list=False, dimension =None, value=None, children=None, token="Declaration"):
+def make_declaration(identifiers: list[str], _type: str, is_list=False, dimension =None, token="Declaration"):
     declaration = Declaration(token)
     declaration.type = _type
-    declaration.value = value
-    declaration.children = children
     declaration.identifiers = identifiers
     declaration.is_list = is_list
     if dimension:
@@ -16,11 +14,15 @@ def make_declaration(identifiers: list[str], _type: str, is_list=False, dimensio
 
     return declaration
 
-def make_node_declaration(identifiers: list[str], value=None, children=None, token="NodeDecl"):
+def make_node_declaration(identifiers: list[str], is_list=False, dimension=None, token="NodeDecl"):
     declaration = NodeDecl(token)
-    declaration.value = value
-    declaration.children = children
     declaration.identifiers = identifiers
+    declaration.is_list = is_list
+    if dimension:
+        declaration.dimension = Term("Term")
+        declaration.dimension.type = 'NATURAL_NUMBER'
+        declaration.dimension.value = dimension
+
     return declaration
 
 #### Declare arithmetic data types #### (D1)
@@ -210,7 +212,7 @@ def test_int_3d_list_declaration():
 # Declare single-dimensional list of other data type
 def test_node_1d_list_declaration():
     # Arrange
-    dec = make_declaration(["x"], "node", True)
+    dec = make_node_declaration(["x"], "node", True)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -229,9 +231,9 @@ def test_node_1d_list_declaration():
     assert len(ret.store.get(ret.env_var.get("x"))) == 0
 
 # Declare multi-dimensional list of other data type
-def test_node_3d_list_declaration():
+def test_text_3d_list_declaration():
     # Arrange
-    dec = make_declaration(["x"], "node", True, 3)
+    dec = make_declaration(["x"], "text", True, 3)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()

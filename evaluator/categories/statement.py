@@ -9,7 +9,7 @@ import evaluator.categories.declaration
 import evaluator.categories.graph_declaration
 import evaluator.categories.edge_declaration
 import evaluator.categories.graph_statement
-import evaluator.categories.edge_loop
+#import evaluator.categories.edge_loop
 
 class LoopException(Exception):
     pass
