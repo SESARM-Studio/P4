@@ -1053,8 +1053,8 @@ class TypeChecker():
 
                 env_g1 = env_g.bind(node.identifier, (graph_type, TypeEnum.UNKNOWN, set()))
 
-                env_v1 = VariableEnv().enter_scope()
-                env_a1 = AlgorithmEnv().enter_scope()
+                env_v1 = env_v.enter_scope()
+                env_a1 = env_a.enter_scope()
                 env_g2 = env_g1.enter_scope()
                 for _node in [*node.nodes, *node.edges]:
                     env_v1, env_a1, env_g2 = self.parse_statement(_node, env_v1, env_a1, env_g2,
@@ -1082,8 +1082,8 @@ class TypeChecker():
 
                 env_g1 = env_g.bind(node.identifier, (graph_type, weight_type, set()))
 
-                env_v1 = VariableEnv().enter_scope()
-                env_a1 = AlgorithmEnv().enter_scope()
+                env_v1 = env_v.enter_scope()
+                env_a1 = env_a.enter_scope()
                 env_g2 = env_g1.enter_scope()
                 for _node in [*node.nodes, *node.edges]:
                     env_v1, env_a1, env_g2 = self.parse_statement(_node, env_v1, env_a1, env_g2,
