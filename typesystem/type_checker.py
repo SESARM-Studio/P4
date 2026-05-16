@@ -968,8 +968,9 @@ class TypeChecker():
             raise TypeCheckError(self.parse_declaration_list, "valid type", "invalid type")
 
         dimension_type = resolved_type
-        for _ in range(int(node.dimension.value)):
-            dimension_type = [dimension_type]
+        if node.dimension is not None:
+            for _ in range(int(node.dimension.value)):
+                dimension_type = [dimension_type]
 
         # abstract syntax only allows one identifier for list declarations
         if env_v.current_scope.in_domain(node.identifiers[0]):
@@ -984,7 +985,7 @@ class TypeChecker():
         return (env_v, dimension_type)
 
     def parse_dimensions(self, node: ASTNode) -> bool:
-        if not isinstance(node, Term): # the dimension node is impl as Term
+        if not isinstance(node, Term) and node is not None: # the dimension node is impl as Term
             raise Exception("parse_dimensions: Implementation error")
 
         well_formed = False
