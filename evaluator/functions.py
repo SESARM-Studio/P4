@@ -48,7 +48,7 @@ class Graph:
         self.graph.add_edges_from(edges)
 
     def add_weighted_edge(self, src, dst, weight):
-        edge = [src, dst, weight]
+        edge = [(src, dst, weight)]
         self.graph.add_weighted_edges_from(edge)
     
     def add_weighted_edges(self, edges):
@@ -59,6 +59,9 @@ class Graph:
     
     def remove_edge(self, src, dst):
         self.graph.remove_edge(src, dst)
+    
+    def clear_edges(self):
+        return self.graph.clear_edges()
 
     def get_nodes(self):
         return self.graph.nodes
