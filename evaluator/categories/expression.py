@@ -93,33 +93,37 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             return len(v), store1
         
         case IdentifierAccess():
-            identifiers = node.identifiers
-            if graph_object is None and len(identifiers) == 2:
-                graph_identifier = identifiers[0] #I
-                node_identifier = identifiers[1] #X
-
-                if graph_identifier not in env_graph:
-                    raise RuntimeError("'{graph_identifier}' is an unknown graph object")
-                
-                go = env_graph[graph_identifier]
-
-                if node_identifier not in go:
-                    raise RuntimeError ("Node '{node_identifier}' not a part of graph '{go}'")
-                
-                return go[node_identifier], store
-                
-
-            elif graph_object is not None and len(identifiers) == 1:
-                node_identifier = identifiers[0] #X
-
-                if node_identifier not in graph_object:
-                    raise RuntimeError ("Node '{node_identifier}' not a part of graph '{graph_object}'")
-                
-                return graph_object[node_identifier], store
-
-
-            else:
-                raise RuntimeError("Invalid graph identifier access. Use G.X outside a graph context or X inside a graph context.")
+            if env_graph.get(node.identifiers[0]): #G.X
+                graph_object = env_graph.get(node.identifiers[0])
+                if len(node.identifiers) > 2:
+                    if isinstance(node.identifiers[2], AlgorithmCall): # G.a.addattribute()
+                        attribute, store = execute_expression(node.identifiers[2].arguments[1], env_graph, env_var, env_algo, loc, graph_object, store)
+                        graph_object.add_attribute(node.identifiers[1], attribute)
+                        v = None
+                        return v, store
+                    else: # G.a.SPE
+                        v = graph_object.get_node_data(node.identifiers[1],node.identifiers[2])
+                        return v, store
+                else: # G.a | G.nodes
+                    new_term = Term("Term")
+                    new_term.type = "IDENTIFIER"
+                    new_term.value = node.identifiers[1]
+                    v, store = execute_expression(new_term, env_graph, env_var, env_algo, loc, graph_object, store)
+                    return v, store # graph_object
+            else: # a.X
+                if graph_object.graph is not None: # Accessed from foreachEdge
+                    location = env_var.get(node.identifiers[0])
+                    value = store.get(location)
+                    if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
+                        graph_object.add_attribute(value, node.identifiers[1].parameters[1])
+                        v = None
+                        #v, store = execute_expression(node.identifiers[1], env_graph, env_var, env_algo, loc, graph_object, store)
+                        return v, store
+                    else: # a.SPE
+                        v = graph_object.get_node_data(value,node.identifiers[1])
+                        return v, store
+                else:
+                    raise Exception("Cant access global node")
 
         case ArrayAccess(): # (IDX)
             array_location = env_var.get(node.identifier)
