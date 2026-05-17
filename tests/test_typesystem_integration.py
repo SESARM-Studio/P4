@@ -82,3 +82,27 @@ algo another_one(t in nat) return real
 
     # Assert
     assert well_formed_program == True, "Program was not well formed"
+
+def test_sorta_dfs(tmp_path):
+    # Arrange
+    input_dir = tmp_path / INPUT_FILES
+    input_dir.mkdir(parents=True)
+    input_file = input_dir / "bellman_ford.gsl"
+
+    file_contents = """// file:
+node start
+visited list in node := [start]
+algo DFS(node n)
+    display n
+    visited[1] := n
+
+    for each neighbor in visited
+        DFS(neighbor)
+    """
+    input_file.write_text(file_contents)
+
+    # Act
+    well_formed_program = IntegratedTypesystem(input_file)
+
+    # Assert
+    assert well_formed_program == True, "Program was not well formed"

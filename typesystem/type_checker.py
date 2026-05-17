@@ -108,7 +108,7 @@ class TypeChecker():
 
                             kind = ident_type
                         else: # (var2)
-                            ident_type = env_g.lookup(node.value)
+                            graph = env_g.lookup(node.value)
                             self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
                             graph_type, weight_type, node_set = graph
@@ -543,13 +543,13 @@ class TypeChecker():
                     env_v = env_v1
 
             case Assignment():
-                if len(node.identifiers) == 1: # (ass)
+                if len(node.identifiers) == 1 and not isinstance(node.identifiers[0], ArrayAccess): # (ass)
                     ident_type = TypeEnum.UNKNOWN
                     ident_type = env_v.lookup(node.identifiers[0])
 
                     expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
-                elif isinstance(node.identifiers[1], IdentifierAccess): # (aas)
+                elif len(node.identifiers) > 2 and isinstance(node.identifiers[1], IdentifierAccess): # (aas)
                     identifier_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
                     self.reject_type(identifier_access_type, TypeEnum.UNKNOWN, self.parse_statement)
 
@@ -643,13 +643,10 @@ class TypeChecker():
 
             case ForEachNormal(): # (for)
                 iterable_type = self.parse_expression(node.iterable, env_v, env_a, env_g)
-                if (
-                    iterable_type is not TypeEnum.TEXT
-                    and not self.list_of_one_type(iterable_type)
-                ):
-                    raise TypeCheckError(self.parse_statement, "iterable type", iterable_type)
+                self.expect_list_of_one_type(iterable_type, self.parse_statement)
 
-                env_v1 = env_v.enter_scope().bind(node.loop_identifier, iterable_type)
+                elem_type = iterable_type[0]
+                env_v1 = env_v.enter_scope().bind(node.loop_identifier, elem_type)
                 env_a1 = env_a.enter_scope()
                 env_g1 = env_g.enter_scope()
                 for statement in node.statements:
@@ -975,6 +972,8 @@ class TypeChecker():
         if node.dimension is not None:
             for _ in range(int(node.dimension.value)):
                 dimension_type = [dimension_type]
+        else:
+            dimension_type = [dimension_type] # if 1d list notation is not used
 
         # abstract syntax only allows one identifier for list declarations
         if env_v.current_scope.in_domain(node.identifiers[0]):

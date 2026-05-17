@@ -913,10 +913,16 @@ def test_type_system_for():
     # Arrange
     expected = True
 
+    decl_init_node = Declaration("Declaration")
+    decl_init_node.is_list = True
+    decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
+    decl_init_node.identifiers = ["mrts"]
+    decl_init_node.type = "int"
+
     for_normal_stmt = ForEachNormal("ForEachNormal")
     for_normal_stmt.loop_identifier = "x"
     for_normal_stmt.iterable = make_expression(
-        arg1=make_term("TEXT", "\"martin\"")
+        arg1=make_term("IDENTIFIER", "mrts")
     )
     for_normal_stmt.statements = [
         make_expression(
@@ -928,6 +934,7 @@ def test_type_system_for():
     ]
 
     ast = ASTNode("PROGRAM", [
+        decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
@@ -1076,16 +1083,23 @@ def test_type_system_stp():
     stop_node = LoopModifier("LoopModifier")
     stop_node.modifier = "stop"
 
+    decl_init_node = Declaration("Declaration")
+    decl_init_node.is_list = True
+    decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
+    decl_init_node.identifiers = ["mrts"]
+    decl_init_node.type = "int"
+
     for_normal_stmt = ForEachNormal("ForEachNormal")
     for_normal_stmt.loop_identifier = "x"
     for_normal_stmt.iterable = make_expression(
-        arg1=make_term("TEXT", "\"martin\"")
+        arg1=make_term("IDENTIFIER", "mrts")
     )
     for_normal_stmt.statements = [
         stop_node
     ]
 
     ast = ASTNode("PROGRAM", [
+        decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
