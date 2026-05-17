@@ -35,7 +35,7 @@ def test_lists(tmp_path):
     # Arrange
     input_dir = tmp_path / INPUT_FILES
     input_dir.mkdir(parents=True)
-    input_file = input_dir / "idk.gsl"
+    input_file = input_dir / "lists.gsl"
 
     file_contents = """// file:
 i 3d list in int := [[[-1,1],[2,2]],[[0,0],[-1,-1]]]
@@ -48,6 +48,32 @@ y 1d list in real
 y := i[1][1]
 
 y[1] = 2.3
+    """
+    input_file.write_text(file_contents)
+
+    # Act
+    well_formed_program = IntegratedTypesystem(input_file)
+
+    # Assert
+    assert well_formed_program == True, "Program was not well formed"
+
+def test_algorithm(tmp_path):
+    # Arrange
+    input_dir = tmp_path / INPUT_FILES
+    input_dir.mkdir(parents=True)
+    input_file = input_dir / "algorithm.gsl"
+
+    file_contents = """// file:
+s in real
+graph x_times
+algo helper(x_times in int, node s)
+    y 1d list in int := [1,2,3]
+    repeat ||y|| - 1 times
+        display s
+
+text t
+algo another_one(t in nat) return real
+    display t
     """
     input_file.write_text(file_contents)
 

@@ -822,17 +822,19 @@ class TypeChecker():
 
             parameter_types = []
 
-            env_vi = env_v; env_gi = env_g
+            env_vi = env_v.enter_scope()
+            scope_a = env_a.enter_scope()
+            env_gi = env_g.enter_scope()
             for param in node.parameters:
-                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_a, env_gi, None)
+                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, scope_a, env_gi, None)
                 parameter_types.append(decl_type)
 
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
                                                   "return_type": TypeEnum.UNKNOWN})
 
-            env_v1 = env_vi.enter_scope()
-            env_a2 = env_a1.enter_scope()
-            env_g1 = env_gi.enter_scope()
+            env_v1 = env_vi
+            env_a2 = env_a1
+            env_g1 = env_gi
             for statement in node.statements:
                 env_v1, env_a2, env_g1 = self.parse_statement(statement, env_v1, env_a2, env_g1,
                                                               node.identifier, None, False)
@@ -852,9 +854,11 @@ class TypeChecker():
             parameter_types = []
             return_type = resolve_type(node.return_type)
 
-            env_vi = env_v; env_gi = env_g
+            env_vi = env_v.enter_scope()
+            scope_a = env_a.enter_scope()
+            env_gi = env_g.enter_scope()
             for param in node.parameters:
-                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, env_a, env_gi, None)
+                env_vi, env_gi, decl_type = self.parse_declaration(param, env_vi, scope_a, env_gi, None)
                 parameter_types.append(decl_type)
 
             if not self.parse_type(return_type):
@@ -863,15 +867,15 @@ class TypeChecker():
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
                                                   "return_type": return_type})
 
-            env_v2 = env_vi.enter_scope()
-            env_a2 = env_a1.enter_scope()
-            env_g2 = env_gi.enter_scope()
+            env_v1 = env_vi
+            env_a2 = env_a1
+            env_g1 = env_gi
             for statement in node.statements:
-                env_v2, env_a2, env_g2 = self.parse_statement(statement, env_v2, env_a2, env_g2,
-                                                                      node.identifier, None, False)
-            env_v2 = env_v2.exit_scope()
+                env_v1, env_a2, env_g1 = self.parse_statement(statement, env_v1, env_a2, env_g1,
+                                                              node.identifier, None, False)
+            env_v1 = env_v1.exit_scope()
             env_a2 = env_a2.exit_scope()
-            env_g2 = env_g2.exit_scope()
+            env_g1 = env_g1.exit_scope()
 
             env_a = env_a1
 
@@ -1141,6 +1145,8 @@ class TypeChecker():
 
     def expect_type_one_of(self, actual: TypeEnum, expected_types: set, rule) -> None:
         """Helper function that throws an error if actual not one of the expected types"""
+        if not isinstance(actual, TypeEnum):
+            raise TypeCheckError(rule, TypeEnum, actual)
 
         if actual not in expected_types:
             expected = " or ".join(
