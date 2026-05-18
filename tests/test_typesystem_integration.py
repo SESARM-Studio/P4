@@ -22,14 +22,66 @@ def IntegratedTypesystem(inp_file: str) -> bool:
 
 ######### (Helper function)
 
-
-#########
-#
-# Test steps:
-#
-#########
-
 INPUT_FILES = "tests/typesystem_integration/"
+
+def test_bellman_ford(tmp_path):
+    # Arrange
+    input_dir = tmp_path / INPUT_FILES
+    input_dir.mkdir(parents=True)
+    input_file = input_dir / "bellman_ford.gsl"
+
+    file_contents = """// file:
+digraph G with int weight
+    node s, y, z, t, x
+
+    edge s --> t, y weight 6, 7
+    edge y --> z weight 9
+    edge y --> x weight -3
+    edge z --> s, x weight 2, 7
+    edge t --> y, z weight 8, -4
+    edge t --> x weight 5
+    edge x --> t weight -2
+
+algo initializeSingleSource(node s)
+    // Adding attributes: nodeX.addAttribute(datatype, attributeName)
+    G.nodes.addAttribute("natural", SPE) // shortest Path Estimate
+    G.nodes.addAttribute("node", pi)
+
+    for each v in G.nodes
+        v.SPE := INF
+        v.pi := NIL
+    s.SPE := 0
+
+algo relax(node x1, node x2, w in int)
+    if x2.SPE > x1.SPE + w then
+        x2.SPE := x1.SPE + w
+        x2.pi := x1
+
+algo bellmanFord(node s) return bool
+
+    initializeSingleSource(s)
+
+    // '||v||' is magnitude of v
+    repeat ||G.nodes|| - 1 times
+        for each edge x1 --> x2 with weight w in G
+            relax(x1, x2, w)
+
+    for each edge x1 --> x2 with weight w in G
+        if x2.SPE > x1.SPE + w then
+            return false
+    return true
+
+
+bellmanFord(G.nodes.s)
+    """
+    input_file.write_text(file_contents)
+
+    # Act
+    well_formed_program = IntegratedTypesystem(input_file)
+
+    # Assert
+    assert well_formed_program == True, "Program was not well formed"
+
 
 def test_lists(tmp_path):
     # Arrange

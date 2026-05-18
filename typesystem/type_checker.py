@@ -176,10 +176,20 @@ class TypeChecker():
                 self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
                 self.reject_type(weight_type, TypeEnum.UNKNOWN, self.parse_expression)
 
-                self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+                if node.identifiers[1] != "nodes": # TODO: add proper handling for .nodes and .edges
+                    self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
 
-                expr_type = self.parse_expression(node.identifiers[2], env_v, env_a, env_g)
-                self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    if ( # TODO: add proper handling for addAttribute()
+                        not isinstance(node.identifiers[2], AlgorithmCall) and node.identifiers[2] != "addAttribute"
+                    ):
+                        expr_type = self.parse_expression(node.identifiers[2], env_v, env_a, env_g)
+                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                        kind = expr_type
+                    else:
+                        # addAttribute should return no type or the type of the attribute
+                        kind = TypeEnum.UNKNOWN # TODO: implement addAttribute here and in the formal type system
+                else: # TODO: fix node access in G.nodes.x
+                    kind = TypeEnum.NODE # hardcoded value for node access
 
             case IdentifierAccess():
                 if (graph := env_g.lookup(node.identifiers[0])) != TypeEnum.UNKNOWN: # (nac)
@@ -189,15 +199,21 @@ class TypeChecker():
                         weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
                     )
 
-                    self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+                    if node.identifiers[1] == "nodes": # TODO: add proper handling for .nodes and .edges
+                        kind = [TypeEnum.NODE]
+                    else:
+                        self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+                        kind = TypeEnum.NODE
 
-                    kind = TypeEnum.NODE
                 else: # (acc)
-                    node = env_v.lookup(node.identifiers[0])
-                    self.expect_type(graph, TypeEnum.NODE, self.parse_expression)
+                    node_type = env_v.lookup(node.identifiers[0])
+                    self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
 
-                    expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
-                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+
+                    # TODO: add attributes
+                    # expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                    # self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    expr_type = TypeEnum.NAT # hardcoded value for all attributes
 
                     kind = expr_type
 
@@ -543,6 +559,9 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, array_access_type, self.parse_statement)
 
+            case Assignment(): # TODO: add attributes to graph or nodes
+                pass
+
             case Declaration() | NodeDecl(): # (std)
                 env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
                 env_v = env_v1
@@ -620,7 +639,7 @@ class TypeChecker():
 
                 env_v1 = env_v.enter_scope()
                 env_a1 = env_a.enter_scope()
-                env_g1 = env_g.exit_scope()
+                env_g1 = env_g.enter_scope()
                 for statement in node.repeat_statements:
                     env_v1, env_a1, env_g1 = self.parse_statement(statement, env_v1, env_a1, env_g1,
                                                                   curr_algo, curr_graph, inside_loop=True)
@@ -666,7 +685,10 @@ class TypeChecker():
                 env_g = env_g1 # only update env_g as rule states
 
             case ForEachEdge() if node.weight_identifier is not None: # (frw)
-                graph_type, weight_type, node_set = env_g.lookup(node.graph_identifier)
+                graph = env_g.lookup(node.graph_identifier)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+
+                graph_type, weight_type, node_set = graph
                 self.expect_type_one_of(graph_type, self.graph_types, self.parse_statement)
                 self.expect_type_one_of(weight_type, self.arit_types, self.parse_statement)
 
