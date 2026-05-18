@@ -576,7 +576,7 @@ def test_type_system_are():
     node1.identifiers = ["a", "b"]
 
     graph_decl_node = GraphDecl("GraphDecl")
-    graph_decl_node.graph_type = "tree"
+    graph_decl_node.graph_type = "digraph"
     graph_decl_node.identifier = "yes_graph"
     graph_decl_node.weight_type = None
     graph_decl_node.nodes = [

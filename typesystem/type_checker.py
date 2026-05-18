@@ -238,9 +238,7 @@ class TypeChecker():
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
                 graph_type, weight_type, node_set = graph
-                self.expect_type_one_of(
-                    graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_expression
-                )
+                self.expect_type(graph_type, TypeEnum.DIGRAPH, self.parse_expression)
 
                 self.expect_type_one_of(weight_type, self.arit_types, self.parse_expression)
 
@@ -410,7 +408,7 @@ class TypeChecker():
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_edge_declaration)
 
                 graph_type, weight_type, node_set = graph
-                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
+                self.expect_type(graph_type, TypeEnum.DIGRAPH, self.parse_edge_declaration)
                 self.expect_type(weight_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
 
                 identifier1 = (
@@ -468,7 +466,7 @@ class TypeChecker():
                 self.reject_type(curr_graph_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
 
                 graph_type, weight_type, node_set = curr_graph_type
-                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
+                self.expect_type(graph_type, TypeEnum.DIGRAPH, self.parse_edge_declaration)
                 self.expect_type_one_of(weight_type, self.arit_types, self.parse_edge_declaration)
 
                 identifier1 = (
