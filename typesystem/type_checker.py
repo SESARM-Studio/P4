@@ -59,15 +59,13 @@ class TypeChecker():
             raise Exception("parse_program: Implementation error")
 
         if len(node.children) > 1: # (pgm)
-            try: # create the initial environments and parse the program
-                env_v = VariableEnv()
-                env_a = AlgorithmEnv()
-                env_g = GraphEnv()
-                for statement in node.children[:-1]: # does not follow rule, but (com) doesn't exist
-                    env_v, env_a, env_g = self.parse_statement(statement, env_v, env_a, env_g, None, None, False)
-                well_formed = True
-            except TypeCheckError as e:
-                print(f"TypeCheckError: {e}")
+            # create the initial environments and parse the program
+            env_v = VariableEnv()
+            env_a = AlgorithmEnv()
+            env_g = GraphEnv()
+            for statement in node.children[:-1]: # does not follow rule, but (com) doesn't exist
+                env_v, env_a, env_g = self.parse_statement(statement, env_v, env_a, env_g, None, None, False)
+            well_formed = True
         else: # (pgn)
             # last element is always expected to be EOF
             end_of_file = node.children[-1]
