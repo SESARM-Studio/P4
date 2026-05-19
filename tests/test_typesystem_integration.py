@@ -24,8 +24,9 @@ def IntegratedTypesystem(inp_file: str) -> bool:
 
 INPUT_FILES = "tests/typesystem_integration/"
 
-def test_bellman_ford(tmp_path):
+def test_bellman_ford(tmp_path): # tmp:path is from pytest that creates a tmp path for the test run
     # Arrange
+    # the '/' is overloaded for path objects that concats the two paths with '/' or '\' depending on system
     input_dir = tmp_path / INPUT_FILES
     input_dir.mkdir(parents=True)
     input_file = input_dir / "bellman_ford.gsl"
