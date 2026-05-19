@@ -34,11 +34,11 @@ def test_expression_lit_nat():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == 18
-    assert store1 == store
+    assert return_object.v == 18
+    assert return_object.modified_store == store
 
 
 # ********* Literal Expressions ********* 
@@ -54,11 +54,11 @@ def test_expression_lit_int():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -18
-    assert store1 == store
+    assert return_object.v == -18
+    assert return_object.modified_store == store
 
 def test_expression_lit_real():
     # Arrange
@@ -71,11 +71,11 @@ def test_expression_lit_real():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -18.9
-    assert store1 == store
+    assert return_object.v == -18.9
+    assert return_object.modified_store == store
 
 def test_expression_lit_text():
     # Arrange
@@ -88,11 +88,11 @@ def test_expression_lit_text():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == "kdsfbibqoqenq fdsf !¤!¤/Y!N131288__:!321"
-    assert store1 == store
+    assert return_object.v == "kdsfbibqoqenq fdsf !¤!¤/Y!N131288__:!321"
+    assert return_object.modified_store == store
 
 def test_expression_lit_bool():
     # Arrange
@@ -105,11 +105,11 @@ def test_expression_lit_bool():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == True
-    assert store1 == store
+    assert return_object.v == True
+    assert return_object.modified_store == store
     
 
 # ********* Identifier ********* 
@@ -128,11 +128,11 @@ def test_expression_id():
     store.update({loc: 484000.2})
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == 484000.2
-    assert store1 == store
+    assert return_object.v == 484000.2
+    assert return_object.modified_store == store
 
 def test_expression_idg():
     # Arrange
@@ -147,12 +147,15 @@ def test_expression_idg():
     graph_object.create_graph("graph")
     graph_object.add_node("a")
 
+    env_var.update({"a": loc})
+    store.update({loc: "a"})
+
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(term, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == "a"
-    assert store1 == store
+    assert return_object.v == "a"
+    assert return_object.modified_store == store
 
 
 # ********* Identifier access ********* 
@@ -176,10 +179,10 @@ def test_expression_and1():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_and2():
     # Arrange
@@ -196,10 +199,10 @@ def test_expression_and2():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_or1():
     # Arrange
@@ -216,10 +219,10 @@ def test_expression_or1():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == True    
+    assert return_object.v == True    
 
 def test_expression_or2():
     # Arrange
@@ -236,10 +239,10 @@ def test_expression_or2():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == False  
+    assert return_object.v == False  
 
 
 # ********* Equality *********
@@ -268,10 +271,10 @@ def test_expression_eq1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_eq2():
     # Arrange
@@ -297,10 +300,10 @@ def test_expression_eq2():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_neq1():
     # Arrange
@@ -326,10 +329,10 @@ def test_expression_neq1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_neq1():
     # Arrange
@@ -355,10 +358,10 @@ def test_expression_neq1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 
 # ********* Comparison *********
@@ -387,10 +390,10 @@ def test_expression_lt1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_lt2():
     # Arrange
@@ -416,10 +419,10 @@ def test_expression_lt2():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_gt1():
     # Arrange
@@ -445,10 +448,10 @@ def test_expression_gt1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_gt2():
     # Arrange
@@ -474,10 +477,10 @@ def test_expression_gt2():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_leq1():
     # Arrange
@@ -503,10 +506,10 @@ def test_expression_leq1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_leq2():
     # Arrange
@@ -532,10 +535,10 @@ def test_expression_leq2():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_leq3():
     # Arrange
@@ -561,10 +564,10 @@ def test_expression_leq3():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_geq1():
     # Arrange
@@ -590,10 +593,10 @@ def test_expression_geq1():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_geq2():
     # Arrange
@@ -619,10 +622,10 @@ def test_expression_geq2():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 def test_expression_geq3():
     # Arrange
@@ -648,10 +651,10 @@ def test_expression_geq3():
     loc3 = loc2.next_location()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc3, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 
 # ********* Arithmetic *********
@@ -671,10 +674,10 @@ def test_expression_add():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == 4
+    assert return_object.v == 4
 
 def test_expression_sub():
     # Arrange
@@ -691,10 +694,10 @@ def test_expression_sub():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -10
+    assert return_object.v == -10
 
 def test_expression_mul():
     # Arrange
@@ -711,10 +714,10 @@ def test_expression_mul():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -21
+    assert return_object.v == -21
 
 def test_expression_div():
     # Arrange
@@ -731,10 +734,10 @@ def test_expression_div():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -3.5
+    assert return_object.v == -3.5
 
 def test_expression_mod():
     # Arrange
@@ -751,10 +754,10 @@ def test_expression_mod():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == 4
+    assert return_object.v == 4
 
 
 # ********* Exponentiation *********
@@ -774,10 +777,10 @@ def test_expression_exp():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == -2187
+    assert return_object.v == -2187
 
 
 # ********* Exponentiation *********
@@ -798,10 +801,10 @@ def test_expression_neg1():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == False
+    assert return_object.v == False
 
 def test_expression_neg2():
     # Arrange
@@ -819,10 +822,10 @@ def test_expression_neg2():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == True
+    assert return_object.v == True
 
 
 # ********* Absolute value / Magnitude *********
@@ -845,10 +848,10 @@ def test_expression_abs():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == 2
+    assert return_object.v == 2
 
 def test_expression_mag1():
     # Arrange
@@ -868,10 +871,10 @@ def test_expression_mag1():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc, graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
     # Assert
-    assert v1 == 4
+    assert return_object.v == 4
 
 def test_expression_mag2():
     # Arrange
@@ -894,10 +897,10 @@ def test_expression_mag2():
     store.update({loc: [1,2,3]})
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(abs_expression, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == 3
+    assert return_object.v == 3
 
 
 # ********* Parentheses *********
@@ -956,10 +959,10 @@ def test_expression_cll():
 
 
     ## Act
-    v1, store1 = evaluator.categories.expression.execute_expression(algorithm_call, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(algorithm_call, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     ## Assert
-    assert v1 == 5
+    assert return_object.v == 5
 
 
 # ********* List *********
@@ -993,10 +996,10 @@ def test_expression_list():
     store = dict()
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(exp_main, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(exp_main, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == [[1,2],[3,4]]
+    assert return_object.v == [[1,2],[3,4]]
 
 
 # ********* Indexing *********
@@ -1023,10 +1026,10 @@ def test_expression_indexing():
     exp_outer = make_expression(arg1=array_access_node)
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(exp_outer, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(exp_outer, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == 2
+    assert return_object.v == 2
 
 
 # ********* Weight of edges *********
@@ -1069,10 +1072,10 @@ def test_expression_woe1():
     exp = make_expression("weight of", arg1="G.a-->b")
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(exp, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(exp, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == 5
+    assert return_object.v == 5
 
 def test_expression_woe2():
 
@@ -1112,9 +1115,9 @@ def test_expression_woe2():
     exp = make_expression("weight of", arg1="G.a-->b")
 
     # Act
-    v1, store1 = evaluator.categories.expression.execute_expression(exp, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+    return_object = evaluator.categories.expression.execute_expression(exp, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
 
     # Assert
-    assert v1 == 5
+    assert return_object.v == 5
 
 
