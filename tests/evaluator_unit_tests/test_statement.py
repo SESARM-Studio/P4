@@ -647,10 +647,6 @@ def test_repeat_statement_runs_body_three_times(setup_env):
     assert value is None
     assert loc == setup_env["loc"]
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 6a7ead8 (Added Repeat statement tests to test_statement.py)
 def test_repeat_statement_zero_times_does_not_run_body(setup_env):
     #arrange
     node = RepeatStatement("RepeatStatement")
@@ -682,10 +678,7 @@ def test_repeat_statement_zero_times_does_not_run_body(setup_env):
     assert value is None
     assert loc == setup_env["loc"]
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 6a7ead8 (Added Repeat statement tests to test_statement.py)
 def test_repeat_statement_breaks_on_loop_exception(setup_env):
     #arrange
     node = RepeatStatement("RepeatStatement")

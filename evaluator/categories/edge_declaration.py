@@ -61,7 +61,7 @@ def execute_edge_declaration(tree_node: EdgeDecl, env_graph, env_var, env_algo, 
                 left_to_right = False
                 get_edges_to_add(tree_node, env_graph, env_var, env_algo, loc, graph_object, store, added_edges, left_to_right)
                 if graph_object.graph is not None:
-                    graph_object.add_weighted_edges(added_edges)
+                    graph_object.add_edges(added_edges)
                 return added_edges
 
             case "<->":
