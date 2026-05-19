@@ -6,40 +6,40 @@ def execute_node_expression(tree_node: ExprNode, env_graph, env_var, env_algo, l
     if graph_object.graph is not None:
         match tree_node.direction:
             case "---":
-                node_identifier, store1 = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.neighbors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(graph_object.graph.neighbors(E.v)), E.modified_store
             case "-->":
-                node_identifier, store1 = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.successors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(graph_object.graph.successors(E.v)), E.modified_store
             case "<--":
-                node_identifier, store1 = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.predecessors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(graph_object.graph.predecessors(E.v)), E.modified_store
             case "<->":
                 points_both_ways = []
-                node_identifier, store1 = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                successors = list(graph_object.graph.successors(node_identifier))
-                predecessors = list(graph_object.graph.predecessors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                successors = list(graph_object.graph.successors(E.v))
+                predecessors = list(graph_object.graph.predecessors(E.v))
                 for node in successors:
                     if node in predecessors:
                         points_both_ways.append(node)
-                return points_both_ways
+                return points_both_ways, E.modified_store
     else:
         match tree_node.direction:
             case "---":
-                node_identifier, graph_object = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.neighbors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(E.graph_object.graph.neighbors(E.v)), E.modified_store
             case "-->":
-                node_identifier, graph_object = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.successors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(E.graph_object.graph.successors(E.v)), E.modified_store
             case "<--":
-                node_identifier, graph_object = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                return list(graph_object.graph.predecessors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                return list(E.graph_object.graph.predecessors(E.v)), E.modified_store
             case "<->":
                 points_both_ways = []
-                node_identifier, graph_object = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-                successors = list(graph_object.graph.successors(node_identifier))
-                predecessors = list(graph_object.graph.predecessors(node_identifier))
+                E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
+                successors = list(E.graph_object.graph.successors(E.v))
+                predecessors = list(E.graph_object.graph.predecessors(E.v))
                 for node in successors:
                     if node in predecessors:
                         points_both_ways.append(node)
-                return points_both_ways
+                return points_both_ways, E.modified_store

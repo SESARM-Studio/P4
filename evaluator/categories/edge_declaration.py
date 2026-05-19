@@ -94,7 +94,7 @@ def get_edges_to_add(tree_node: EdgeDecl, env_graph, env_var, env_algo, loc, gra
             else:
                 edge.append(tree_node.initial_node)
         if tree_node.weight != []:
-            value, store = evaluator.categories.expression.execute_expression(tree_node.weight[index], env_graph, env_var, env_algo, loc, graph_object, store)
-            edge.append(value)
+            E = evaluator.categories.expression.execute_expression(tree_node.weight[index], env_graph, env_var, env_algo, loc, graph_object, store)
+            edge.append(E.v)
         added_edges.append(tuple(edge))
     return added_edges
