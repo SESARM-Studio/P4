@@ -398,13 +398,13 @@ class TypeChecker():
                 )
                 self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
 
-                for _node in node.nodes:
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
+                for node_obj in node.nodes:
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                 kind = TypeEnum.EDGE
 
@@ -423,13 +423,13 @@ class TypeChecker():
                 )
                 self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
 
-                for _node in node.nodes:
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
+                for node_obj in node.nodes:
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                 kind = TypeEnum.EDGE
 
@@ -453,13 +453,13 @@ class TypeChecker():
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
-                for _node, weight in zip(node.nodes, node.weight):
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
-                        else _node
+                for node_obj, weight in zip(node.nodes, node.weight):
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
+                        else node_obj
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
@@ -486,13 +486,13 @@ class TypeChecker():
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
-                for _node, weight in zip(node.nodes, node.weight):
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
-                        else _node
+                for node_obj, weight in zip(node.nodes, node.weight):
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
+                        else node_obj
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
