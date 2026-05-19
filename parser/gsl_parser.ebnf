@@ -22,7 +22,7 @@ IfStatement        ::= 'if' Expression 'then' NEWLINE INDENT Statement+ DEDENT (
 WhileStatement     ::= 'while' Expression 'then' NEWLINE INDENT Statement+ DEDENT
 ForEachNormal      ::= 'for each' IDENTIFIER 'in' Expression NEWLINE INDENT Statement+ DEDENT
 ForEachEdge        ::= 'for each' EdgeLoop ('with weight' IDENTIFIER)? 'in' IDENTIFIER NEWLINE INDENT Statement+ DEDENT
-EdgeLoop           ::= TYPE_EDGE (IdentifierAccess | IDENTIFIER) ('---' | '-->' | '<--' | '<->') (IdentifierAccess | IDENTIFIER)
+EdgeLoop           ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<->') IDENTIFIER
 
 RepeatStatement    ::= 'repeat' Expression 'times' NEWLINE INDENT Statement+ DEDENT
 DisplayStatement   ::= 'display' Expression
@@ -60,8 +60,8 @@ ExprNode           ::= '(' Expression ')---'
                      | '(' Expression ')-->' 
                      | '(' Expression ')<--'
                      | '(' Expression ')<->'
-EdgeDecl           ::= TYPE_EDGE (IdentifierAccess | IDENTIFIER) ('---' | '-->' | '<--' | '<->') (IdentifierAccess | IDENTIFIER) (',' (IdentifierAccess | IDENTIFIER))* ('weight' Expression (',' Expression)*)?
-IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER | '.' AlgorithmCall | '.' ArrayAccess)+
+EdgeDecl           ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
+IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)+ ('.' AlgorithmCall)?
 
 
 Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('return' TYPE)? NEWLINE INDENT Statement+ DEDENT
@@ -82,7 +82,7 @@ ListExpression     ::= '[' Expression (',' Expression)* ']'
                      | '[' Expression ']'
 
 Assignment         ::= AssignmentIdentifier ':=' Expression
-AssignmentIdentifier ::= ArrayAccess | IDENTIFIER ('.' IDENTIFIER)* ('.' ArrayAccess)?
+AssignmentIdentifier ::= ArrayAccess | IDENTIFIER ('.' IDENTIFIER)*
 
 <?TOKENS?>
 
