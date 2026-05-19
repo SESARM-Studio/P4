@@ -205,7 +205,7 @@ class TypeChecker():
                         self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
                         kind = TypeEnum.NODE
 
-                else: # (acc)
+                else: # (aac)
                     node_type = env_v.lookup(node.identifiers[0])
                     self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
 
