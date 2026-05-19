@@ -5,13 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "graph",
+            "name": "digraph_with_weight",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
             "args": [
-                "{digraph G @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e @NEWLINE @DEDENT for each edge x-->y in G @NEWLINE @INDENT G add edge y-->c,x @NEWLINE G remove edge y-->x,c @NEWLINE @DEDENT $}"
+                "{i in int := 6 @NEWLINE digraph G with int weight @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e weight 7,7,6,7 @NEWLINE edge b-->a weight 6 @NEWLINE @DEDENT for each edge x<->y with weight i in G @NEWLINE @INDENT G add edge y-->c,x @NEWLINE G add edge y-->y @NEWLINE display x @NEWLINE display y @NEWLINE display i @NEWLINE @DEDENT $}"
+            ]
+        },
+        {
+            "name": "digraph",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/gsl_program.py",
+            "console": "integratedTerminal",
+            "args": [
+                "{i in int := 2 @NEWLINE digraph G @NEWLINE @INDENT node a,b,c,d,e @NEWLINE edge a-->b,c,d,e @NEWLINE @DEDENT for each edge x<--y in G @NEWLINE @INDENT G add edge y-->c,x @NEWLINE G add edge y-->y @NEWLINE display x @NEWLINE display y @NEWLINE display i @NEWLINE @DEDENT $}"
             ]
         },
         {
@@ -41,7 +51,7 @@
             "program": "${workspaceFolder}/gsl_program.py",
             "console": "integratedTerminal",
             "args": [
-                "{while 1 < 2 then @NEWLINE @INDENT 1 + 2 @NEWLINE @DEDENT $}"
+                "{i in int := 1 @NEWLINE while i < 100 then @NEWLINE @INDENT i := i + 1 @NEWLINE 1 + 1 @NEWLINE @DEDENT $}"
             ]
         },
         {

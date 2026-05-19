@@ -48,17 +48,23 @@ class Graph:
         self.graph.add_edges_from(edges)
 
     def add_weighted_edge(self, src, dst, weight):
-        edge = [src, dst, weight]
+        edge = [(src, dst, weight)]
         self.graph.add_weighted_edges_from(edge)
     
     def add_weighted_edges(self, edges):
         self.graph.add_weighted_edges_from(edges)
+
+    def add_attribute(self, node, attribute):
+        self.graph.nodes[node][attribute] = None
 
     def remove_node(self, node):
         self.graph.remove_node(node)
     
     def remove_edge(self, src, dst):
         self.graph.remove_edge(src, dst)
+    
+    def clear_edges(self):
+        return self.graph.clear_edges()
 
     def get_nodes(self):
         return self.graph.nodes
@@ -68,6 +74,9 @@ class Graph:
     
     def get_edge_data(self, src, dst):
         return self.graph.get_edge_data(src, dst)
+    
+    def get_node_data(self, node, data):
+        return self.graph.nodes[node][data]
 
     def copy(self):
         return deepcopy(self)
