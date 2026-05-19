@@ -174,8 +174,8 @@ class TypeChecker():
 
                 kind = [TypeEnum.NODE]
 
-            case IdentifierAccess(identifiers=[i1, i2]): # (gnd)
-                graph = env_g.lookup(node.identifiers[0])
+            case IdentifierAccess(identifiers=[i1, i2]) if env_v.lookup(i1) == TypeEnum.UNKNOWN: # (gnd)
+                graph = env_g.lookup(i1)
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
                 graph_type, weight_type, node_set = graph
@@ -194,19 +194,23 @@ class TypeChecker():
                         weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
                     )
 
-                    expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
-                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    # TODO: extend with more complex type for checking types of attributes
+                    kind = TypeEnum.NAT
 
-                    kind = expr_type
+                    # expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                    # self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    # kind = expr_type
 
                 else: # (nxr)
                     node_type = env_v.lookup(node.identifiers[0])
                     self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
 
-                    expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
-                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    # TODO: extend with more complex type for checking types of attributes
+                    kind = TypeEnum.NAT
 
-                    kind = expr_type
+                    # expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                    # self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                    # kind = expr_type
 
             case ListExpression(): # (arl)
                 list_types = []
@@ -305,7 +309,7 @@ class TypeChecker():
                 kind = expr1_type
 
             case Expression(operator=None | ""): # sometimes the expr just contains another expr
-                        kind = self.parse_expression(node.arg1, env_v, env_a, env_g)
+                kind = self.parse_expression(node.arg1, env_v, env_a, env_g)
 
             case _:
                 raise Exception("Unknown expression type")
@@ -536,7 +540,7 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
 
-            case Assignment(identifiers=ids) if len(ids) > 2: # (aas)
+            case Assignment(identifiers=ids) if len(ids) > 2: # 2 = I.X chain # (aas)
                 identifier_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
                 self.reject_type(identifier_access_type, TypeEnum.UNKNOWN, self.parse_statement)
 

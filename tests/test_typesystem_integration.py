@@ -73,7 +73,7 @@ algo bellmanFord(node s) return bool
     return true
 
 
-bellmanFord(G.nodes.s)
+bellmanFord(G.s)
     """
     input_file.write_text(file_contents)
 
