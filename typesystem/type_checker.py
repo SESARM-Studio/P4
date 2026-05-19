@@ -168,52 +168,43 @@ class TypeChecker():
 
                 kind = elem_type
 
-            case IdentifierAccess() if len(node.identifiers) == 3: # (gna)
+            case IdentifierAccess(identifiers=[i1, i2]) if i2 == "nodes": # (gns)
+                graph = env_g.lookup(i1)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+
+                kind = [TypeEnum.NODE]
+
+            case IdentifierAccess(identifiers=[i1, i2]): # (gnd)
                 graph = env_g.lookup(node.identifiers[0])
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
                 graph_type, weight_type, node_set = graph
                 self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
-                self.reject_type(weight_type, TypeEnum.UNKNOWN, self.parse_expression)
+                self.expect_type_one_of(weight_type, { TypeEnum.UNKNOWN, *self.arit_types }, self.parse_expression)
 
-                if node.identifiers[1] != "nodes": # TODO: add proper handling for .nodes and .edges
-                    self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+                self.expect_in_domain(i2, node_set, self.parse_expression)
 
-                    if ( # TODO: add proper handling for addAttribute()
-                        not isinstance(node.identifiers[2], AlgorithmCall) and node.identifiers[2] != "addAttribute"
-                    ):
-                        expr_type = self.parse_expression(node.identifiers[2], env_v, env_a, env_g)
-                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
-                        kind = expr_type
-                    else:
-                        # addAttribute should return no type or the type of the attribute
-                        kind = TypeEnum.UNKNOWN # TODO: implement addAttribute here and in the formal type system
-                else: # TODO: fix node access in G.nodes.x
-                    kind = TypeEnum.NODE # hardcoded value for node access
+                kind = TypeEnum.NODE
 
             case IdentifierAccess():
-                if (graph := env_g.lookup(node.identifiers[0])) != TypeEnum.UNKNOWN: # (nac)
+                if (graph := env_g.lookup(node.identifiers[0])) != TypeEnum.UNKNOWN: # (gxr)
                     graph_type, weight_type, node_set = graph
                     self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
                     self.expect_type_one_of(
                         weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
                     )
 
-                    if node.identifiers[1] == "nodes": # TODO: add proper handling for .nodes and .edges
-                        kind = [TypeEnum.NODE]
-                    else:
-                        self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
-                        kind = TypeEnum.NODE
+                    expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
 
-                else: # (aac)
+                    kind = expr_type
+
+                else: # (nxr)
                     node_type = env_v.lookup(node.identifiers[0])
                     self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
 
-
-                    # TODO: add attributes
-                    # expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
-                    # self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
-                    expr_type = TypeEnum.NAT # hardcoded value for all attributes
+                    expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                    self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
 
                     kind = expr_type
 
