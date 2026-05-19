@@ -232,7 +232,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             copy_env_var = deepcopy(env_var)
             copy_env_algo= deepcopy(env_algo)
             copy_loc = deepcopy(loc)
-            copy_store = deepcopy(store)
+            # copy_store = deepcopy(store)
 
             # Can't see any meaning in implementing EdgeLoop, as the nodes in for each EdgeLoop, just server as a placeholder.
             # It would not have to do anything but return them...
@@ -279,11 +279,11 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
             for edge in edges:
                 # Update store to match the edges in edge
-                copy_store.update({copy_env_var.get(node.edge.initial_node):edge[0]})
-                copy_store.update({copy_env_var.get(node.edge.last_node):edge[1]})
+                store.update({copy_env_var.get(node.edge.initial_node):edge[0]})
+                store.update({copy_env_var.get(node.edge.last_node):edge[1]})
                 if node.weight_identifier != None:
                     weight_value = copy_graph_object.get_edge_data(edge[0], edge[1])["weight"]
-                    copy_store.update({copy_env_var.get(node.weight_identifier):weight_value})
+                    store.update({copy_env_var.get(node.weight_identifier):weight_value})
                 # If the current statement inside the loop is a GraphStatement,
                 # we change the values in a copy of it (copy_statement) to match the edges in edge
                 try: 
@@ -291,22 +291,33 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                         copy_statement = deepcopy(statement)
                         match statement:
                             case GraphStatement():
-                                for i_node in range(0,len(copy_statement.argument.nodes)):
-                                    if node.edge.last_node == copy_statement.argument.nodes[i_node]:
-                                            node2, copy_statement.argument.nodes[i_node] = edge
-                                    if node.edge.initial_node == copy_statement.argument.nodes[i_node]:
-                                            copy_statement.argument.nodes[i_node], node2 = edge
-                                    if node.edge.last_node == copy_statement.argument.initial_node:
-                                            node2, copy_statement.argument.initial_node = edge
-                                    if node.edge.initial_node == copy_statement.argument.initial_node:
-                                            copy_statement.argument.initial_node, node2 = edge
-                        copy_store, copy_env_var, copy_env_algo, copy_env_graph, v, loc = execute_statement(copy_statement, loc, graph_object, copy_store, copy_env_var, copy_env_algo, copy_env_graph)
+                                match statement.argument:
+                                    case EdgeDecl():
+                                        for i_node in range(0,len(copy_statement.argument.nodes)):
+                                            if node.edge.last_node == copy_statement.argument.nodes[i_node]:
+                                                    node2, copy_statement.argument.nodes[i_node] = edge
+                                            if node.edge.initial_node == copy_statement.argument.nodes[i_node]:
+                                                    copy_statement.argument.nodes[i_node], node2 = edge
+                                            if node.edge.last_node == copy_statement.argument.initial_node:
+                                                    node2, copy_statement.argument.initial_node = edge
+                                            if node.edge.initial_node == copy_statement.argument.initial_node:
+                                                    copy_statement.argument.initial_node, node2 = edge
+                                    case Declaration():
+                                        for i_identifiers in range(0,len(copy_statement.argument.identifiers)):
+                                            if node.edge.last_node == copy_statement.argument.identifiers[i_identifiers]:
+                                                    node2, copy_statement.argument.identifiers[i_identifiers] = edge
+                                            if node.edge.initial_node == copy_statement.argument.identifiers[i_identifiers]:
+                                                    copy_statement.argument.identifiers[i_identifiers], node2 = edge
+                        store, copy_env_var, copy_env_algo, copy_env_graph, v, loc = execute_statement(copy_statement, loc, graph_object, store, copy_env_var, copy_env_algo, copy_env_graph)
                 except LoopException:
                     v2 = None
-                    loc = copy_loc
-                    return copy_store, env_var, env_algo, env_graph, v, loc
-                loc = copy_loc
-            return copy_store, env_var, env_algo, env_graph, v, loc
+                    # loc = copy_loc
+                    return store, env_var, env_algo, copy_env_graph, v, loc
+                # loc = copy_loc
+            print(graph_object.get_edges())
+            print(copy_env_graph.get(node.graph_identifier).get_edges())
+            print(store, env_var, env_algo, copy_env_graph, v, loc)
+            return store, env_var, env_algo, copy_env_graph, v, loc
         
 
         case RepeatStatement():
