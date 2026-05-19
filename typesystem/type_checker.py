@@ -1,25 +1,11 @@
 from typesystem.type_env import VariableEnv, AlgorithmEnv, GraphEnv, TypeEnv
 from typesystem.data_types import TypeEnum, resolve_type
 from parser.ast_builder import *
-class TypeCheckError(Exception):
-
-    """
-    Custom exception to make debugging of the type system easier
-
-    Prints the function from which the type error occured
-    """
-
-    def __init__(self, type_rule, expected=None, actual=None):
-        self.type_rule = type_rule
-        self.expected = expected
-        self.actual = actual
-
-    def __str__(self):
-        type_rule_function_name = self.type_rule.__name__
-        return f"[{type_rule_function_name}] expected: {self.expected}, got: {self.actual}"
+from exceptions.typesystem_exception import TypeCheckError
+from preprocessor.source_map import SourceMap
+import sys
 
 class TypeChecker():
-
     """
     Follows the type rules of type system and annotates the AST
 
@@ -43,8 +29,9 @@ class TypeChecker():
         TypeEnum.REAL: 3
     }
 
-    def __init__(self, ast: ASTNode) -> None:
+    def __init__(self, ast: ASTNode, source_map: SourceMap) -> None:
         self.ast = ast
+        self.source_map = source_map
 
     def check(self) -> bool:
         """Annotates the AST and return true if program is well formed"""
@@ -67,7 +54,8 @@ class TypeChecker():
                     env_v, env_a, env_g = self.parse_statement(statement, env_v, env_a, env_g, None, None, False)
                 well_formed = True
             except TypeCheckError as e:
-                print(f"TypeCheckError: {e}")
+                self.source_map.print_error(e, e.span[0], e.span[1])
+                sys.exit(1)
         else: # (pgn)
             # last element is always expected to be EOF
             end_of_file = node.children[-1]
@@ -103,7 +91,7 @@ class TypeChecker():
 
                     case "IDENTIFIER": # (var)
                         ident_type = env_v.lookup(node.value)
-                        self.reject_type(ident_type, TypeEnum.UNKNOWN, self.parse_expression)
+                        self.reject_type(ident_type, TypeEnum.UNKNOWN, self.parse_expression, node)
                         kind = ident_type
 
                     case _:
@@ -111,12 +99,12 @@ class TypeChecker():
 
             case ExprNode(): # (nex)
                 node_expr_type = self.parse_node_expression(node, env_v, env_a, env_g)
-                self.expect_type_list_of(node_expr_type, TypeEnum.NODE, self.parse_expression)
+                self.expect_type_list_of(node_expr_type, TypeEnum.NODE, self.parse_expression, node)
                 kind = node_expr_type # special type (list[TypeEnum])
 
             case AbsoluteValue(): # (abs)
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
-                self.expect_type_one_of(expr_type, self.arit_types, self.parse_expression)
+                self.expect_type_one_of(expr_type, self.arit_types, self.parse_expression, node)
                 kind = TypeEnum.NAT
 
             case Magnitude(): # (mag)
@@ -125,30 +113,30 @@ class TypeChecker():
                     expr_type is not TypeEnum.TEXT
                     and not self.list_of_one_type(expr_type)
                 ):
-                    raise TypeCheckError(self.parse_expression, f"{TypeEnum.TEXT} or list", expr_type)
+                    raise TypeCheckError(self.parse_expression, node.span, f"{TypeEnum.TEXT} or list", expr_type)
                 kind = TypeEnum.NAT
 
             case AlgorithmCall(): # (aca)
                 algo_type = env_a.lookup(node.identifier)
-                self.reject_type(algo_type, TypeEnum.UNKNOWN, self.parse_expression)
+                self.reject_type(algo_type, TypeEnum.UNKNOWN, self.parse_expression, node)
 
                 arguments = node.arguments if node.arguments is not None else []
                 if len(algo_type["parameters"]) != len(arguments):
-                    raise TypeCheckError(self.parse_expression, "same number of parameters and arguments", "not that")
+                    raise TypeCheckError(self.parse_expression, node.span,"same number of parameters and arguments", "not that")
 
                 for param_type, arg in zip(algo_type["parameters"], arguments):
                     arg_type = self.parse_expression(arg, env_v, env_a, env_g)
-                    self.expect_type_compatable(arg_type, param_type, self.parse_expression)
+                    self.expect_type_compatable(arg_type, param_type, self.parse_expression, node)
 
                 kind = algo_type["return_type"]
 
             case ArrayAccess(): # (arr)
                 for index in node.indexes:
                     expr_type = self.parse_expression(index, env_v, env_a, env_g)
-                    self.expect_type(expr_type, TypeEnum.NAT, self.parse_expression)
+                    self.expect_type(expr_type, TypeEnum.NAT, self.parse_expression, node)
 
                 array_type = env_v.lookup(node.identifier)
-                self.reject_type(array_type, TypeEnum.UNKNOWN, self.parse_expression)
+                self.reject_type(array_type, TypeEnum.UNKNOWN, self.parse_expression, node)
 
                 kind = array_type
 
@@ -157,12 +145,12 @@ class TypeChecker():
                     if isinstance(identifier, str):
                         if env_v.lookup(identifier) is not TypeEnum.NODE: # (dt1)
                             graph = env_g.lookup(identifier)
-                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression, node)
 
                             kind = graph[0] # GT
                         else: # (dt2)
                             node_type = env_v.lookup(identifier)
-                            self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
+                            self.expect_type(node_type, TypeEnum.NODE, self.parse_expression, node)
 
                             kind = node_type
                     elif isinstance(identifier, AlgorithmCall) or isinstance(identifier, ArrayAccess):
@@ -172,7 +160,7 @@ class TypeChecker():
                 list_types = []
                 for child in node.expressions:
                     list_types.append(self.parse_expression(child, env_v, env_a, env_g))
-                self.expect_list_of_one_type(list_types, self.parse_expression)
+                self.expect_list_of_one_type(list_types, self.parse_expression, node)
                 self.annotate_list_expr(list_types)
 
                 kind = [list_types[0]] if len(list_types) > 0 else TypeEnum.UNKNOWN
@@ -181,19 +169,19 @@ class TypeChecker():
                 match node.operator:
                     case "+" | "-" | "*" | "/" | "^": # (ope)
                         expr1_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr1_type, self.arit_types, self.parse_expression)
+                        self.expect_type_one_of(expr1_type, self.arit_types, self.parse_expression, node)
 
                         expr2_type = self.parse_expression(node.arg2, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr2_type, self.arit_types, self.parse_expression)
+                        self.expect_type_one_of(expr2_type, self.arit_types, self.parse_expression, node)
 
                         kind = self.lub_arit(expr1_type, expr2_type)
 
                     case "%": # (mod)
                         expr1_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr1_type, { TypeEnum.NAT, TypeEnum.INT }, self.parse_expression)
+                        self.expect_type_one_of(expr1_type, { TypeEnum.NAT, TypeEnum.INT }, self.parse_expression, node)
 
                         expr2_type = self.parse_expression(node.arg2, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr2_type, { TypeEnum.NAT, TypeEnum.INT }, self.parse_expression)
+                        self.expect_type_one_of(expr2_type, { TypeEnum.NAT, TypeEnum.INT }, self.parse_expression, node)
 
                         kind = self.lub_arit(expr1_type, expr2_type)
 
@@ -203,17 +191,17 @@ class TypeChecker():
                             ident1, ident2 = ident1n2.split(".")
 
                             graph = env_g.lookup(ident1)
-                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression, node)
 
                             graph_type, weight_type, node_set = graph
                             self.expect_type_one_of(
-                                graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_expression
+                                graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_expression, node
                             )
 
-                            self.expect_type_one_of(weight_type, self.arit_types, self.parse_expression)
+                            self.expect_type_one_of(weight_type, self.arit_types, self.parse_expression, node)
 
-                            self.expect_in_domain(ident2, node_set, self.parse_expression)
-                            self.expect_in_domain(ident3, node_set, self.parse_expression)
+                            self.expect_in_domain(ident2, node_set, self.parse_expression, node)
+                            self.expect_in_domain(ident3, node_set, self.parse_expression, node)
 
                             kind = weight_type
                         else: # (woe)
@@ -221,50 +209,50 @@ class TypeChecker():
                             ident1, ident2 = ident1n2.split(".")
 
                             graph = env_g.lookup(ident1)
-                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+                            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression, node)
 
                             graph_type, weight_type, node_set = graph
                             self.expect_type_one_of(
-                                graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_expression
+                                graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_expression, node
                             )
 
-                            self.expect_type_one_of(weight_type, self.arit_types, self.parse_expression)
+                            self.expect_type_one_of(weight_type, self.arit_types, self.parse_expression, node)
 
-                            self.expect_in_domain(ident2, node_set, self.parse_expression)
-                            self.expect_in_domain(ident3, node_set, self.parse_expression)
+                            self.expect_in_domain(ident2, node_set, self.parse_expression, node)
+                            self.expect_in_domain(ident3, node_set, self.parse_expression, node)
 
                             kind = weight_type
 
                     case "=" | "!=" | "<" | "<=" | ">" | ">=": # (cmp)
                         expr1_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr1_type, self.arit_types, self.parse_expression)
+                        self.expect_type_one_of(expr1_type, self.arit_types, self.parse_expression, node)
 
                         expr2_type = self.parse_expression(node.arg2, env_v, env_a, env_g)
-                        self.expect_type_one_of(expr2_type, self.arit_types, self.parse_expression)
+                        self.expect_type_one_of(expr2_type, self.arit_types, self.parse_expression, node)
 
                         kind = TypeEnum.BOOL
 
                     case "neg": # (neg)
                         expr_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type(expr_type, TypeEnum.BOOL, self.parse_expression)
+                        self.expect_type(expr_type, TypeEnum.BOOL, self.parse_expression, node)
 
                         kind = expr_type
 
                     case "and": # (and)
                         expr1_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type(expr1_type, TypeEnum.BOOL, self.parse_expression)
+                        self.expect_type(expr1_type, TypeEnum.BOOL, self.parse_expression, node)
 
                         expr2_type = self.parse_expression(node.arg2, env_v, env_a, env_g)
-                        self.expect_type(expr2_type, TypeEnum.BOOL, self.parse_expression)
+                        self.expect_type(expr2_type, TypeEnum.BOOL, self.parse_expression, node)
 
                         kind = expr1_type
 
                     case "or": # (ore)
                         expr1_type = self.parse_expression(node.arg1, env_v, env_a, env_g)
-                        self.expect_type(expr1_type, TypeEnum.BOOL, self.parse_expression)
+                        self.expect_type(expr1_type, TypeEnum.BOOL, self.parse_expression, node)
 
                         expr2_type = self.parse_expression(node.arg2, env_v, env_a, env_g)
-                        self.expect_type(expr2_type, TypeEnum.BOOL, self.parse_expression)
+                        self.expect_type(expr2_type, TypeEnum.BOOL, self.parse_expression, node)
 
                         kind = expr1_type
 
@@ -292,29 +280,29 @@ class TypeChecker():
         if not isinstance(node.argument, EdgeDecl):
             if node.operator == "add": # (gan)
                 graph = env_g.lookup(node.graph_identifier)
-                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement, node)
 
                 env_v1, env_g1, decl_type = self.parse_declaration(node.argument, env_v, env_g, node.graph_identifier)
                 env_g = env_g1
 
-                self.expect_type(decl_type, TypeEnum.NODE, self.parse_graph_statement)
+                self.expect_type(decl_type, TypeEnum.NODE, self.parse_graph_statement, node)
             else: # (grn)
                 graph = env_g.lookup(node.graph_identifier)
-                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement, node)
 
                 graph_type, weight_type, node_set = graph
-                self.expect_type_one_of(graph_type, self.graph_types, self.parse_graph_statement)
+                self.expect_type_one_of(graph_type, self.graph_types, self.parse_graph_statement, node)
 
-                self.expect_type_one_of(weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_graph_statement)
+                self.expect_type_one_of(weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_graph_statement, node)
 
                 ident2 = node.argument
-                self.expect_in_domain(ident2, node_set, self.parse_graph_statement)
+                self.expect_in_domain(ident2, node_set, self.parse_graph_statement, node)
         else: # (are)
             graph = env_g.lookup(node.graph_identifier)
-            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement)
+            self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_graph_statement, node)
 
             expr_type = self.parse_edge_declaration(node.argument, env_v, env_a, env_g, node.graph_identifier)
-            self.expect_type(expr_type, TypeEnum.EDGE, self.parse_graph_statement)
+            self.expect_type(expr_type, TypeEnum.EDGE, self.parse_graph_statement, node)
 
         return env_g
 
@@ -329,7 +317,7 @@ class TypeChecker():
 
         # (ind)
         expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
-        self.expect_type(expr_type, TypeEnum.NODE, self.parse_node_expression)
+        self.expect_type(expr_type, TypeEnum.NODE, self.parse_node_expression, node)
 
         list_expr_type = [TypeEnum.NODE]
         setattr(node, "type", list_expr_type)
@@ -350,18 +338,18 @@ class TypeChecker():
         if len(node.weight) == 0:
             if node.direction == "---": # (edu)
                 graph = env_g.lookup(curr_graph)
-                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 graph_type, weight_type, node_set = graph
-                self.expect_type_one_of(graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
-                self.expect_type(weight_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.expect_type_one_of(graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_edge_declaration, node)
+                self.expect_type(weight_type, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 identifier1 = (
                     node.initial_node.identifiers[0]
                     if isinstance(node.initial_node, IdentifierAccess)
                     else node.initial_node
                 )
-                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
+                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration, node)
 
                 for _node in node.nodes:
                     _node_id = (
@@ -369,23 +357,23 @@ class TypeChecker():
                         if isinstance(_node, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration, node)
 
                 kind = TypeEnum.EDGE
             else: # (edd)
                 graph = env_g.lookup(curr_graph)
-                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 graph_type, weight_type, node_set = graph
-                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
-                self.expect_type(weight_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration, node)
+                self.expect_type(weight_type, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 identifier1 = (
                     node.initial_node.identifiers[0]
                     if isinstance(node.initial_node, IdentifierAccess)
                     else node.initial_node
                 )
-                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
+                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration, node)
 
                 for _node in node.nodes:
                     _node_id = (
@@ -393,27 +381,27 @@ class TypeChecker():
                         if isinstance(_node, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration, node)
 
                 kind = TypeEnum.EDGE
         else:
             if node.direction == "---": # (ewu)
                 curr_graph_type = env_g.lookup(curr_graph)
-                self.reject_type(curr_graph_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.reject_type(curr_graph_type, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 graph_type, weight_type, node_set = curr_graph_type
-                self.expect_type_one_of(graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
-                self.expect_type_one_of(weight_type, self.arit_types, self.parse_edge_declaration)
+                self.expect_type_one_of(graph_type, { TypeEnum.GRAPH, TypeEnum.TREE }, self.parse_edge_declaration, node)
+                self.expect_type_one_of(weight_type, self.arit_types, self.parse_edge_declaration, node)
 
                 identifier1 = (
                     node.initial_node.identifiers[0]
                     if isinstance(node.initial_node, IdentifierAccess)
                     else node.initial_node
                 )
-                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
+                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration, node)
 
                 if len(node.nodes) != len(node.weight):
-                    raise TypeCheckError(self.parse_edge_declaration,
+                    raise TypeCheckError(self.parse_edge_declaration, node.span,
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
@@ -423,29 +411,29 @@ class TypeChecker():
                         if isinstance(_node, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration, node)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
-                    self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
+                    self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration, node)
 
                 kind = TypeEnum.EDGE
             else: # (ewd)
                 curr_graph_type = env_g.lookup(curr_graph)
-                self.reject_type(curr_graph_type, TypeEnum.UNKNOWN, self.parse_edge_declaration)
+                self.reject_type(curr_graph_type, TypeEnum.UNKNOWN, self.parse_edge_declaration, node)
 
                 graph_type, weight_type, node_set = curr_graph_type
-                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration)
-                self.expect_type_one_of(weight_type, self.arit_types, self.parse_edge_declaration)
+                self.expect_type_one_of(graph_type, { TypeEnum.DIGRAPH, TypeEnum.TREE }, self.parse_edge_declaration, node)
+                self.expect_type_one_of(weight_type, self.arit_types, self.parse_edge_declaration, node)
 
                 identifier1 = (
                     node.initial_node.identifiers[0]
                     if isinstance(node.initial_node, IdentifierAccess)
                     else node.initial_node
                 )
-                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
+                self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration, node)
 
                 if len(node.nodes) != len(node.weight):
-                    raise TypeCheckError(self.parse_edge_declaration,
+                    raise TypeCheckError(self.parse_edge_declaration, node.span,
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
@@ -455,10 +443,10 @@ class TypeChecker():
                         if isinstance(_node, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration, node)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
-                    self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
+                    self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration, node)
 
                 kind = TypeEnum.EDGE
 
@@ -488,7 +476,7 @@ class TypeChecker():
                     env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_g, curr_graph)
 
                     expr_type = self.parse_expression(node.expression[0], env_v, env_a, env_g)
-                    self.expect_type_compatable(expr_type, decl_type, self.parse_statement)
+                    self.expect_type_compatable(expr_type, decl_type, self.parse_statement, node)
 
                     env_v = env_v1
                     env_g = env_g1
@@ -496,7 +484,7 @@ class TypeChecker():
                     env_v1, decl_type = self.parse_declaration_list(node, env_v)
                     for expr in node.expression:
                         expr_type = self.parse_expression(expr, env_v, env_a, env_g)
-                        self.expect_type_compatable(expr_type, decl_type, self.parse_statement)
+                        self.expect_type_compatable(expr_type, decl_type, self.parse_statement, node)
 
                     env_v = env_v1
 
@@ -506,7 +494,7 @@ class TypeChecker():
                     ident_type = env_v.lookup(identifier)
 
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
-                self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
+                self.expect_type_compatable(expr_type, ident_type, self.parse_statement, node)
 
             case Declaration() | NodeDecl(): # (std)
                 env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_g, curr_graph)
@@ -516,7 +504,7 @@ class TypeChecker():
             case IfStatement():
                 if len(node.else_statements) == 0: # (ift)
                     if_kind = self.parse_expression(node.condition, env_v, env_a, env_g)
-                    self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement)
+                    self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement, node)
 
                     env_v1 = env_v.enter_scope()
                     env_a1 = env_a.enter_scope()
@@ -531,7 +519,7 @@ class TypeChecker():
                     env_g = env_g1
                 else: # (ife)
                     if_kind = self.parse_expression(node.condition, env_v, env_a, env_g)
-                    self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement)
+                    self.expect_type(if_kind, TypeEnum.BOOL, self.parse_statement, node)
 
                     env_v1 = env_v.enter_scope()
                     env_a1 = env_a.enter_scope()
@@ -557,7 +545,7 @@ class TypeChecker():
 
             case WhileStatement(): # (whl)
                 cond_kind = self.parse_expression(node.condition, env_v, env_a, env_g)
-                self.expect_type(cond_kind, TypeEnum.BOOL, self.parse_statement)
+                self.expect_type(cond_kind, TypeEnum.BOOL, self.parse_statement, node)
 
                 env_v1 = env_v.enter_scope()
                 env_a1 = env_a.enter_scope()
@@ -573,7 +561,7 @@ class TypeChecker():
 
             case RepeatStatement(): # (rpt)
                 repeat_expression = self.parse_expression(node.repeat_expression, env_v, env_a, env_g)
-                self.expect_type(repeat_expression, TypeEnum.NAT, self.parse_statement)
+                self.expect_type(repeat_expression, TypeEnum.NAT, self.parse_statement, node)
 
                 env_v1 = env_v.enter_scope()
                 env_a1 = env_a.enter_scope()
@@ -593,7 +581,7 @@ class TypeChecker():
                     iterable_type is not TypeEnum.TEXT
                     and not self.list_of_one_type(iterable_type)
                 ):
-                    raise TypeCheckError(self.parse_statement, "iterable type", iterable_type)
+                    raise TypeCheckError(self.parse_statement, node.span, "iterable type", iterable_type)
 
                 env_v1 = env_v.enter_scope().bind(node.loop_identifier, iterable_type)
                 env_a1 = env_a.enter_scope()
@@ -610,7 +598,7 @@ class TypeChecker():
             case ForEachEdge():
                 if node.weight_identifier is None: # (fre)
                     graph = env_g.lookup(node.graph_identifier)
-                    self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_statement)
+                    self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_statement, node)
 
                     env_v1 = VariableEnv(current_scope=self.parse_edge_loop(node.edge, TypeEnv()))
 
@@ -627,8 +615,8 @@ class TypeChecker():
                     env_g = env_g1 # only update env_g as rule states
                 else: # (frw)
                     graph_type, weight_type, node_set = env_g.lookup(node.graph_identifier)
-                    self.expect_type_one_of(graph_type, self.graph_types, self.parse_statement)
-                    self.expect_type_one_of(weight_type, self.arit_types, self.parse_statement)
+                    self.expect_type_one_of(graph_type, self.graph_types, self.parse_statement, node)
+                    self.expect_type_one_of(weight_type, self.arit_types, self.parse_statement, node)
 
                     env_v1 = VariableEnv(current_scope=self.parse_edge_loop(node.edge, TypeEnv()))
 
@@ -646,11 +634,11 @@ class TypeChecker():
 
             case ReturnStatement(): # (ret)
                 if curr_algo is None:
-                    raise TypeCheckError(self.parse_statement, "inside function", "outside function")
+                    raise TypeCheckError(self.parse_statement, node.span, "inside function", "outside function")
 
                 algorithm = env_a.lookup(curr_algo)
                 return_type = self.parse_expression(node.expression, env_v, env_a, env_g)
-                self.expect_type_compatable(return_type, algorithm["return_type"], self.parse_statement)
+                self.expect_type_compatable(return_type, algorithm["return_type"], self.parse_statement, node)
 
             case Algorithm(): # (alg)
                 env_a1 = self.parse_algorithm(node, env_v, env_a, env_g)
@@ -668,7 +656,7 @@ class TypeChecker():
 
             case EdgeDecl(): # (edc)
                 edge_decl_type = self.parse_edge_declaration(node, env_v, env_a, env_g, curr_graph)
-                self.expect_type(edge_decl_type, TypeEnum.EDGE, self.parse_expression)
+                self.expect_type(edge_decl_type, TypeEnum.EDGE, self.parse_expression, node)
 
             case GraphStatement(): # (gst)
                 env_g1 = self.parse_graph_statement(node, env_v, env_a, env_g)
@@ -676,7 +664,7 @@ class TypeChecker():
 
             case DisplayStatement(): # (dis)
                 display_expr = self.parse_expression(node.expression, env_v, env_a, env_g)
-                self.reject_type(display_expr, TypeEnum.UNKNOWN, self.parse_statement)
+                self.reject_type(display_expr, TypeEnum.UNKNOWN, self.parse_statement, node)
 
             case _:
                 raise Exception(f"Unknown statement type")
@@ -689,7 +677,7 @@ class TypeChecker():
 
         # (stp)
         if inside_loop is False:
-            raise TypeCheckError(self.parse_loop_modifier, True, inside_loop)
+            raise TypeCheckError(self.parse_loop_modifier, node.span, True, inside_loop)
 
         return True
 
@@ -760,7 +748,7 @@ class TypeChecker():
 
         if node.return_type is None: # (alg)
             if env_a.current_scope.in_domain(node.identifier):
-                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
+                raise TypeCheckError(self.parse_algorithm, node.span, "not in domain", "double declaration")
 
             parameter_types = []
 
@@ -785,7 +773,7 @@ class TypeChecker():
             env_a = env_a1
         else: # (alr)
             if env_a.current_scope.in_domain(node.identifier):
-                raise TypeCheckError(self.parse_algorithm, "not in domain", "double declaration")
+                raise TypeCheckError(self.parse_algorithm, node.span, "not in domain", "double declaration")
 
             parameter_types = []
             return_type = resolve_type(node.return_type)
@@ -796,7 +784,7 @@ class TypeChecker():
                 parameter_types.append(decl_type)
 
             if not self.parse_type(return_type):
-                raise TypeCheckError(self.parse_statement, "valid return type", "Invalid return type")
+                raise TypeCheckError(self.parse_statement, node.span, "valid return type", "Invalid return type")
 
             env_a1 = env_a.bind(node.identifier, {"parameters": tuple(parameter_types),
                                                   "return_type": return_type})
@@ -835,7 +823,7 @@ class TypeChecker():
 
                 for identifier in node.identifiers:
                     if env_v.current_scope.in_domain(identifier):
-                        raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                        raise TypeCheckError(self.parse_declaration, node.span, "not in domain", "double declaration")
 
                     env_v = env_v.bind(identifier, decl_type)
 
@@ -845,31 +833,31 @@ class TypeChecker():
 
                     for identifier in node.identifiers:
                         if env_v.current_scope.in_domain(identifier):
-                            raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                            raise TypeCheckError(self.parse_declaration, node.span, "not in domain", "double declaration")
 
                         env_v = env_v.bind(identifier, decl_type)
 
                     if not self.parse_type(decl_type):
-                        raise TypeCheckError(self.parse_declaration, "valid type", "invalid type")
+                        raise TypeCheckError(self.parse_declaration, node.span, "valid type", "invalid type")
 
                     self.expect_type_one_of(
-                        decl_type, { TypeEnum.NODE, TypeEnum.TEXT, TypeEnum.BOOL }, self.parse_declaration
+                        decl_type, { TypeEnum.NODE, TypeEnum.TEXT, TypeEnum.BOOL }, self.parse_declaration, node
                     )
                 else: # (dtg)
                     graph_type, weight_type, node_set = env_g.lookup(curr_graph)
-                    self.expect_type_one_of(graph_type, self.graph_types, self.parse_statement)
-                    self.expect_type_one_of(weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_statement)
+                    self.expect_type_one_of(graph_type, self.graph_types, self.parse_statement, node)
+                    self.expect_type_one_of(weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_statement, node)
 
                     decl_type = resolve_type(node.type)
 
                     if not self.parse_type(decl_type):
-                        raise TypeCheckError(self.parse_declaration, "valid type", "invalid type")
+                        raise TypeCheckError(self.parse_declaration, node.span, "valid type", "invalid type")
 
-                    self.expect_type(decl_type, TypeEnum.NODE, self.parse_declaration)
+                    self.expect_type(decl_type, TypeEnum.NODE, self.parse_declaration, node)
 
                     for identifier in node.identifiers:
-                        if self.reject_in_domain(identifier, node_set, self.parse_declaration):
-                            raise TypeCheckError(self.parse_declaration, "not in domain", "double declaration")
+                        if self.reject_in_domain(identifier, node_set, self.parse_declaration, node):
+                            raise TypeCheckError(self.parse_declaration, node.span, "not in domain", "double declaration")
 
                     env_g = env_g.update_node_set(curr_graph, set(node.identifiers))
 
@@ -885,11 +873,11 @@ class TypeChecker():
 
         # (dli)
         if not self.parse_dimensions(node.dimension):
-            raise TypeCheckError(self.parse_declaration_list, "valid dimension", "invalid dimension")
+            raise TypeCheckError(self.parse_declaration_list, node.span, "valid dimension", "invalid dimension")
 
         resolved_type = resolve_type(node.type)
         if not self.parse_type(resolved_type):
-            raise TypeCheckError(self.parse_declaration_list, "valid type", "invalid type")
+            raise TypeCheckError(self.parse_declaration_list, node.span, "valid type", "invalid type")
 
         dimension_type = resolved_type
         for _ in range(int(node.dimension.value)):
@@ -897,7 +885,7 @@ class TypeChecker():
 
         # abstract syntax only allows one identifier for list declarations
         if env_v.current_scope.in_domain(node.identifiers[0]):
-            raise TypeCheckError(self.parse_declaration_list, "not in domain", "double declaration")
+            raise TypeCheckError(self.parse_declaration_list, node.span, "not in domain", "double declaration")
 
         env_v = env_v.bind(node.identifiers[0], dimension_type)
 
@@ -910,7 +898,7 @@ class TypeChecker():
         well_formed = False
         if node is not None: # (dim)
             kind = self.parse_expression(node, VariableEnv(), AlgorithmEnv(), GraphEnv())
-            self.expect_type(kind, TypeEnum.NAT, self.parse_dimensions)
+            self.expect_type(kind, TypeEnum.NAT, self.parse_dimensions, node)
             well_formed = True
         else: # (din)
             well_formed = True
@@ -925,33 +913,33 @@ class TypeChecker():
             if node.weight_type is None: # (ghd)
                 graph_type = resolve_type(node.graph_type)
                 if not self.parse_graph_type(graph_type):
-                    raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "valid graph type", "invalid graph type")
 
                 if env_g.current_scope.in_domain(node.identifier):
-                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "not in domain", "double declaration")
 
                 env_g = env_g.bind(node.identifier, (graph_type, TypeEnum.UNKNOWN, set()))
             else: # (gdw)
                 graph_type = resolve_type(node.graph_type)
                 if not self.parse_graph_type(graph_type):
-                    raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "valid graph type", "invalid graph type")
 
                 weight_type = resolve_type(node.weight_type)
                 if not self.parse_type_arithmetic(weight_type):
-                    raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, self.arit_types, weight_type)
 
                 if env_g.current_scope.in_domain(node.identifier):
-                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "not in domain", "double declaration")
 
                 env_g = env_g.bind(node.identifier, (graph_type, weight_type, set()))
         else:
             if node.weight_type is None: # (gdi)
                 graph_type = resolve_type(node.graph_type)
                 if not self.parse_graph_type(graph_type):
-                    raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "valid graph type", "invalid graph type")
 
                 if env_g.current_scope.in_domain(node.identifier):
-                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "not in domain", "double declaration")
 
                 env_g1 = env_g.bind(node.identifier, (graph_type, TypeEnum.UNKNOWN, set()))
 
@@ -969,14 +957,14 @@ class TypeChecker():
             else: # (gwi)
                 graph_type = resolve_type(node.graph_type)
                 if not self.parse_graph_type(graph_type):
-                    raise TypeCheckError(self.parse_graph_declaration, "valid graph type", "invalid graph type")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "valid graph type", "invalid graph type")
 
                 weight_type = resolve_type(node.weight_type)
                 if not self.parse_type_arithmetic(weight_type):
-                    raise TypeCheckError(self.parse_graph_declaration, self.arit_types, weight_type)
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, self.arit_types, weight_type)
 
                 if env_g.current_scope.in_domain(node.identifier):
-                    raise TypeCheckError(self.parse_graph_declaration, "not in domain", "double declaration")
+                    raise TypeCheckError(self.parse_graph_declaration, node.span, "not in domain", "double declaration")
 
                 env_g1 = env_g.bind(node.identifier, (graph_type, weight_type, set()))
 
@@ -1010,21 +998,21 @@ class TypeChecker():
         else: # _type_2 < _type_1
             return type_1
 
-    def expect_type(self, actual: TypeEnum, expected: TypeEnum, rule) -> None:
+    def expect_type(self, actual: TypeEnum, expected: TypeEnum, rule, node) -> None:
         """Helper function that throws an error if actual is not the expected type"""
 
         if actual != expected:
-            raise TypeCheckError(rule, expected, actual)
+            raise TypeCheckError(rule, node.span, expected, actual)
 
-    def expect_type_compatable(self, actual: TypeEnum, expected: TypeEnum, rule) -> None:
+    def expect_type_compatable(self, actual: TypeEnum, expected: TypeEnum, rule, node) -> None:
         """Helper function throws an error if actual and expected are not compatable types"""
 
         if isinstance(expected, list) and isinstance(actual, list):
-            self.expect_type_compatable(actual[0], expected[0], rule) # list types only have one element
+            self.expect_type_compatable(actual[0], expected[0], rule, node) # list types only have one element
             return
 
         if isinstance(expected, list) or isinstance(actual, list): # one is a list the other is not
-            raise TypeCheckError(rule, f"compatable with {expected}", actual)
+            raise TypeCheckError(rule, node.span, f"compatable with {expected}", actual)
 
         _expected = self.arit_order.get(expected, None)
         _actual = self.arit_order.get(actual, None)
@@ -1032,31 +1020,31 @@ class TypeChecker():
         if _expected is not None and _actual is not None:
             # arithmetic types: allow widening/equal types
             if _actual > _expected: # can cast to wider type but not vice versa
-                raise TypeCheckError(rule, f"compatable with {expected}", actual)
+                raise TypeCheckError(rule, node.span, f"compatable with {expected}", actual)
 
         elif expected != actual: # compare normally
-            raise TypeCheckError(rule, f"compatable with {expected}", actual)
+            raise TypeCheckError(rule, node.span, f"compatable with {expected}", actual)
 
-    def expect_type_one_of(self, actual: TypeEnum, expected_types: set, rule) -> None:
+    def expect_type_one_of(self, actual: TypeEnum, expected_types: set, rule, node) -> None:
         """Helper function that throws an error if actual not one of the expected types"""
 
         if actual not in expected_types:
             expected = " or ".join(
                 t.name for t in expected_types
             ) # makes it print the enum types without their value (which it does by default)
-            raise TypeCheckError(rule, expected, actual)
+            raise TypeCheckError(rule, node.span, expected, actual)
 
-    def expect_type_list_of(self, actual: list[TypeEnum], expected: TypeEnum, rule) -> None:
+    def expect_type_list_of(self, actual: list[TypeEnum], expected: TypeEnum, rule, node) -> None:
         """Helper function that throws an error if actual is not a list of the expected type"""
 
         if not isinstance(actual, list) or all(elem != expected for elem in actual):
-            raise TypeCheckError(rule, f"list[{expected}]", actual)
+            raise TypeCheckError(rule, node.span, f"list[{expected}]", actual)
 
-    def expect_list_of_one_type(self, actual: list[TypeEnum], rule) -> None:
+    def expect_list_of_one_type(self, actual: list[TypeEnum], rule, node) -> None:
         """Helper function that throws an error if actual is a list of more than one type"""
 
         if not self.list_of_one_type(actual):
-            raise TypeCheckError(rule, "list of one type", actual)
+            raise TypeCheckError(rule, node.span, "list of one type", actual)
 
     def list_of_one_type(self, actual: TypeEnum | list[TypeEnum]) -> bool:
         """Returns true if actual is a list and every element has the same type (or is compatable)"""
@@ -1114,20 +1102,20 @@ class TypeChecker():
                 setattr(elem, "type", least_upper_bound)
             setattr(list_expr[0], "type", least_upper_bound)
 
-    def expect_in_domain(self, identifier: str, domain: set, rule):
+    def expect_in_domain(self, identifier: str, domain: set, rule, node):
         """Helper function that throws an error if an identifier is not in the domain"""
 
         if identifier not in domain:
-            raise TypeCheckError(rule, f"in {domain}", identifier)
+            raise TypeCheckError(rule, node.span, f"in {domain}", identifier)
 
-    def reject_type(self, actual: TypeEnum, expected: TypeEnum, rule) -> None:
+    def reject_type(self, actual: TypeEnum, expected: TypeEnum, rule, node) -> None:
         """Helper function that throws an error if actual and expected are the same type"""
 
         if actual == expected:
-            raise TypeCheckError(rule, f"not {expected}", actual)
+            raise TypeCheckError(rule, node.span, f"not {expected}", actual)
 
-    def reject_in_domain(self, identifier: str, domain: set, rule):
+    def reject_in_domain(self, identifier: str, domain: set, rule, node):
         """Helper function that throws an error if an identifier is in the domain"""
 
         if identifier in domain:
-            raise TypeCheckError(rule, f"not in {domain}", identifier)
+            raise TypeCheckError(rule, node.span, f"not in {domain}", identifier)
