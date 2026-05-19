@@ -249,13 +249,3 @@ def test_for_each_edge():
     assert env_graph.get(graph_identifier).get_edge_data('d', 'f')['weight'] == 3
     assert env_graph.get(graph_identifier).get_edge_data('e', 'f')['weight'] == 4
     assert env_graph.get(graph_identifier).get_edges() == [('b','f'),('c','f'),('d','f'),('e','f')]
-
-    
-def test_repeat_statement():
-    # Arrange
-   
-    # Act
-
-    # Assert
-    
-    pass
