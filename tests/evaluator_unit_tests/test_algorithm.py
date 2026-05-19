@@ -1,6 +1,5 @@
 from parser.ast_builder import *
 from evaluator.functions import *
-from copy import deepcopy
 
 import evaluator.categories.algorithm
 

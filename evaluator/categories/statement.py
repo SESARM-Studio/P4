@@ -349,7 +349,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return store, env_var, env_algo, env_graph, v, loc
 
         case NodeDecl():
-            D = evaluator.categories.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
         case GraphStatement():
