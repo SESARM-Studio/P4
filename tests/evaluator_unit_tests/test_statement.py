@@ -607,3 +607,106 @@ def test_return_statement_raises_return_exception(setup_env):
                 setup_env["env_algo"],
                 setup_env["env_graph"],
             )
+
+def test_repeat_statement_runs_body_three_times(setup_env):
+    #arrange
+    node = RepeatStatement("RepeatStatement")
+    node.repeat_expression = Term("Term")
+    node.repeat_statements = [Declaration("Declaration")]
+
+    with patch(
+        "evaluator.categories.expression.execute_expression",
+        return_value=(3, setup_env["store"].copy()),
+    ), patch(
+        "evaluator.categories.statement.execute_statement",
+        return_value=(
+            setup_env["store"],
+            setup_env["env_var"],
+            setup_env["env_algo"],
+            setup_env["env_graph"],
+            None,
+            setup_env["loc"],
+        ),
+    ) as mocked_statement:
+        #act
+        result = execute_statement(
+            node,
+            setup_env["loc"],
+            setup_env["graph_object"],
+            setup_env["store"],
+            setup_env["env_var"],
+            setup_env["env_algo"],
+            setup_env["env_graph"],
+        )
+
+    store, env_var, env_algo, env_graph, value, loc = result
+
+    #assert
+    assert mocked_statement.call_count == 3
+    assert store == setup_env["store"]
+    assert value is None
+    assert loc == setup_env["loc"]
+
+def test_repeat_statement_zero_times_does_not_run_body(setup_env):
+    #arrange
+    node = RepeatStatement("RepeatStatement")
+    node.repeat_expression = Term("Term")
+    node.repeat_statements = [Declaration("Declaration")]
+
+    with patch(
+        "evaluator.categories.expression.execute_expression",
+        return_value=(0, setup_env["store"].copy()),
+    ), patch(
+        "evaluator.categories.statement.execute_statement",
+    ) as mocked_statement:
+        #act
+        result = execute_statement(
+            node,
+            setup_env["loc"],
+            setup_env["graph_object"],
+            setup_env["store"],
+            setup_env["env_var"],
+            setup_env["env_algo"],
+            setup_env["env_graph"],
+        )
+
+    store, env_var, env_algo, env_graph, value, loc = result
+
+    #assert
+    assert mocked_statement.call_count == 0
+    assert store == setup_env["store"]
+    assert value is None
+    assert loc == setup_env["loc"]
+
+
+def test_repeat_statement_breaks_on_loop_exception(setup_env):
+    #arrange
+    node = RepeatStatement("RepeatStatement")
+    node.repeat_expression = Term("Term")
+    node.repeat_statements = [Declaration("Declaration")]
+
+    with patch(
+        "evaluator.categories.expression.execute_expression",
+        return_value=(5, setup_env["store"].copy()),
+    ), patch(
+        "evaluator.categories.statement.execute_statement",
+        side_effect=LoopException(),
+    ) as mocked_statement:
+        #act
+        result = execute_statement(
+            node,
+            setup_env["loc"],
+            setup_env["graph_object"],
+            setup_env["store"],
+            setup_env["env_var"],
+            setup_env["env_algo"],
+            setup_env["env_graph"],
+        )
+
+    store, env_var, env_algo, env_graph, value, loc = result
+
+    #assert
+    assert mocked_statement.call_count == 1
+    assert store == setup_env["store"]
+    assert value is None
+    assert loc == setup_env["loc"]

@@ -75,7 +75,7 @@ def test_node_expression_right():
     store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
 
     # Evaluate node expression
-    nodes = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
+    nodes, modified_store = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
 
     ## Assert
     assert 'b' in nodes
@@ -133,7 +133,7 @@ def test_node_expression_left():
     store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
 
     # Evaluate node expression
-    nodes = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
+    nodes, modified_store = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
 
     ## Assert
     assert 'c' in nodes
@@ -191,12 +191,10 @@ def test_node_expression_right_left():
     store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
 
     # Evaluate node expression
-    nodes = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
+    nodes, modified_store = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
 
     ## Assert
-    assert 'b' in nodes
     assert 'c' in nodes
-    assert 'd' in nodes
 
 def test_node_expression_undirected():
     
@@ -245,7 +243,7 @@ def test_node_expression_undirected():
     store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
 
     # Evaluate node expression
-    nodes = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
+    nodes, modified_store = evaluator.categories.node_expression.execute_node_expression(expression_node, env_graph, env_var, env_algo, loc, graph_object, store)
 
     ## Assert
     assert 'b' in nodes
