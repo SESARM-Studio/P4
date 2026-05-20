@@ -116,13 +116,14 @@ def test_expression_lit_bool():
 
 def test_expression_id():
     # Arrange
-    term = make_term("IDENTIFIER", "a")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
     loc = Location()
     graph_object = Graph()
     store = dict()
+
+    term = make_term("IDENTIFIER", "a")
     
     env_var.update({"a": loc})
     store.update({loc: 484000.2})
@@ -136,13 +137,14 @@ def test_expression_id():
 
 def test_expression_idg():
     # Arrange
-    term = make_term("IDENTIFIER", "a")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
     loc = Location()
     graph_object = Graph()
     store = dict()
+
+    term = make_term("IDENTIFIER", "a")
     
     graph_object.create_graph("graph")
     graph_object.add_node("a")
@@ -159,8 +161,96 @@ def test_expression_idg():
 
 
 # ********* Identifier access ********* 
-# Waiting for implementation to be done
 
+def test_expression_dot():
+    # Arrange
+    env_graph = dict()
+    env_var = dict()
+    env_algo = dict()
+    loc = Location()
+    graph_object = Graph()
+    store = dict()
+
+    decl_nodes = NodeDecl("NodeDecl")
+    decl_nodes.type = "node"
+    decl_nodes.identifiers = ['a']
+    decl_nodes.is_list = False
+    
+    decl_graph = GraphDecl("GraphDecl")
+    decl_graph.graph_type = "graph"
+    decl_graph.identifier = "G"
+    decl_graph.nodes = [decl_nodes]
+
+    identifier_access = IdentifierAccess("IdentifierAccess")
+    identifier_access.identifiers = ['G', 'a']
+
+    # Act
+    store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
+    
+    return_object = evaluator.categories.expression.execute_expression(identifier_access, env_graph, env_var, env_algo, loc, graph_object, store)
+
+    # Assert
+    assert return_object.v == "a"
+    assert return_object.modified_store == store
+
+def test_expression_dgo():
+    ## Arrange
+    env_graph = dict()
+    env_var = dict()
+    env_algo = dict()
+    loc = Location()
+    graph_object = Graph()
+    store = dict()
+
+    # Creating a graph G
+    decl_nodes = NodeDecl("NodeDecl")
+    decl_nodes.type = "node"
+    decl_nodes.identifiers = ['a']
+    decl_nodes.is_list = False
+    
+    decl_graph = GraphDecl("GraphDecl")
+    decl_graph.graph_type = "graph"
+    decl_graph.identifier = "G"
+    decl_graph.nodes = [decl_nodes]
+
+    # Adding an attribute to G nodes
+    algorithm_call = AlgorithmCall("AlgorithmCall")
+    algorithm_call.identifier = "addAttribute"
+    algorithm_call.arguments = [
+        make_expression(arg1=make_term("TEXT", "nat")),
+        make_expression(arg1=make_term("TEXT", "SPE"))
+    ]
+
+    identifier_access_addAttribute = IdentifierAccess("IdentifierAccess")
+    identifier_access_addAttribute.identifiers = ['G', 'nodes', algorithm_call]
+
+    # Assigning value 5 to node a's "SPE" attribute
+    assignment = Assignment("Assignment")
+    assignment.identifiers = ['G', 'a', 'SPE']
+    assignment.expression = make_expression(arg1=make_term("NATURAL_NUMBER", "5"))
+
+    # Identifier access to attribute
+    identifier_access = IdentifierAccess("IdentifierAccess")
+    identifier_access.identifiers = ['G', 'a', 'SPE']
+
+
+    ## Act
+    # Declare graph
+    store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(decl_graph, loc, graph_object, store, env_var, env_algo, env_graph)
+    
+    # Add attribute
+    return_object1 = evaluator.categories.expression.execute_expression(identifier_access_addAttribute, env_graph, env_var, env_algo, loc, graph_object, store)
+
+    # Assigning value to attribute
+    store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(assignment, loc, graph_object, return_object1.modified_store, env_var, env_algo, env_graph)
+
+    # Accessing attribute
+    return_object3 = evaluator.categories.expression.execute_expression(identifier_access, env_graph, env_var, env_algo, loc, graph_object, store)
+
+
+    ## Assert
+    assert return_object3.v == 5
+    assert return_object3.modified_store == store
 
 # ********* And / Or *********
 

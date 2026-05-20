@@ -8,7 +8,7 @@ digraph G with int weight
     edge x --> t weight -2
 
 algo bellmanFord(digraph G, node s)
-    G.nodes.addAttribute("natural", "SPE") // shortest Path Estimate
+    G.nodes.addAttribute("nat", "SPE") // shortest Path Estimate
     G.nodes.addAttribute("node", "pi")
     
     for each v in G.nodes
