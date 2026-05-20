@@ -147,7 +147,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
         case ArrayAccess(): # (IDX)
             array_location = env_var.get(node.identifier)
-            array = store.get(array_location)
+            array = list(store.get(array_location))
 
             # Evaluate given array indices
             access_indices = []

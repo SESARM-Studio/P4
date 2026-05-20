@@ -5,7 +5,6 @@ from .expression import execute_expression
 from .graph_statement import execute_graph_statement
 from .node_expression import execute_node_expression
 from .statement import execute_statement
-from .type import execute_type
 
 __all__ = ["execute_algorithm",
            "execute_declaration",
@@ -13,5 +12,5 @@ __all__ = ["execute_algorithm",
            "execute_graph_statement",
            "execute_expression",
            "execute_node_expression",
-           "execute_statement",
-           "execute_type"]
+           "execute_statement"
+           ]

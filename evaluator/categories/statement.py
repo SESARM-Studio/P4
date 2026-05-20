@@ -313,12 +313,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                         store, copy_env_var, copy_env_algo, copy_env_graph, v, loc = execute_statement(copy_statement, loc, graph_object, store, copy_env_var, copy_env_algo, copy_env_graph)
                 except LoopException:
                     v2 = None
-                    # loc = copy_loc
                     return store, env_var, env_algo, copy_env_graph, v, loc
-                # loc = copy_loc
-            print(graph_object.get_edges())
-            print(copy_env_graph.get(node.graph_identifier).get_edges())
-            print(store, env_var, env_algo, copy_env_graph, v, loc)
+
             return store, env_var, env_algo, copy_env_graph, v, loc
         
 
