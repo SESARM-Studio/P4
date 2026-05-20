@@ -157,9 +157,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             E2 = ExpressionReturn(E1.v, E1.modified_store, E1.graph_object)
 
             for index in node.indexes[1:]:
-                E2.v, E2.modified_store = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, E2.modified_store)
+                E2 = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, E2.modified_store)
                 access_indices.append(E2.v)
-
+            
             # Retrieve array element with evaluated indices and retrieved array
             v = array
             for idx in access_indices:
