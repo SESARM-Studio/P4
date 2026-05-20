@@ -9,6 +9,17 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 
+class EmptyGraphContext:
+    graph = None
+
+class FakeGraph:
+    def __init__(self, nodes=None):
+        self.graph = {}
+        self.nodes = nodes or {}
+
+    def get_nodes(self):
+        return self.nodes    
+
 @pytest.fixture
 def setup_env():
     return {
@@ -20,10 +31,18 @@ def setup_env():
             1: [[1, 2], [3, 4]],
         },
         "loc": 2,
-        "graph_object": None,
+        "graph_object": EmptyGraphContext
     }
 
-
+def expr_result(value, store=None, graph_object=None):
+    if store is None:
+        store = {}
+    return SimpleNamespace(
+        v=value,
+        modified_store=store,
+        store=store,
+        graph_object=graph_object,
+    )
 
 
 def test_declaration(setup_env):
@@ -80,7 +99,7 @@ def test_declaration_init_non_list(setup_env):
         location=3,
     )
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(99, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration",return_value=fake_result):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration",return_value=fake_result):
         #act
         result = execute_statement(
             node,
@@ -118,7 +137,7 @@ def test_declaration_init_list(setup_env):
         location=3,
     )
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(7, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(7, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
         #act
         result = execute_statement(
             node,
@@ -148,7 +167,7 @@ def test_normal_assignment(setup_env):
     expr.value = "42"
     node.expression = expr
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(42, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, setup_env["store"].copy())):
         #act
         result = execute_statement(
             node,
@@ -170,7 +189,7 @@ def test_normal_assignment(setup_env):
 
 def test_graph_node_attribute_assignment_outside_graph(setup_env):
     #arrange
-    setup_env["env_graph"] = {"G": {"x": {"value": 1}}}
+    setup_env["env_graph"] = {"G": FakeGraph({"x": {"value": 1}})}
 
     node = Assignment("Assignment")
     node.identifiers = ["G", "x", "value"]
@@ -180,13 +199,13 @@ def test_graph_node_attribute_assignment_outside_graph(setup_env):
     expr.value = "99"
     node.expression = expr
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(99, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, setup_env["store"].copy())):
 
         #act
         result = execute_statement(
             node,
             setup_env["loc"],
-            None,
+            setup_env["graph_object"],
             setup_env["store"],
             setup_env["env_var"],
             setup_env["env_algo"],
@@ -196,13 +215,13 @@ def test_graph_node_attribute_assignment_outside_graph(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     #assert
-    assert env_graph["G"]["x"]["value"] == 99
+    assert env_graph["G"].get_nodes()["x"]["value"] == 99
     assert value is None
 
 
 def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
     #arrange
-    setup_env["env_graph"] = {"G": {"x": {"child": {"value": 1}}}}
+    setup_env["env_graph"] = {"G": FakeGraph({"x": {"child": {"value": 1}}})}
 
     node = Assignment("Assignment")
     node.identifiers = ["G", "x", "child", "value"]
@@ -212,12 +231,12 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
     expr.value = "99"
     node.expression = expr
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(123, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(123, setup_env["store"].copy())):
         #act
         result = execute_statement(
             node,
             setup_env["loc"],
-            None,
+            setup_env["graph_object"],
             setup_env["store"],
             setup_env["env_var"],
             setup_env["env_algo"],
@@ -227,13 +246,15 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     #assert
-    assert env_graph["G"]["x"]["child"]["value"] == 123
+    assert env_graph["G"].get_nodes()["x"]["child"]["value"] == 123
     assert value is None
 
 
 def test_graph_node_attribute_assignment_inside_graph(setup_env):
     #arrange
-    graph_object = {"x": {"value": 1}}
+    graph_object = FakeGraph({"node_x": {"value": 1}})
+    setup_env["env_var"]["x"] = 2
+    setup_env["store"][2] = "node_x"
 
     node = Assignment("Assignment")
     node.identifiers = ["x", "value"]
@@ -243,7 +264,7 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
     expr.value = "55"
     node.expression = expr
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(55, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(55, setup_env["store"].copy())):
         #act
         result = execute_statement(
             node,
@@ -258,13 +279,16 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     #assert
-    assert graph_object["x"]["value"] == 55
+    assert graph_object.get_nodes()["node_x"]["value"] == 55
     assert value is None
 
 
 def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     #arrange
-    graph_object = {"x": {"child": {"child": {"value": 1}}}}
+    graph_object = FakeGraph({"node_x": {"child": {"child": {"value": 1}}}})
+    setup_env["env_var"]["x"] = 2
+    setup_env["store"][2] = "node_x"
+
 
     node = Assignment("Assignment")
     node.identifiers = ["x", "child", "child", "value"]
@@ -274,7 +298,7 @@ def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     expr.value = "88"
     node.expression = expr
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(88, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(88, setup_env["store"].copy())):
         #act
         result = execute_statement(
             node,
@@ -289,7 +313,7 @@ def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     #assert
-    assert(graph_object["x"]["child"]["child"]["value"]) == 88
+    assert graph_object.get_nodes()["node_x"]["child"]["child"]["value"] == 88
     assert value is None
 
 
@@ -302,7 +326,7 @@ def test_if_statement_true_branch(setup_env):
 
     with patch(
         "evaluator.categories.expression.execute_expression",
-        return_value=(True, setup_env["store"].copy()),
+        return_value=expr_result(True, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
         return_value=(
@@ -341,7 +365,7 @@ def test_if_statement_false_branch(setup_env):
 
     with patch(
         "evaluator.categories.expression.execute_expression",
-        return_value=(False, setup_env["store"].copy()),
+        return_value=expr_result(False, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
         return_value=(
@@ -378,7 +402,7 @@ def test_if_statement_false_no_else(setup_env):
     node.then_statements = [Declaration("Declaration")]
     node.else_statements = []
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(False, setup_env["store"].copy())):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(False, setup_env["store"].copy())):
         #act
         result = execute_statement(
             node,
@@ -450,7 +474,7 @@ def test_expression_statement(setup_env):
     #arrange
     node = Expression("Expression")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(42, {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, {0: 10})):
         #act
         result = execute_statement(
             node,
@@ -570,7 +594,7 @@ def test_display_statement(setup_env, capsys):
     node = DisplayStatement("DisplayStatement")
     node.expression = Term("Term")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=("hello world", {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result("hello world", {0: 10})):
         #act
         result = execute_statement(
             node,
@@ -595,7 +619,7 @@ def test_return_statement_raises_return_exception(setup_env):
     node = ReturnStatement("ReturnStatement")
     node.expression = Term("Term")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=(99, {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, {0: 10})):
         #act & assert
         with pytest.raises(ReturnException):
             execute_statement(
@@ -616,7 +640,7 @@ def test_repeat_statement_runs_body_three_times(setup_env):
 
     with patch(
         "evaluator.categories.expression.execute_expression",
-        return_value=(3, setup_env["store"].copy()),
+        return_value=expr_result(3, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
         return_value=(
@@ -655,7 +679,7 @@ def test_repeat_statement_zero_times_does_not_run_body(setup_env):
 
     with patch(
         "evaluator.categories.expression.execute_expression",
-        return_value=(0, setup_env["store"].copy()),
+        return_value=expr_result(0, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
     ) as mocked_statement:
@@ -687,7 +711,7 @@ def test_repeat_statement_breaks_on_loop_exception(setup_env):
 
     with patch(
         "evaluator.categories.expression.execute_expression",
-        return_value=(5, setup_env["store"].copy()),
+        return_value=expr_result(5, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
         side_effect=LoopException(),

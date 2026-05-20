@@ -33,7 +33,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store)
                 D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var_copy, env_algo, loc, graph_object, E.modified_store)
 
-                D.store.update({loc: v})
+                D.store.update({loc: E.v})
                 return D.store, D.env_var, env_algo, env_graph, E.v, D.location
 
             else:
