@@ -134,10 +134,10 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 E = evaluator.categories.expression.ExpressionReturn(None, store)
 
                 for term in node.identifiers[0].indexes:
-                    E = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, E.store)
+                    E = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, E.modified_store)
                     indexes.append(E.v)
 
-                E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, E.store)
+                E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, E.modified_store)
                 map = E.modified_store.get(env_var.get(node.identifiers[0].identifier))
                 ref = map
 
