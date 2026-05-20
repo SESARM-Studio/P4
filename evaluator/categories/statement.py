@@ -259,7 +259,9 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     for edge1 in graph_object.get_edges():
                         for edge2 in graph_object.get_edges():
                             if edge1[0] == edge2[1] and edge1[1] == edge2[0]:
-                                copy_graph_object.add_weighted_edge(edge1[0], edge1[1])
+                                if copy_graph_object.get_edge_data(edge2[0],edge2[1]) != None:
+                                    break
+                                copy_graph_object.add_edge(edge1[0], edge1[1])
             # Check if there is a weight, and if so remove the ones without the specified weight in copy_graph_object
             #elif node.weight_identifier != None:
             #    for edge in graph_object.get_edges():
