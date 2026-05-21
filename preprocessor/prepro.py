@@ -1,16 +1,30 @@
+from __future__ import annotations
 import re
-def preprocessor(file_input, return_file=False, file_output="output.gsl"):
-    indent_counter = 0
-    spaces_or_tabs = 0 # 1 for spaces, 2 for tabs
+from exceptions.preprocessor_exception import PreprocessorException
+from pathlib import Path
+from preprocessor.source_map import SourceMap
+
+def preprocessor(file_input, source_map: SourceMap, return_file=False, file_output="output.gsl"):
+    current_indent_level = 0
+    indent_type = None # Undefined, spaces or tabs
     spaces_amount = None
     line_number = 0
-
     final_string = ""
+    source_map.input_file = str(Path(file_input).resolve())
+
     with open(file_input, "r") as input_file:
         inside_comment = False
         inside_text = False
+        source_offset = 0
+        source_end_location = 0
+        processed_offset = 0
 
         for i, line in enumerate (input_file, 1):
+            source_map.source_array.append(line)
+            source_offset = source_end_location
+            source_end_location += len(line)
+            processed_offset = len(final_string)
+            source_map.newline_array.append(source_offset)
             temp_str = line
 
             # Checks if inside multiline comment. Then check if there is an end. Otherwise skip
@@ -20,7 +34,7 @@ def preprocessor(file_input, return_file=False, file_output="output.gsl"):
                 else:
                     temp_str = re.sub(r".*\*\/","", temp_str)
                     if temp_str.strip() != "":
-                        exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+                        raise PreprocessorException("No code must follow a multi-line comment", [source_offset, source_end_location])
                     inside_comment = False
             
             # If the line contains a double quote (") then make a thorough check of each character to allow // or /* */ inside double quotes ("")
@@ -39,7 +53,7 @@ def preprocessor(file_input, return_file=False, file_output="output.gsl"):
                                 # Check if code comes after single-line multi-line comments "/* */"
                                 multi_line = re.split(r"/\*.*\*/", temp_str)
                                 if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
-                                    exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+                                    raise PreprocessorException("No code must follow a multi-line comment", [source_offset, source_end_location])
 
                                 # Remove single-line multi-line comments "/* */"
                                 temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
@@ -61,9 +75,9 @@ def preprocessor(file_input, return_file=False, file_output="output.gsl"):
                 multi_line = re.split(r"/\*.*\*/", temp_str)
                 if len(multi_line) > 1:
                     if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
-                        exit(f"ERROR LINE {i}: No code must follow a multi-line comment")
+                        raise PreprocessorException("No code must follow a multi-line comment",[source_offset, source_end_location])
 
-                # Remove single-line multi-line comments "/* */"
+                # Remove multi-line comments on 1 line "/* */"
                 temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
 
                 # Remove start-of multi-line comments "/*"
@@ -75,67 +89,71 @@ def preprocessor(file_input, return_file=False, file_output="output.gsl"):
             if temp_str.strip() == "":
                 continue
 
-            # Replaces new/missing tabs / 4 spaces with "@INDENT"/"@DEDENT"
+            # Replaces new/missing tabs / x spaces with "@INDENT"/"@DEDENT"
             number_indents = 0
             indents = ""
             line_number += 1
 
             if re.match(r"(\t|\ )+", temp_str) and line_number == 1:
-                exit(f"ERROR LINE {i}: Unexpected indentation")
+                raise PreprocessorException("Unexpected indentation",[source_offset, source_end_location])
 
             if m:= re.match(r"(\t|\ )+", temp_str):
                 # Creates string from the match
                 indents = m.group(0)
 
                 # If it has not yet been defined if the document uses spaces or tabs
-                if spaces_or_tabs == 0:
+                if indent_type is None:
                     if "\t" in indents and " " in indents:
-                        exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
+                        raise PreprocessorException("Tabs and spaces cannot be combined", [source_offset, source_end_location])
 
                     if "\t" in indents:
-                        spaces_or_tabs = 2
+                        indent_type = "Tabs"
                     else:
-                        spaces_or_tabs = 1
+                        indent_type = "Spaces"
                         spaces_amount = len(indents)
                 
                 # If the document uses spaces
-                if spaces_or_tabs == 1:
+                if indent_type == "Spaces":
                     if "\t" in indents:
-                        exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
-                    number_indents = len(indents) / spaces_amount
-                    if number_indents % 1 != 0:
-                        exit(f"ERROR LINE {i}: Inconsistent use of spaces")
+                        raise PreprocessorException("Tabs and spaces cannot be combined", [source_offset, source_end_location])
+                    if (len(indents) / spaces_amount) % 1 != 0:
+                        raise PreprocessorException("Inconsistent use of spaces", [source_offset, source_end_location])
+                    number_indents = len(indents) // spaces_amount
                 
                 # If the document uses tabs
-                if spaces_or_tabs == 2:
+                if indent_type == "Tabs":
                     if " " in indents:
-                        exit(f"ERROR LINE {i}: Tabs and spaces cannot be combined")
+                        raise PreprocessorException("Tabs and spaces cannot be combined", [source_offset, source_end_location])
                     number_indents = len(indents)
 
-            change_indents = int(number_indents) - indent_counter
+            token_amount = number_indents - current_indent_level
 
             # Adds @INDENT or @DEDENT tokens for each indent / dedent
-            if change_indents > 0:
-                temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@INDENT ", temp_str)
-            else:
-                temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(change_indents) * "@DEDENT ", temp_str)
+            if token_amount >= 0:
+                temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(token_amount) * "@INDENT ", temp_str)
+
+            if token_amount < 0:
+                temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(token_amount) * "@DEDENT ", temp_str)
 
             # Updates indent counter
-            indent_counter += change_indents
+            current_indent_level += token_amount
 
-            # Replaces 1+ newlines wit one "@NEWLINE"
-            temp_str = re.sub(r"(\n)"," @NEWLINE\n",temp_str)
+            # Add '@NEWLINE' token before newline escape '\n'
+            token_str = re.sub(r"(\n)"," @NEWLINE\n",temp_str)
+            if token_str != temp_str:
+                temp_str = token_str
 
             # Appends to final string
             final_string += temp_str
+            source_map.add_span(processed_offset, source_offset, processed_offset + len(temp_str), source_end_location)
 
     # If the document does not end on a newline, add one 
     if final_string.endswith("@NEWLINE\n") is False:
         final_string += " @NEWLINE\n"
 
     # If the document does not end unindentet, it adds the missing dedents
-    if indent_counter != 0:
-        final_string += indent_counter * "@DEDENT "
+    if current_indent_level > 0:
+        final_string += current_indent_level * "@DEDENT "
 
     # Adds the EOD sign '$'
     final_string += "$"

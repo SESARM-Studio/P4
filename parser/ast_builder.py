@@ -1,52 +1,53 @@
 from parser.gsl_parser import gsl_parser
 
 class ASTNode:
-    def __init__(self, token, children=None, value=None):
+    def __init__(self, token, span: list = None, children=None, value=None):
         self.token = token
         self.value = value
         self.children = children or []
         self.parent = None
+        self.span = span
 
         for c in self.children:
             c.parent = self
 
 class IfStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.condition = None
         self.then_statements = []
         self.else_statements = []
 
 class WhileStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.condition = None
         self.statements = []
 
 class RepeatStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.repeat_expression = None
         self.repeat_statements = []
 
 class ForEachNormal(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.loop_identifier = None
         self.iterable = None
         self.statements = []
 
 class ForEachEdge(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.edge = None
         self.weight_identifier = None
         self.graph_identifier = None
         self.statements = []
 
 class GraphDecl(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.graph_type = None
         self.identifier = None
         self.weight_type = None
@@ -54,129 +55,129 @@ class GraphDecl(ASTNode):
         self.edges = []
 
 class DisplayStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = None
 
 class ReturnStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = None
 
 
 
 class GraphStatement(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.graph_identifier = None
         self.operator = None
         self.argument = None
 
 class EdgeDecl(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.initial_node = None
         self.nodes = []
         self.direction = None
         self.weight = []
 
 class EdgeLoop(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.initial_node = None
         self.last_node = None
         self.direction = None
 
 class Algorithm(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifier = None
         self.parameters = []
         self.return_type = None
         self.statements = []
 
 class Parameter(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.type = None
         self.identifier = None
         
 class LoopModifier(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.modifier = None
 
 class Declaration(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifiers = []
         self.type = None
         self.is_list = False
         self.dimension = None
 
 class NodeDecl(Declaration):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.type = 'node'
 
 class DeclarationInit(Declaration):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = []
 
 class Assignment(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifiers = []
         self.expression = None
 
 class Expression(ASTNode):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.operator = None
         self.arg1 = None
         self.arg2 = None
 
 class Term(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.type = None
 
 class IdentifierAccess(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifiers = []
 
 class AbsoluteValue(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = None
 
 class Magnitude(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = None
 
 class ListExpression(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expressions = []
 
 class AlgorithmCall(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifier = None
         self.arguments = None
 
 class ArrayAccess(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.identifier = None
         self.indexes = []
 
 class ExprNode(Expression):
-    def __init__(self, token):
-        super().__init__(token)
+    def __init__(self, token, span: list = None):
+        super().__init__(token, span)
         self.expression = None
         self.direction = None
 
@@ -243,7 +244,7 @@ class AbstractSyntaxTreeBuilder:
 
         # Base case: If symbol does not have attribute children, it is a terminal.
         if hasattr(symbol, "children") is False:
-            return ASTNode(symbol.name, [], self.characters(symbol.getBegin(), symbol.getEnd()))
+            return ASTNode(symbol.name, [symbol.getBegin(), symbol.getEnd()],[], self.characters(symbol.getBegin(), symbol.getEnd()))
 
         # Creates a new array of the symbols children, and reduces redundant tokens.
         for child in symbol.children:
@@ -252,7 +253,7 @@ class AbstractSyntaxTreeBuilder:
 
         match symbol.name:
             case "IfStatement":
-                if_statement = IfStatement(symbol.name)
+                if_statement = IfStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 if_index = then_index = else_index = None
                 for index, child in enumerate(symbol_children):
                     match child.name:
@@ -275,7 +276,7 @@ class AbstractSyntaxTreeBuilder:
                 return if_statement
             
             case "WhileStatement":
-                while_statement = WhileStatement(symbol.name)
+                while_statement = WhileStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
@@ -285,7 +286,7 @@ class AbstractSyntaxTreeBuilder:
                 return while_statement
             
             case "ForEachNormal":
-                for_each_normal = ForEachNormal(symbol.name)
+                for_each_normal = ForEachNormal(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -297,7 +298,7 @@ class AbstractSyntaxTreeBuilder:
                 return for_each_normal
             
             case "ForEachEdge":
-                for_each_edge = ForEachEdge(symbol.name)
+                for_each_edge = ForEachEdge(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "EdgeLoop":
@@ -311,7 +312,7 @@ class AbstractSyntaxTreeBuilder:
                 return for_each_edge
             
             case "RepeatStatement":
-                repeat_statement = RepeatStatement(symbol.name)
+                repeat_statement = RepeatStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
@@ -321,7 +322,7 @@ class AbstractSyntaxTreeBuilder:
                 return repeat_statement
             
             case "GraphDecl":
-                graph_decl = GraphDecl(symbol.name)
+                graph_decl = GraphDecl(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "TYPE_GRAPH":
@@ -337,21 +338,21 @@ class AbstractSyntaxTreeBuilder:
                 return graph_decl
             
             case "DisplayStatement":
-                display_statement = DisplayStatement(symbol.name)
+                display_statement = DisplayStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "Expression":
                         display_statement.expression = self.recursive_builder(child)
                 return display_statement
             
             case "ReturnStatement":
-                return_statement = ReturnStatement(symbol.name)
+                return_statement = ReturnStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "Expression":
                         return_statement.expression = self.recursive_builder(child)
                 return return_statement
             
             case "Expression":
-                expression = Expression(symbol.name)
+                expression = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprAnd":
@@ -380,7 +381,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprAnd":
                 if len(symbol_children) > 1:
-                    expr_and = Expression(symbol.name)
+                    expr_and = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprEq":
@@ -403,7 +404,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprEq":
                 if len(symbol_children) > 1:
-                    expr_eq = Expression(symbol.name)
+                    expr_eq = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprRel":
@@ -426,7 +427,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprRel":
                 if len(symbol_children) > 1:
-                    expr_rel = Expression(symbol.name)
+                    expr_rel = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprPlus":
@@ -449,7 +450,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprPlus":
                 if len(symbol_children) > 1:
-                    expr_plus = Expression(symbol.name)
+                    expr_plus = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprMult":
@@ -472,7 +473,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprMult":
                 if len(symbol_children) > 1:
-                    expr_mult = Expression(symbol.name)
+                    expr_mult = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprExp":
@@ -495,7 +496,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprExp":
                 if len(symbol_children) > 1:
-                    expr_exp = Expression(symbol.name)
+                    expr_exp = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     match child.name:
                         case "ExprNot":
@@ -518,7 +519,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "ExprNot":
                 if len(symbol_children) > 1:
-                    expr_not = Expression(symbol.name)
+                    expr_not = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "ExprCall":
@@ -534,7 +535,7 @@ class AbstractSyntaxTreeBuilder:
                     return self.recursive_builder(child)
                 
             case "AbsoluteValue":
-                absolute_value = AbsoluteValue(symbol.name)
+                absolute_value = AbsoluteValue(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
@@ -542,7 +543,7 @@ class AbstractSyntaxTreeBuilder:
                 return absolute_value
             
             case "Magnitude":
-                magnitude = Magnitude(symbol.name)
+                magnitude = Magnitude(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
@@ -550,7 +551,7 @@ class AbstractSyntaxTreeBuilder:
                 return magnitude
             
             case "IdentifierAccess":
-                identifier_access = IdentifierAccess(symbol.name)
+                identifier_access = IdentifierAccess(symbol.name, [symbol.getBegin(), symbol.getEnd()])
 
                 for child in symbol_children:
                     match child.name:
@@ -563,21 +564,21 @@ class AbstractSyntaxTreeBuilder:
                 return identifier_access
             
             case "Term":
-                term = Term(symbol.name)
+                term = Term(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     term.type = child.name
                     term.value = self.characters(child.begin, child.end)
                 return term
             
             case "NodeDecl":
-                node_decl = NodeDecl(symbol.name)
+                node_decl = NodeDecl(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "IDENTIFIER":
                         node_decl.identifiers.append(self.characters(child.begin, child.end))
                 return node_decl
             
             case "GraphStatement":
-                graph_statement = GraphStatement(symbol.name)
+                graph_statement = GraphStatement(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for index, child in enumerate(symbol_children):
                     if index == 0 and child.name == "IDENTIFIER":
                         graph_statement.graph_identifier = self.characters(child.begin, child.end)
@@ -593,7 +594,7 @@ class AbstractSyntaxTreeBuilder:
                 return graph_statement
             
             case "ExprNode":
-                expr_node = ExprNode(symbol.name)
+                expr_node = ExprNode(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "Expression":
                         expr_node.expression = self.recursive_builder(child)
@@ -603,7 +604,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "EdgeDecl":
                 assigned_first_node = False
-                edge_decl = EdgeDecl(symbol.name)
+                edge_decl = EdgeDecl(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "IdentifierAccess":
                         identifier = self.recursive_builder(child)
@@ -626,7 +627,7 @@ class AbstractSyntaxTreeBuilder:
             
             case "EdgeLoop":
                 assigned_first_node = False
-                edge_loop = EdgeLoop(symbol.name)
+                edge_loop = EdgeLoop(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     if child.name == "IdentifierAccess":
                         identifier = self.recursive_builder(child)
@@ -646,7 +647,7 @@ class AbstractSyntaxTreeBuilder:
                 return edge_loop
             
             case "Algorithm":
-                algorithm = Algorithm(symbol.name)
+                algorithm = Algorithm(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -660,7 +661,7 @@ class AbstractSyntaxTreeBuilder:
                 return algorithm
             
             case "Parameter":
-                parameter = Parameter(symbol.name)
+                parameter = Parameter(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE_GRAPH" | "'node'":
@@ -670,12 +671,12 @@ class AbstractSyntaxTreeBuilder:
                 return parameter
             
             case "LoopModifier":
-                loop_modifier = LoopModifier(symbol.name)
+                loop_modifier = LoopModifier(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 loop_modifier.modifier = self.characters(symbol.begin, symbol.end)
                 return loop_modifier
             
             case "Declaration":
-                declaration = Declaration(symbol.name)
+                declaration = Declaration(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -692,7 +693,7 @@ class AbstractSyntaxTreeBuilder:
                 return declaration
             
             case "DeclarationInit":
-                decl_init = DeclarationInit(symbol.name)
+                decl_init = DeclarationInit(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -711,7 +712,7 @@ class AbstractSyntaxTreeBuilder:
                 return decl_init
             
             case "ListExpression":
-                list_expr = ListExpression(symbol.name)
+                list_expr = ListExpression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "Expression":
@@ -719,7 +720,7 @@ class AbstractSyntaxTreeBuilder:
                 return list_expr
             
             case "Assignment":
-                assignment = Assignment(symbol.name)
+                assignment = Assignment(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "AssignmentIdentifier": #Når identifierer G.array[0] så er .identifier= G. og .arrayaccess = ArrayAccess Class 
@@ -729,7 +730,7 @@ class AbstractSyntaxTreeBuilder:
                 return assignment
             
             case "AlgorithmCall":
-                algorithm_call = AlgorithmCall(symbol.name)
+                algorithm_call = AlgorithmCall(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -745,7 +746,7 @@ class AbstractSyntaxTreeBuilder:
                 return arguments
             
             case "ArrayAccess":
-                array_access = ArrayAccess(symbol.name)
+                array_access = ArrayAccess(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
                         case "IDENTIFIER":
@@ -761,7 +762,7 @@ class AbstractSyntaxTreeBuilder:
             accepted_children.append(self.recursive_builder(child))
 
         # Return the non-terminal as a ASTNode with the array of ASTNode children.
-        return ASTNode(symbol.name, accepted_children)
+        return ASTNode(symbol.name, [symbol.getBegin(), symbol.getEnd()], accepted_children)
 
 
     SKIP_WORDS = [

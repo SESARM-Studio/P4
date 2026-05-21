@@ -1,5 +1,6 @@
 from typesystem.type_checker import TypeChecker
 from parser.ast_builder import *
+from preprocessor.source_map import SourceMap
 # this will maybe be split up into each category
 
 ### AST tree helpers ###
@@ -21,10 +22,11 @@ def make_expression(operator=None, arg1=None, arg2=None, token="Expression"):
 def test_type_system_pgn():
     # Arrange
     expected = True
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None,[
         ASTNode("EOF", value="'$'")
     ])
-    checker = TypeChecker(ast)
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
 
     # Act
     well_formed = checker.check()
@@ -36,14 +38,14 @@ def test_type_system_pgm():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None,[
         make_expression(
             arg1=make_term("NATURAL_NUMBER", "5")
         ),
         ASTNode("EOF", value="'$'")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -59,14 +61,14 @@ def test_type_system_abs():
         arg1=make_term("NATURAL_NUMBER", "3")
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=absolute_value_node
         ),
         ASTNode("EOF", value="'$'")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -82,14 +84,14 @@ def test_type_system_mag():
         arg1=make_term("TEXT", "\"hello\"")
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=magnitude_node
         ),
         ASTNode("EOF", value="'$'")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -123,15 +125,15 @@ def test_type_system_aca():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         algo,
         make_expression(
             arg1=algo_call
         ),
         ASTNode("EOF", value="'$'")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -167,15 +169,15 @@ def test_type_system_arr():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_init_node,
         make_expression(
             arg1=array_access
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -200,15 +202,15 @@ def test_type_system_nac():
     id_access = IdentifierAccess("IdentifierAccess")
     id_access.identifiers = ["ze", "ez"]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         make_expression(
             arg1=id_access
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -250,14 +252,14 @@ def test_type_system_arl():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=list_expr_column_node
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -268,7 +270,7 @@ def test_type_system_ope():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=make_expression("+", token="ExprPlus",
                 arg1=make_expression("/", token="ExprMult",
@@ -289,8 +291,8 @@ def test_type_system_ope():
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -301,7 +303,7 @@ def test_type_system_mod():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=make_expression("%", token="ExprMult",
                 arg1=make_term("INTEGER_NUMBER", "-1"),
@@ -310,8 +312,8 @@ def test_type_system_mod():
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -356,13 +358,13 @@ def test_type_system_wot():
         arg1="test.alt2-->alt",
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         weight_of,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -408,13 +410,13 @@ def test_type_system_woe():
         arg1="test.a---b",
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         weight_of,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -426,7 +428,7 @@ def test_type_system_cmp():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=make_expression("<", token="ExprRel",
                 arg1=make_term("REAL_NUMBER", "2.3"),
@@ -435,8 +437,8 @@ def test_type_system_cmp():
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -447,7 +449,7 @@ def test_type_system_neg():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=make_expression("neg", token="ExprNot",
                 arg1=make_term("BOOL_VALUE", "false")
@@ -455,8 +457,8 @@ def test_type_system_neg():
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -467,7 +469,7 @@ def test_type_system_and():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression(
             arg1=make_expression("and", token="ExprAnd",
                 arg1=make_term("BOOL_VALUE", "true"),
@@ -476,8 +478,8 @@ def test_type_system_and():
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -488,15 +490,15 @@ def test_type_system_orc():
     # Arrange
     expected = True
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         make_expression("or", token="Expr",
             arg1=make_term("BOOL_VALUE", "false"),
             arg2=make_term("BOOL_VALUE", "true")
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -521,13 +523,13 @@ def test_type_system_gan_dtg():
     graph_stmt.operator = "add"
     graph_stmt.argument = node_decl
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         graph_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -554,14 +556,14 @@ def test_type_system_grn():
     graph_stmt.operator = "remove"
     graph_stmt.argument = "c"
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
 
         graph_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -599,14 +601,14 @@ def test_type_system_are():
     graph_stmt.operator = "add"
     graph_stmt.argument = edge1
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         node1,
         graph_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -626,15 +628,15 @@ def test_type_system_ind():
     )
     expr_node_node.direction = "-->"
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         node_decl_node,
         make_expression(
             arg1=expr_node_node
         ),
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -656,13 +658,13 @@ def test_type_system_com_dis():
         arg1=make_term("NATURAL_NUMBER", "2")
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         display1,
         display2,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -682,12 +684,12 @@ def test_type_system_dcl():
     )]
 
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_init_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -709,13 +711,13 @@ def test_type_system_ass():
         arg1=make_term("NATURAL_NUMBER", "3")
     )
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_node,
         assignment,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -763,12 +765,12 @@ def test_type_system_las():
     decl_init_node.type = "int"
     decl_init_node.expression = [list_expr3]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_init_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -795,12 +797,12 @@ def test_type_system_ift():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         if_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -836,12 +838,12 @@ def test_type_system_ife():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         if_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -868,12 +870,12 @@ def test_type_system_whl():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         while_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -897,12 +899,12 @@ def test_type_system_rpt():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         repeat_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -933,13 +935,13 @@ def test_type_system_for():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -995,13 +997,13 @@ def test_type_system_fre():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         for_edge_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1063,13 +1065,13 @@ def test_type_system_frw():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         for_edge_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1098,13 +1100,13 @@ def test_type_system_stp():
         stop_node
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1123,12 +1125,12 @@ def test_type_system_alg():
         )
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         algo,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1159,12 +1161,12 @@ def test_type_system_alr_ret():
     algo.return_type = "real"
     algo.statements = [return_statement]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         algo,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1180,12 +1182,12 @@ def test_type_system_dca():
     decl_node.identifiers = ["y"]
     decl_node.type = "real"
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1201,12 +1203,12 @@ def test_type_system_dlt_dti():
     decl_node.identifiers = ["n"]
     decl_node.type = "node"
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1223,12 +1225,12 @@ def test_type_system_dli_dim():
     list_decl_node.type = "int"
     list_decl_node.dimension = make_term("NATURAL_NUMBER", "2")
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         list_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1245,12 +1247,12 @@ def test_type_system_dli_din():
     list_decl_node.type = "int"
 
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         list_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1266,12 +1268,12 @@ def test_type_system_ghd():
     graph_decl_node.identifier = "i"
     graph_decl_node.weight_type = None
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1287,12 +1289,12 @@ def test_type_system_gdw():
     graph_decl_node.identifier = "tw"
     graph_decl_node.weight_type = "int"
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1331,12 +1333,12 @@ def test_type_system_gdi_edu():
         edge1
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 
@@ -1383,12 +1385,12 @@ def test_type_system_gwi_ewd():
         edge1
     ]
 
-    ast = ASTNode("PROGRAM", [
+    ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
         ASTNode("EOF", value="$")
     ])
-    checker = TypeChecker(ast)
-
+    sm = SourceMap()
+    checker = TypeChecker(ast, sm)
     # Act
     well_formed = checker.check()
 

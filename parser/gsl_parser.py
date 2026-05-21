@@ -16,9 +16,9 @@ class gsl_parser:
 
     def error(self):
       if self.offending < 0:
-        return "lexical analysis failed"
+        return "Lexical analysis failed"
       else:
-        return "syntax error"
+        return "Syntax error"
 
     def serialize(self, eventHandler):
       pass
@@ -264,7 +264,7 @@ class gsl_parser:
       message += ", found "
       message += found
     expected = gsl_parser.getExpectedTokenSet(e)
-    message += "\nwhile expecting "
+    message += "while expecting "
     delimiter = ""
     if len(expected) != 1:
       delimiter = "["
@@ -288,6 +288,7 @@ class gsl_parser:
         column = 1
       else:
         column += 1
+    '''
     message += "at line "
     message += str(line)
     message += ", column "
@@ -298,6 +299,7 @@ class gsl_parser:
       end = len(self.input)
     message += self.input[e.getBegin() : end]
     message += "..."
+    '''
     return message
 
   def parse_Program(self):
