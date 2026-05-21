@@ -118,7 +118,7 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
                         raise PreprocessorException("Tabs and spaces cannot be combined", [source_offset, source_end_location])
                     if (len(indents) / spaces_amount) % 1 != 0:
                         raise PreprocessorException("Inconsistent use of spaces", [source_offset, source_end_location])
-                    number_indents = len(indents) / spaces_amount
+                    number_indents = len(indents) // spaces_amount
                 
                 # If the document uses tabs
                 if indent_type == "Tabs":
@@ -129,7 +129,7 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
             token_amount = number_indents - current_indent_level
 
             # Adds @INDENT or @DEDENT tokens for each indent / dedent
-            if token_amount > 0:
+            if token_amount >= 0:
                 temp_str = re.sub(rf"^(\t|\ {{{spaces_amount}}})*", abs(token_amount) * "@INDENT ", temp_str)
 
             if token_amount < 0:

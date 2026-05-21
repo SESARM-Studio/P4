@@ -1,7 +1,7 @@
 from parser.gsl_parser import gsl_parser
 
 class ASTNode:
-    def __init__(self, token, span: list, children=None, value=None):
+    def __init__(self, token, span: list = None, children=None, value=None):
         self.token = token
         self.value = value
         self.children = children or []
@@ -12,33 +12,33 @@ class ASTNode:
             c.parent = self
 
 class IfStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.condition = None
         self.then_statements = []
         self.else_statements = []
 
 class WhileStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.condition = None
         self.statements = []
 
 class RepeatStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.repeat_expression = None
         self.repeat_statements = []
 
 class ForEachNormal(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.loop_identifier = None
         self.iterable = None
         self.statements = []
 
 class ForEachEdge(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.edge = None
         self.weight_identifier = None
@@ -46,7 +46,7 @@ class ForEachEdge(ASTNode):
         self.statements = []
 
 class GraphDecl(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.graph_type = None
         self.identifier = None
@@ -55,26 +55,26 @@ class GraphDecl(ASTNode):
         self.edges = []
 
 class DisplayStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = None
 
 class ReturnStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = None
 
 
 
 class GraphStatement(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.graph_identifier = None
         self.operator = None
         self.argument = None
 
 class EdgeDecl(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.initial_node = None
         self.nodes = []
@@ -82,14 +82,14 @@ class EdgeDecl(ASTNode):
         self.weight = []
 
 class EdgeLoop(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.initial_node = None
         self.last_node = None
         self.direction = None
 
 class Algorithm(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifier = None
         self.parameters = []
@@ -97,18 +97,18 @@ class Algorithm(ASTNode):
         self.statements = []
 
 class Parameter(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.type = None
         self.identifier = None
         
 class LoopModifier(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.modifier = None
 
 class Declaration(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifiers = []
         self.type = None
@@ -116,67 +116,67 @@ class Declaration(ASTNode):
         self.dimension = None
 
 class NodeDecl(Declaration):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.type = 'node'
 
 class DeclarationInit(Declaration):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = []
 
 class Assignment(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifiers = []
         self.expression = None
 
 class Expression(ASTNode):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.operator = None
         self.arg1 = None
         self.arg2 = None
 
 class Term(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.type = None
 
 class IdentifierAccess(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifiers = []
 
 class AbsoluteValue(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = None
 
 class Magnitude(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = None
 
 class ListExpression(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expressions = []
 
 class AlgorithmCall(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifier = None
         self.arguments = None
 
 class ArrayAccess(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.identifier = None
         self.indexes = []
 
 class ExprNode(Expression):
-    def __init__(self, token, span: list):
+    def __init__(self, token, span: list = None):
         super().__init__(token, span)
         self.expression = None
         self.direction = None

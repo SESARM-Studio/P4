@@ -1,12 +1,14 @@
 from preprocessor.prepro import preprocessor
-from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
+from parser.ast_builder import AbstractSyntaxTreeBuilder
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
+from preprocessor.source_map import SourceMap
 
 ######### Integration of typesystem
 
 def IntegratedTypesystem(inp_file: str) -> bool:
-    preprocessed_contents = preprocessor(inp_file)
+    sm = SourceMap()
+    preprocessed_contents = preprocessor(inp_file, sm)
 
     tree_builder = gsl_parser.ParseTreeBuilder()
     parser = gsl_parser(preprocessed_contents, tree_builder)
@@ -17,7 +19,7 @@ def IntegratedTypesystem(inp_file: str) -> bool:
     ast_builder = AbstractSyntaxTreeBuilder(preprocessed_contents)
     tree = ast_builder.build_tree(tree_builder.stack)
 
-    type_checker = TypeChecker(ast=tree)
+    type_checker = TypeChecker(ast=tree, source_map=sm)
     return type_checker.check()
 
 ######### (Helper function)
@@ -133,7 +135,7 @@ algo another_one(t in nat) return real
     input_file.write_text(file_contents)
 
     # Act
-    well_formed_program = IntegratedTypesystem(input_file)
+    well_formed_program = IntegratedTypesystem(str(input_file))
 
     # Assert
     assert well_formed_program == True, "Program was not well formed"

@@ -4,9 +4,9 @@ class SourceMap:
     input_file = '' # Input file used by the preprocessor
     source_array = [] # Array containing each line of original code, to print for error messages
 
-    def add_span(self, processed_offset, original_offset, processed_end, original_end):
-        segment = SpanSegment(processed_offset, original_offset, processed_end, original_end)
-        self.map.update({processed_offset: segment})
+    def add_span(self, processed_offset_start, original_offset_start, processed_offset_end, original_offset_end):
+        segment = SpanSegment(processed_offset_start, original_offset_start, processed_offset_end, original_offset_end)
+        self.map.update({processed_offset_start: segment})
 
     def get_line(self, original_offset):
         for i in range(len(self.newline_array)):
@@ -15,7 +15,7 @@ class SourceMap:
 
         return len(self.newline_array)
 
-    def get_source_spans_from_processed_segment(self, processed_offset_start, processed_offset_end):
+    def get_spans_from_processed_segment(self, processed_offset_start, processed_offset_end):
         """
         Returns the SpanSegments based on a processed start and end offset
         """
@@ -46,7 +46,7 @@ class SourceMap:
         """
         Returns information about the original coded needed for error messages, based on a processed segment
         """
-        span_segments = self.get_source_spans_from_processed_segment(processed_start, processed_end)
+        span_segments = self.get_spans_from_processed_segment(processed_start, processed_end)
 
         span_lines = [] # Array containing line numbers in original source code for the processed span
         source_code_lines = [] # Array containing source code representing the span segments

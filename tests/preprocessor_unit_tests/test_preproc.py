@@ -1,21 +1,25 @@
 import pytest
-
+from pathlib import Path
 from preprocessor.prepro import preprocessor
+from preprocessor.source_map import SourceMap
+from exceptions.preprocessor_exception import PreprocessorException
 
-INPUT_FILES = "tests/preprocessor_unit_tests/input_files/"
+INPUT_FILES = Path("tests/preprocessor_unit_tests/input_files/")
 OUTPUT_FILES = "output_files"
 
 def test_comments(tmp_path):
     # Arrange
     expected = "x in int := 1 @NEWLINE\n$"
-    input_file = INPUT_FILES + "comments.gsl"
+    input_file = INPUT_FILES / "comments.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "comments_out.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    print("Test file: ",input_file)
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -39,14 +43,15 @@ edge a --> c weight 3 @NEWLINE
 @DEDENT return true @NEWLINE
 @DEDENT @DEDENT $"""
 
-    input_file = INPUT_FILES + "indents.gsl"
+    input_file = INPUT_FILES / "indents.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "indents_out.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -66,14 +71,15 @@ v in real := 2 @NEWLINE
 o in real := y^2 * v @NEWLINE
 $"""
 
-    input_file = INPUT_FILES + "newlines.gsl"
+    input_file = INPUT_FILES / "newlines.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "newlines_out.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -82,69 +88,73 @@ $"""
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_codeAfterCommentError(tmp_path):
+def test_code_after_comment_error(tmp_path):
     # Arrange
-    expected = "ERROR LINE 6: No code must follow a multi-line comment"
+    expected = "No code must follow a multi-line comment"
 
-    input_file = INPUT_FILES + "codeAfterCommentError.gsl"
+    input_file = INPUT_FILES / "codeAfterCommentError.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "codeAfterCommentError.gsl"
 
     # Act
-    with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, True, output_file)   
+    sm = SourceMap()
+    with pytest.raises(PreprocessorException) as exit_info:
+        preprocessor(input_file, sm,True, output_file)
 
     # Assert
-    assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
+    assert expected == exit_info.value.message, f"expected: {expected} actual: {exit_info.value.message}"
 
-def test_mismatchIndentError(tmp_path):
+def test_mismatch_indent_error(tmp_path):
     # Arrange
-    expected = "ERROR LINE 3: Inconsistent use of spaces"
+    expected = "Inconsistent use of spaces"
 
-    input_file = INPUT_FILES + "mismatchIndentError.gsl"
+    input_file = INPUT_FILES / "mismatchIndentError.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "mismatchIndentError.gsl"
 
     # Act
-    with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, True, output_file)   
+    sm = SourceMap()
+    with pytest.raises(PreprocessorException) as exit_info:
+        preprocessor(input_file, sm,True, output_file)
 
     # Assert
-    assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
+    assert expected == exit_info.value.message, f"expected: {expected} actual: {exit_info.value.message}"
 
-def test_startIndentError(tmp_path):
+def test_start_indent_error(tmp_path):
     # Arrange
-    expected = "ERROR LINE 1: Unexpected indentation"
+    expected = "Unexpected indentation"
 
-    input_file = INPUT_FILES + "startIndentError.gsl"
+    input_file = INPUT_FILES / "startIndentError.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "startIndentError.gsl"
 
     # Act
-    with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, True, output_file)   
+    sm = SourceMap()
+    with pytest.raises(PreprocessorException) as exit_info:
+        preprocessor(input_file, sm,True, output_file)
 
     # Assert
-    assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
+    assert expected == exit_info.value.message, f"expected: {expected} actual: {exit_info.value.message}"
 
-def test_commentSLInTextType(tmp_path):
+def test_comment_sl_in_text_type(tmp_path):
     # Arrange
     expected = "text a := \"This is text type with a comment // This should be here\" @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "commentSLInTextType.gsl"
+    input_file = INPUT_FILES / "commentSLInTextType.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "commentSLInTextType.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -153,18 +163,19 @@ def test_commentSLInTextType(tmp_path):
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_commentSLInTextTypeAndAfter(tmp_path):
+def test_comment_sl_in_text_type_and_after(tmp_path):
     # Arrange
     expected = "text testing := \"This is a test text // This is cool\"  @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "commentSLInTextTypeAndAfter.gsl"
+    input_file = INPUT_FILES / "commentSLInTextTypeAndAfter.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "commentSLInTextTypeAndAfter.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -173,18 +184,19 @@ def test_commentSLInTextTypeAndAfter(tmp_path):
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_commentMLInTextType(tmp_path):
+def test_comment_ml_in_text_type(tmp_path):
     # Arrange
     expected = "text something := \"I love something /* Multiline comment wow */\" @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "commentMLInTextType.gsl"
+    input_file = INPUT_FILES / "commentMLInTextType.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "commentSLInTextType.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -193,18 +205,19 @@ def test_commentMLInTextType(tmp_path):
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_commentMLInTextTypeAndAfter(tmp_path):
+def test_comment_ml_in_text_type_and_after(tmp_path):
     # Arrange
     expected = "text blabla := \"Cool text /* Multiline comment */\"  @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "commentMLInTextTypeAndAfter.gsl"
+    input_file = INPUT_FILES / "commentMLInTextTypeAndAfter.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "commentMLInTextTypeAndAfter.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -213,35 +226,37 @@ def test_commentMLInTextTypeAndAfter(tmp_path):
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_commentInExpressionError(tmp_path):
+def test_comment_in_expression_error(tmp_path):
     # Arrange
-    expected = "ERROR LINE 1: No code must follow a multi-line comment"
+    expected = "No code must follow a multi-line comment"
 
-    input_file = INPUT_FILES + "commentInExpressionError.gsl"
+    input_file = INPUT_FILES / "commentInExpressionError.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "commentInExpressionError.gsl"
 
     # Act
-    with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, True, output_file)   
+    sm = SourceMap()
+    with pytest.raises(PreprocessorException) as exit_info:
+        preprocessor(input_file, sm,True, output_file)
 
     # Assert
-    assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
+    assert expected == exit_info.value.message, f"expected: {expected} actual: {exit_info.value.message}"
 
-def test_multipleMLComments(tmp_path):
+def test_multiple_ml_comments(tmp_path):
     # Arrange
     expected = "a in int := 5  @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "multipleMLComments.gsl"
+    input_file = INPUT_FILES / "multipleMLComments.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "multipleMLComments.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -250,7 +265,7 @@ def test_multipleMLComments(tmp_path):
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_MLCommentAfterSLComment(tmp_path):
+def test_ml_comment_after_sl_comment(tmp_path):
     # Arrange
     expected = \
         """number in real := 0.1  @NEWLINE
@@ -258,14 +273,15 @@ This is a comment @NEWLINE
 */ @NEWLINE
 $"""
 
-    input_file = INPUT_FILES + "MLCommentAfterSLComment.gsl"
+    input_file = INPUT_FILES / "MLCommentAfterSLComment.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "MLCommentAfterSLComment.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
@@ -274,35 +290,37 @@ $"""
     # Assert
     assert expected == data, f"expected: {expected} actual: {data}"
 
-def test_SLCommentAfterMLCommentError(tmp_path):
+def test_sl_comment_after_ml_comment_error(tmp_path):
     # Arrange
-    expected = "ERROR LINE 3: No code must follow a multi-line comment"
+    expected = "No code must follow a multi-line comment"
 
-    input_file = INPUT_FILES + "SLCommentAfterMLCommentError.gsl"
+    input_file = INPUT_FILES / "SLCommentAfterMLCommentError.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "SLCommentAfterMLCommentError.gsl"
 
     # Act
-    with pytest.raises(SystemExit) as exit_info:
-        preprocessor(input_file, True, output_file)   
+    sm = SourceMap()
+    with pytest.raises(PreprocessorException) as exit_info:
+        preprocessor(input_file, sm,True, output_file)
 
     # Assert
-    assert expected == exit_info.value.code, f"expected: {expected} actual: {exit_info.value.code}"
+    assert expected == exit_info.value.message, f"expected: {expected} actual: {exit_info.value.message}"
 
-def test_multipleMLCommentsAfterEachother(tmp_path):
+def test_multiple_ml_comments_after_each_other(tmp_path):
     # Arrange
     expected = "a in nat := 1  @NEWLINE\n$"
 
-    input_file = INPUT_FILES + "multipleMLCommentsAfterEachother.gsl"
+    input_file = INPUT_FILES / "multipleMLCommentsAfterEachother.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
     output_dir.mkdir()
     output_file = output_dir / "multipleMLCommentsAfterEachother.gsl"
 
     # Act
-    preprocessor(input_file, True, output_file)
+    sm = SourceMap()
+    preprocessor(input_file,sm, True, output_file)
 
     data = ""
     with open(output_file, "r") as out:
