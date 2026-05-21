@@ -17,7 +17,7 @@ class ExpressionReturn():
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
         case Term():
-            match node.type:
+            match node.type: # (LIT)
                 case 'NATURAL_NUMBER':
                     return ExpressionReturn(abs(int(node.value)), store)
                 case 'INTEGER_NUMBER':
@@ -31,23 +31,20 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         return ExpressionReturn(True, store)
                     else: return ExpressionReturn(False, store)
                 case 'IDENTIFIER':
-                    if graph_object.graph is not None:
-                        if node.value == "nodes":
-                            return ExpressionReturn(graph_object.get_nodes(), store)
-                        else:
-                            location = env_var.get(node.value)
-                            return ExpressionReturn(store.get(location), store)
-                    else:      
+                    if graph_object.graph is not None and node.value == "nodes": #(IDG)
+                        return ExpressionReturn(graph_object.get_nodes(), store)
+                    else:  # (ID)
                         location = env_var.get(node.value)
                         return ExpressionReturn(store.get(location), store)
                 case _:
                     exit("Invalid term type!")
-        case AlgorithmCall():
+
+        case AlgorithmCall(): # (cll2)
             argument_values = []
             algorithm_store = deepcopy(store)
 
-            # Retrieve algorithm information
-            parameters, body_statement, env_graph_old, env_var_old, env_algo_old = env_algo.get(node.identifier)
+            # Retrieve algorithm information.  # (cll1)
+            parameters, body_statements, env_graph_old, env_var_old, env_algo_old = env_algo.get(node.identifier)
 
             # Update algorithm's algorithm store to contain itself to allow recursive calls
             env_algo_old.update({node.identifier: deepcopy(env_algo.get(node.identifier))})
@@ -55,49 +52,48 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             # Not deep-copying next free location as location object fields are never used.
             free_location = loc
 
-            # If the function call was given arguments
+            # If the function call was given arguments # (cll1)
             if node.arguments:
                 # Evaluating algorithm arguments
                 for argument in node.arguments:
 
                     E = execute_expression(argument, env_graph, env_var, env_algo, loc, graph_object, algorithm_store)
                     argument_values.append(E.v)
+                    algorithm_store = E.modified_store
 
                 # Assign algorithm parameters a location in algorithm's variable environment
-                # Assign algorithm parameters the values passed in as arguments
-                for idx, parameter in enumerate(parameters):
-                    if idx == 0:
-                        env_var_old.update({parameter.identifier: loc})
-                        E.modified_store.update({loc: argument_values[0]})
-                    else:
-                        env_var_old.update({parameter.identifier: env_var_old.get(parameters[idx-1].identifier).next_location()})
-                        E.modified_store.update({env_var_old.get(parameter.identifier): argument_values[idx]})
+                # and then assign algorithm parameters the values passed in as arguments
+                env_var_old.update({parameters[0].identifier: free_location})
+                E.modified_store.update({free_location: argument_values[0]})
+
+                for idx, parameter in enumerate(parameters[1:], 1):
+                    env_var_old.update({parameter.identifier: env_var_old.get(parameters[idx-1].identifier).next_location()})
+                    E.modified_store.update({env_var_old.get(parameter.identifier): argument_values[idx]})
                 
                 free_location = env_var_old.get(parameters[-1].identifier).next_location() # index -1 accesses last element in an array.
 
             try: 
-                store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(body_statement[0],free_location, graph_object, E.modified_store, env_var_old, env_algo_old, env_graph_old)
 
-                for statement in body_statement[1:]:
-                    store_body, env_var_body, env_algo_body, env_graph_body, v, loc_body = evaluator.categories.statement.execute_statement(statement,loc_body, graph_object, store_body, env_var_body, env_algo_body, env_graph_body)
+                for statement in body_statements:
+                    algorithm_store, env_var_old, env_var_old, env_graph_old, v, free_location = evaluator.categories.statement.execute_statement(statement, free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
 
-                return ExpressionReturn(v,store_body)
+                return ExpressionReturn(v, algorithm_store)
             except ReturnException as e:
                 return ExpressionReturn(e.v, e.store)
         
-        case ListExpression():
-            v2 = []
+        case ListExpression(): # (LIST)
+            v = []
             for i in node.expressions:
                 E = execute_expression(i, env_graph, env_var, env_algo, loc, graph_object, store)
-                v2.append(E.v)
-            return ExpressionReturn(v2, E.modified_store)
+                v.append(E.v)
+            return ExpressionReturn(v, E.modified_store)
         
-        case AbsoluteValue():
+        case AbsoluteValue(): # (ABS)
             E = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
                     
             return ExpressionReturn(abs(E.v), E.modified_store)
 
-        case Magnitude():
+        case Magnitude(): # (AG)
             E = execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
 
             return ExpressionReturn(len(E.v), E.modified_store)
@@ -151,106 +147,104 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
             # Evaluate given array indices
             access_indices = []
-            E1 = execute_expression(node.indexes[0], env_graph, env_var, env_algo, loc, graph_object, store)
-            access_indices.append(E1.v)
 
-            E2 = ExpressionReturn(E1.v, E1.modified_store, E1.graph_object)
+            E = ExpressionReturn(None, store)
 
-            for index in node.indexes[1:]:
-                E2 = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, E2.modified_store)
-                access_indices.append(E2.v)
+            for index in node.indexes:
+                E = execute_expression(index, env_graph, env_var, env_algo, loc, graph_object, E.modified_store)
+                access_indices.append(E.v)
             
             # Retrieve array element with evaluated indices and retrieved array
             v = array
             for idx in access_indices:
                 v = v[idx-1] # -1 as GSL indexes from 1
 
-            return ExpressionReturn(v, E2.modified_store)
+            return ExpressionReturn(v, E.modified_store)
 
-        case ExprNode():
+        case ExprNode(): # (NEX)
             v, store = evaluator.categories.node_expression.execute_node_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return ExpressionReturn(v, store)
 
         case Expression():
             match node.operator:
-                case '=':
+                case '=': # (EQ)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v == E2.v, E2.modified_store)
-                case '!=':
+                case '!=': # (NEQ)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v != E2.v, E2.modified_store)
-                case '<':
+                case '<': # (LT)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v < E2.v, E2.modified_store)
-                case '>':
+                case '>': # (GT)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v > E2.v, E2.modified_store)
-                case '<=':
+                case '<=': # (LEQ)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v <= E2.v, E2.modified_store)
-                case '>=':
+                case '>=': # (GEQ)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v >= E2.v, E2.modified_store)
-                case '+':
+                case '+': # (ADD)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v + E2.v, E2.modified_store)
 
-                case '-':
+                case '-': # (SUB)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v - E2.v, E2.modified_store)
         
-                case '*':
+                case '*': # (MUL)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v * E2.v, E2.modified_store)
 
-                case '/':
+                case '/': # (DIV)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v / E2.v, E2.modified_store)
 
-                case '%':
+                case '%': # (MOD)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v % E2.v, E2.modified_store)
                 
-                case '^':
+                case '^': # (EXP)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(math.pow(E1.v, E2.v), E2.modified_store)
                 
-                case 'neg':
+                case 'neg': # (NEG)
                     E = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
 
                     return ExpressionReturn(not E.v, E.modified_store)
 
-                case 'and':
+                case 'and': # (AND)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
                     return ExpressionReturn(E1.v and E2.v, E2.modified_store)
                 
-                case 'or':
+                case 'or': # (OR)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                     
@@ -260,9 +254,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     graph_identifier = node.arg1.split(".")[0]
                     graph = env_graph.get(graph_identifier)
 
-                    if node.arg1.count("-->") > 0:
+                    if "-->" in node.arg1:  # (NWD)
                         node_identifiers = node.arg1.split(".")[1].split("-->")
-                    else:
+                    else:  # (NWUD)
                         node_identifiers = node.arg1.split(".")[1].split("---")
 
                     edge_data = graph.get_edge_data(node_identifiers[0], node_identifiers[1])
