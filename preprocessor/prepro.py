@@ -152,7 +152,7 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
         final_string += " @NEWLINE\n"
 
     # If the document does not end unindentet, it adds the missing dedents
-    if current_indent_level != 0:
+    if current_indent_level > 0:
         final_string += current_indent_level * "@DEDENT "
 
     # Adds the EOD sign '$'
