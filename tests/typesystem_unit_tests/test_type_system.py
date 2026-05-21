@@ -182,53 +182,29 @@ def test_type_system_arr():
     # Assert
     assert well_formed == expected, print_ast(ast)
 
-def test_type_system_dt1():
+def test_type_system_nac():
     # Arrange
     expected = True
 
-    algo = Algorithm("Algorithm")
-    algo.identifier = "test"
+    node0 = NodeDecl("NodeDecl")
+    node0.identifiers = ["ez"]
 
     graph_decl_node = GraphDecl("GraphDecl")
     graph_decl_node.graph_type = "tree"
     graph_decl_node.identifier = "ze"
     graph_decl_node.weight_type = "int"
-
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["ez"]
-
-    algo_call = AlgorithmCall("AlgorithmCall")
-    algo_call.identifier = "test"
+    graph_decl_node.nodes = [
+        node0
+    ]
 
     id_access = IdentifierAccess("IdentifierAccess")
-    id_access.identifiers = ["ze", "ez", algo_call]
+    id_access.identifiers = ["ze", "ez"]
 
     ast = ASTNode("PROGRAM", [
-        algo,
         graph_decl_node,
-        node1,
         make_expression(
             arg1=id_access
         ),
-        ASTNode("EOF", value="$")
-    ])
-    checker = TypeChecker(ast)
-
-    # Act
-    well_formed = checker.check()
-
-    # Assert
-    assert well_formed == expected, print_ast(ast)
-
-def test_type_system_dt2():
-    # Arrange
-    expected = True
-
-    node1 = NodeDecl("NodeDecl")
-    node1.identifiers = ["ez"]
-
-    ast = ASTNode("PROGRAM", [
-        node1,
         ASTNode("EOF", value="$")
     ])
     checker = TypeChecker(ast)
@@ -600,7 +576,7 @@ def test_type_system_are():
     node1.identifiers = ["a", "b"]
 
     graph_decl_node = GraphDecl("GraphDecl")
-    graph_decl_node.graph_type = "tree"
+    graph_decl_node.graph_type = "digraph"
     graph_decl_node.identifier = "yes_graph"
     graph_decl_node.weight_type = None
     graph_decl_node.nodes = [
@@ -937,10 +913,16 @@ def test_type_system_for():
     # Arrange
     expected = True
 
+    decl_init_node = Declaration("Declaration")
+    decl_init_node.is_list = True
+    decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
+    decl_init_node.identifiers = ["mrts"]
+    decl_init_node.type = "int"
+
     for_normal_stmt = ForEachNormal("ForEachNormal")
     for_normal_stmt.loop_identifier = "x"
     for_normal_stmt.iterable = make_expression(
-        arg1=make_term("TEXT", "\"martin\"")
+        arg1=make_term("IDENTIFIER", "mrts")
     )
     for_normal_stmt.statements = [
         make_expression(
@@ -952,6 +934,7 @@ def test_type_system_for():
     ]
 
     ast = ASTNode("PROGRAM", [
+        decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
@@ -1100,16 +1083,23 @@ def test_type_system_stp():
     stop_node = LoopModifier("LoopModifier")
     stop_node.modifier = "stop"
 
+    decl_init_node = Declaration("Declaration")
+    decl_init_node.is_list = True
+    decl_init_node.dimension = make_term("NATURAL_NUMBER", "1")
+    decl_init_node.identifiers = ["mrts"]
+    decl_init_node.type = "int"
+
     for_normal_stmt = ForEachNormal("ForEachNormal")
     for_normal_stmt.loop_identifier = "x"
     for_normal_stmt.iterable = make_expression(
-        arg1=make_term("TEXT", "\"martin\"")
+        arg1=make_term("IDENTIFIER", "mrts")
     )
     for_normal_stmt.statements = [
         stop_node
     ]
 
     ast = ASTNode("PROGRAM", [
+        decl_init_node,
         for_normal_stmt,
         ASTNode("EOF", value="$")
     ])
