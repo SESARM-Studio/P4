@@ -14,8 +14,6 @@ def traverse_program(program: ASTNode):
     store = dict()
 
     if len(program.children) != 1:
-        for child in program.children:
-            if not child.token == "EOF":
-                store, env_var, env_algo, env_graph, v, loc = execute_statement(child, loc, graph_object, store, env_var, env_algo, env_graph)
-
-    print("")
+        for statement in program.children:
+            if not statement.token == "EOF":
+                store, env_var, env_algo, env_graph, v, loc = execute_statement(statement, loc, graph_object, store, env_var, env_algo, env_graph)
