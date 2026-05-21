@@ -1,7 +1,7 @@
 from copy import deepcopy
 from parser.ast_builder import *
 
-def execute_algorithm(node: Algorithm, env_graph, env_var, env_algo, loc, graph_object, store):
+def execute_algorithm(node: Algorithm, env_graph, env_var, env_algo): #ALGO and ALGO-R (they are identical in the semantics)
     match node.token:
         case "Algorithm":
             env_graph_cpy = env_graph.copy()
