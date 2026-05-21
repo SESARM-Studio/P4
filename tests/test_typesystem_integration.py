@@ -43,9 +43,12 @@ digraph G with int weight
     edge t --> x weight 5
     edge x --> t weight -2
 
+node NIL
+INF in int := 99999999
+
 algo initializeSingleSource(node s)
     // Adding attributes: nodeX.addAttribute(datatype, attributeName)
-    G.nodes.addAttribute("natural", SPE) // shortest Path Estimate
+    G.nodes.addAttribute("int", SPE) // shortest Path Estimate
     G.nodes.addAttribute("node", pi)
 
     for each v in G.nodes
@@ -72,8 +75,7 @@ algo bellmanFord(node s) return bool
             return false
     return true
 
-
-bellmanFord(G.nodes.s)
+bellmanFord(G.s)
     """
     input_file.write_text(file_contents)
 

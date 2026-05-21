@@ -45,6 +45,7 @@ class TypeChecker():
 
     def __init__(self, ast: ASTNode) -> None:
         self.ast = ast
+        self.attributes: dict = {} # simplification of attributes added by addAttributes
 
     def check(self) -> bool:
         """Annotates the AST and return true if program is well formed"""
@@ -168,54 +169,62 @@ class TypeChecker():
 
                 kind = elem_type
 
-            case IdentifierAccess() if len(node.identifiers) == 3: # (gna)
-                graph = env_g.lookup(node.identifiers[0])
+            case IdentifierAccess(identifiers=[i1, i2]) if i2 == "nodes": # (gns)
+                graph = env_g.lookup(i1)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
+
+                kind = [TypeEnum.NODE]
+
+            case IdentifierAccess(identifiers=[i1, i2]) if env_v.lookup(i1) == TypeEnum.UNKNOWN: # (gnd)
+                graph = env_g.lookup(i1)
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression)
 
                 graph_type, weight_type, node_set = graph
                 self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
-                self.reject_type(weight_type, TypeEnum.UNKNOWN, self.parse_expression)
+                self.expect_type_one_of(weight_type, { TypeEnum.UNKNOWN, *self.arit_types }, self.parse_expression)
 
-                if node.identifiers[1] != "nodes": # TODO: add proper handling for .nodes and .edges
-                    self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
+                self.expect_in_domain(i2, node_set, self.parse_expression)
 
-                    if ( # TODO: add proper handling for addAttribute()
-                        not isinstance(node.identifiers[2], AlgorithmCall) and node.identifiers[2] != "addAttribute"
-                    ):
-                        expr_type = self.parse_expression(node.identifiers[2], env_v, env_a, env_g)
-                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
-                        kind = expr_type
-                    else:
-                        # addAttribute should return no type or the type of the attribute
-                        kind = TypeEnum.UNKNOWN # TODO: implement addAttribute here and in the formal type system
-                else: # TODO: fix node access in G.nodes.x
-                    kind = TypeEnum.NODE # hardcoded value for node access
+                kind = TypeEnum.NODE
 
-            case IdentifierAccess():
-                if (graph := env_g.lookup(node.identifiers[0])) != TypeEnum.UNKNOWN: # (nac)
+            case IdentifierAccess(identifiers=ids):
+                if (graph := env_g.lookup(ids[0])) != TypeEnum.UNKNOWN: # (gxr) with addAttribute
                     graph_type, weight_type, node_set = graph
                     self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression)
                     self.expect_type_one_of(
                         weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_expression
                     )
 
-                    if node.identifiers[1] == "nodes": # TODO: add proper handling for .nodes and .edges
-                        kind = [TypeEnum.NODE]
-                    else:
-                        self.expect_in_domain(node.identifiers[1], node_set, self.parse_expression)
-                        kind = TypeEnum.NODE
+                    if (
+                        len(ids) == 3 and isinstance(ids[2], AlgorithmCall) # G.nodes.addAttribute()
+                    ):
+                        algorithm_identifier = ids[2].identifier
+                        if algorithm_identifier != "addAttribute":
+                            raise TypeCheckError(self.parse_expression, "addAttribute", algorithm_identifier)
 
-                else: # (aac)
-                    node_type = env_v.lookup(node.identifiers[0])
+                        arguments = ids[2].arguments
+                        attribute_type = resolve_type(arguments[0].arg1.value.strip('"'))
+                        attribute_identifier = arguments[1].arg1.value
+
+                        # internal algorithm implementation of addAttribute that is built in:
+                        self.attributes[attribute_identifier] = attribute_type
+
+                    else: # type system version of (gxr):
+                        expr_type = self.parse_expression(ids[1], env_v, env_a, env_g)
+                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+
+                        kind = expr_type
+
+                else: # (nxr)
+                    node_type = env_v.lookup(ids[0])
                     self.expect_type(node_type, TypeEnum.NODE, self.parse_expression)
 
-
-                    # TODO: add attributes
-                    # expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
-                    # self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
-                    expr_type = TypeEnum.NAT # hardcoded value for all attributes
-
-                    kind = expr_type
+                    if isinstance(ids[1], str):
+                        kind = self.attributes.get(ids[1], TypeEnum.UNKNOWN)
+                    else: # type system version of (nxr)
+                        expr_type = self.parse_expression(node.identifiers[1], env_v, env_a, env_g)
+                        self.reject_type(expr_type, TypeEnum.UNKNOWN, self.parse_expression)
+                        kind = expr_type
 
             case ListExpression(): # (arl)
                 list_types = []
@@ -314,7 +323,7 @@ class TypeChecker():
                 kind = expr1_type
 
             case Expression(operator=None | ""): # sometimes the expr just contains another expr
-                        kind = self.parse_expression(node.arg1, env_v, env_a, env_g)
+                kind = self.parse_expression(node.arg1, env_v, env_a, env_g)
 
             case _:
                 raise Exception("Unknown expression type")
@@ -407,13 +416,13 @@ class TypeChecker():
                 )
                 self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
 
-                for _node in node.nodes:
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
+                for node_obj in node.nodes:
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                 kind = TypeEnum.EDGE
 
@@ -432,13 +441,13 @@ class TypeChecker():
                 )
                 self.expect_in_domain(identifier1, node_set, self.parse_edge_declaration)
 
-                for _node in node.nodes:
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
+                for node_obj in node.nodes:
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
                         else _node
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                 kind = TypeEnum.EDGE
 
@@ -462,13 +471,13 @@ class TypeChecker():
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
-                for _node, weight in zip(node.nodes, node.weight):
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
-                        else _node
+                for node_obj, weight in zip(node.nodes, node.weight):
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
+                        else node_obj
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
@@ -495,13 +504,13 @@ class TypeChecker():
                                          "matching number of nodes and weights",
                                          "uneven amount of nodes and weigths")
 
-                for _node, weight in zip(node.nodes, node.weight):
-                    _node_id = (
-                        _node.identifiers[0]
-                        if isinstance(_node, IdentifierAccess)
-                        else _node
+                for node_obj, weight in zip(node.nodes, node.weight):
+                    node_id = (
+                        node_obj.identifiers[0]
+                        if isinstance(node_obj, IdentifierAccess)
+                        else node_obj
                     )
-                    self.expect_in_domain(_node_id, node_set, self.parse_edge_declaration)
+                    self.expect_in_domain(node_id, node_set, self.parse_edge_declaration)
 
                     expr_type = self.parse_expression(weight, env_v, env_a, env_g)
                     self.expect_type_compatable(expr_type, weight_type, self.parse_edge_declaration)
@@ -545,9 +554,14 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, ident_type, self.parse_statement)
 
-            case Assignment(identifiers=ids) if len(ids) > 2: # (aas)
-                identifier_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
-                self.reject_type(identifier_access_type, TypeEnum.UNKNOWN, self.parse_statement)
+            case Assignment(identifiers=ids) if len(ids) == 2: # 2 = I.X chain # (aas)
+                identifier_access_type = TypeEnum.UNKNOWN
+                # if string : I.X cannot be parsed to expression as seen in type system
+                if isinstance(ids[0], str) and isinstance(ids[1], str):
+                    identifier_access_type = self.attributes.get(ids[1], TypeEnum.UNKNOWN) # attribute access
+                else:
+                    identifier_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
+                    self.reject_type(identifier_access_type, TypeEnum.UNKNOWN, self.parse_statement)
 
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, identifier_access_type, self.parse_statement)
@@ -558,9 +572,6 @@ class TypeChecker():
 
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, array_access_type, self.parse_statement)
-
-            case Assignment(): # TODO: add attributes to graph or nodes
-                pass
 
             case Declaration() | NodeDecl(): # (std)
                 env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
