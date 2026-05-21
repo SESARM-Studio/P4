@@ -1054,6 +1054,86 @@ def test_expression_cll():
     ## Assert
     assert return_object.v == 5
 
+def test_expression_cll2():
+    ## Arrange
+
+    env_graph = dict()
+    env_var = dict()
+    env_algo = dict()
+    loc = Location()
+    graph_object = Graph()
+    store = dict()
+
+    # Algorithm body statement
+    body_expression = make_expression(arg1=make_term("REAL_NUMBER", "18.88"))
+
+    body_statement = ReturnStatement("ReturnStatement")
+    body_statement.expression = body_expression
+
+    body_statements = [body_statement]
+    parameters = []
+
+    # Update algorithm environment for algorithm identifier
+    env_algo.update({"f": (parameters, body_statements, env_graph.copy(), deepcopy(env_var), deepcopy(env_algo))})
+
+    # Algorithm call node
+    algorithm_call = AlgorithmCall("AlgorithmCall")
+    algorithm_call.arguments = []
+    algorithm_call.identifier = "f"
+
+
+    ## Act
+    return_object = evaluator.categories.expression.execute_expression(algorithm_call, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+
+    ## Assert
+    assert return_object.v == 18.88
+
+def test_expression_cll2_side_effects():
+    ## Arrange
+
+    env_graph = dict()
+    env_var = dict()
+    env_algo = dict()
+    loc = Location()
+    graph_object = Graph()
+    store = dict()
+
+    # Declaration of a global variable of type 'real' and value 3.14
+    declaration_var = DeclarationInit("DeclarationInit")
+    declaration_var.identifiers = ['a']
+    declaration_var.type = "real"
+    declaration_var.is_list = False
+    declaration_var.expression = [make_expression(arg1=make_term("REAL_NUMBER", "3.14"))]
+
+    # Algorithm body statement    
+    body_statement = Assignment("Assignment")
+    body_statement.identifiers = ['global_var']
+    body_statement.expression = make_expression(arg1=make_term("REAL_NUMBER", "19.3"))
+
+    body_statements = [body_statement]
+    parameters = []
+
+    # Update algorithm environment for algorithm identifier
+    env_algo.update({"f": (parameters, body_statements, env_graph.copy(), deepcopy(env_var), deepcopy(env_algo))})
+
+    # Algorithm call node
+    algorithm_call = AlgorithmCall("AlgorithmCall")
+    algorithm_call.arguments = []
+    algorithm_call.identifier = "f"
+
+
+    ## Act
+    # Declare global variable
+    store, env_var, env_algo, env_graph, v, loc = evaluator.categories.statement.execute_statement(declaration_var, loc, graph_object, store, env_var, env_algo, env_graph)
+
+    # Call algorithm
+    return_object = evaluator.categories.expression.execute_expression(algorithm_call, env_graph, env_var, env_algo, loc.next_location(), graph_object, store)
+
+    ## Assert
+    # Check algorithm call did indeed change global variable value to 19.3
+    location_var = env_var.get("global_var")
+    assert return_object.modified_store.get(location_var) == 19.3
+
 
 # ********* List *********
 
