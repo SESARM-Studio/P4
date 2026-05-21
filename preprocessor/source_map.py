@@ -13,6 +13,8 @@ class SourceMap:
             if original_offset < self.newline_array[i]:
                 return i
 
+        return len(self.newline_array)
+
     def get_source_spans_from_processed_segment(self, processed_offset_start, processed_offset_end):
         """
         Returns the SpanSegments based on a processed start and end offset
