@@ -46,7 +46,7 @@ def test_unweighted_edge_undirected(setup_env):
     edge = make_edge("---")
 
     #act
-    result = execute_edge_declaration(edge, **setup_env)
+    result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("a", "b"), ("a", "c")]
@@ -57,7 +57,7 @@ def test_unweighted_edge_right(setup_env):
     edge = make_edge("-->")
 
     #act
-    result = execute_edge_declaration(edge, **setup_env)
+    result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("a", "b"), ("a", "c")]
@@ -68,7 +68,7 @@ def test_unweighted_edge_left(setup_env):
     edge = make_edge("<--")
 
     #act
-    result = execute_edge_declaration(edge, **setup_env)
+    result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("b", "a"), ("c", "a")]
@@ -79,7 +79,7 @@ def test_unweighted_edge_bidirectional(setup_env):
     edge = make_edge("<->")
 
     #act
-    result = execute_edge_declaration(edge, **setup_env)
+    result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [
@@ -97,12 +97,12 @@ def test_weighted_edge_undirected(setup_env):
     with patch(
         "evaluator.categories.expression.execute_expression",
         side_effect=[
-            SimpleNamespace(v=3),
-            SimpleNamespace(v=5),
+            SimpleNamespace(v=3, modified_store=None),
+            SimpleNamespace(v=5, modified_store=None),
         ],
     ):
         #act
-        result = execute_edge_declaration(edge, **setup_env)
+        result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("a", "b", 3), ("a", "c", 5)]
@@ -115,12 +115,12 @@ def test_weighted_edge_right(setup_env):
     with patch(
         "evaluator.categories.expression.execute_expression",
         side_effect=[
-            SimpleNamespace(v=3),
-            SimpleNamespace(v=5),
+            SimpleNamespace(v=3, modified_store=None),
+            SimpleNamespace(v=5, modified_store=None),
         ],
     ):
         #act
-        result = execute_edge_declaration(edge, **setup_env)
+        result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("a", "b", 3), ("a", "c", 5)]
@@ -133,12 +133,12 @@ def test_weighted_edge_left(setup_env):
     with patch(
         "evaluator.categories.expression.execute_expression",
         side_effect=[
-            SimpleNamespace(v=3),
-            SimpleNamespace(v=5),
+            SimpleNamespace(v=3, modified_store=None),
+            SimpleNamespace(v=5, modified_store=None),
         ],
     ):
         #act
-        result = execute_edge_declaration(edge, **setup_env)
+        result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [("b", "a", 3), ("c", "a", 5)]
@@ -151,14 +151,14 @@ def test_weighted_edge_bidirectional(setup_env):
     with patch(
         "evaluator.categories.expression.execute_expression",
         side_effect=[
-            SimpleNamespace(v=3),
-            SimpleNamespace(v=5),
-            SimpleNamespace(v=3),
-            SimpleNamespace(v=5),
+            SimpleNamespace(v=3, modified_store=None),
+            SimpleNamespace(v=5, modified_store=None),
+            SimpleNamespace(v=3, modified_store=None),
+            SimpleNamespace(v=5, modified_store=None),
         ],
     ):
         #act
-        result = execute_edge_declaration(edge, **setup_env)
+        result, store = execute_edge_declaration(edge, **setup_env)
 
     #assert
     assert result == [

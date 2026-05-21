@@ -10,9 +10,11 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                     if isinstance(env_graph.get(tree_node.graph_identifier), Graph):
                         graph = env_graph.get(tree_node.graph_identifier)
                         if tree_node.argument.weight != []:
-                            graph.add_weighted_edges(evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
+                            edge, store = evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
+                            graph.add_weighted_edges(edge)
                         else:
-                            graph.add_edges(evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store))
+                            edge, store = evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
+                            graph.add_edges(edge)
                     else:
                         print("Cant add edge to not graph object")
 
@@ -29,7 +31,7 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                 case EdgeDecl():
                     if isinstance(env_graph.get(tree_node.graph_identifier), Graph):
                         graph = env_graph.get(tree_node.graph_identifier)
-                        edges_to_remove = evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
+                        edges_to_remove, store = evaluator.categories.edge_declaration.execute_edge_declaration(tree_node.argument, env_graph, env_var, env_algo, loc, graph_object=Graph(), store = store)
                         for edge in edges_to_remove:
                             graph.remove_edge(edge[0], edge[1])
                     else:
