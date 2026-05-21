@@ -566,8 +566,6 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, identifier_access_type, self.parse_statement)
 
-                self.expect_type_compatable(identifier_access_type, expr_type, self.parse_statement)
-
             case Assignment(identifiers=ids) if len(ids) == 1: # (ara)
                 array_access_type = self.parse_expression(node.identifiers[0], env_v, env_a, env_g)
                 self.reject_type(array_access_type, TypeEnum.UNKNOWN, self.parse_statement)

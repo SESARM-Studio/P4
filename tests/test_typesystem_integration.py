@@ -44,11 +44,11 @@ digraph G with int weight
     edge x --> t weight -2
 
 node NIL
-INF in nat := 99999999
+INF in int := 99999999
 
 algo initializeSingleSource(node s)
     // Adding attributes: nodeX.addAttribute(datatype, attributeName)
-    G.nodes.addAttribute("nat", SPE) // shortest Path Estimate
+    G.nodes.addAttribute("int", SPE) // shortest Path Estimate
     G.nodes.addAttribute("node", pi)
 
     for each v in G.nodes
@@ -58,6 +58,7 @@ algo initializeSingleSource(node s)
 
 algo relax(node x1, node x2, w in int)
     if x2.SPE > x1.SPE + w then
+        x2.SPE := x1.SPE + w
         x2.pi := x1
 
 algo bellmanFord(node s) return bool
@@ -73,7 +74,6 @@ algo bellmanFord(node s) return bool
         if x2.SPE > x1.SPE + w then
             return false
     return true
-
 
 bellmanFord(G.s)
     """
