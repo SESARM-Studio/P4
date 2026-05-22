@@ -54,7 +54,7 @@ def expr_result(value, store=None, graph_object=None):
 
 def test_declaration(setup_env):
 
-    #arrange
+    # Arrange
     node = Declaration("Declaration")
     node.identifiers = ["a"]
     node.type = "int"
@@ -68,7 +68,7 @@ def test_declaration(setup_env):
 
     with patch("evaluator.categories.declaration.execute_declaration", return_value=fake_result):
 
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -81,7 +81,7 @@ def test_declaration(setup_env):
         
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert env_var["a"] == 2
     assert value is None
     assert loc == 3
@@ -89,7 +89,7 @@ def test_declaration(setup_env):
 
 def test_declaration_init_non_list(setup_env):
 
-    #arrange
+    # Arrange
     node = DeclarationInit("DeclarationInit")
     node.identifiers = ["a"]
     node.type = "int"
@@ -107,7 +107,7 @@ def test_declaration_init_non_list(setup_env):
     )
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration",return_value=fake_result):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -120,14 +120,14 @@ def test_declaration_init_non_list(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store[2] == 99
     assert value is None
     assert loc == 3
 
 def test_declaration_init_list(setup_env):
 
-    #arrange
+    # Arrange
     node = DeclarationInit("DeclarationInit")
     node.identifiers = ["xs"]
     node.type = "int"
@@ -145,7 +145,7 @@ def test_declaration_init_list(setup_env):
     )
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(7, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -158,14 +158,14 @@ def test_declaration_init_list(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store[2] == 7
     assert value == 7
     assert loc == 3
 
 def test_normal_assignment(setup_env):
 
-    #arrange
+    # Arrange
     node = Assignment("Assignment")
     node.identifiers = ["x"]
 
@@ -175,7 +175,7 @@ def test_normal_assignment(setup_env):
     node.expression = expr
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, setup_env["store"].copy())):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -188,14 +188,14 @@ def test_normal_assignment(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store[0] == 42
     assert value is None
     assert loc == setup_env["loc"]
 
 
 def test_graph_node_attribute_assignment_outside_graph(setup_env):
-    #arrange
+    # Arrange
     setup_env["env_graph"] = {"G": FakeGraph({"x": {"value": 1}})}
 
     node = Assignment("Assignment")
@@ -208,7 +208,7 @@ def test_graph_node_attribute_assignment_outside_graph(setup_env):
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, setup_env["store"].copy())):
 
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -221,13 +221,13 @@ def test_graph_node_attribute_assignment_outside_graph(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert env_graph["G"].get_nodes()["x"]["value"] == 99
     assert value is None
 
 
 def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
-    #arrange
+    # Arrange
     setup_env["env_graph"] = {"G": FakeGraph({"x": {"child": {"value": 1}}})}
 
     node = Assignment("Assignment")
@@ -239,7 +239,7 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
     node.expression = expr
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(123, setup_env["store"].copy())):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -252,13 +252,13 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert env_graph["G"].get_nodes()["x"]["child"]["value"] == 123
     assert value is None
 
 
 def test_graph_node_attribute_assignment_inside_graph(setup_env):
-    #arrange
+    # Arrange
     graph_object = FakeGraph({"node_x": {"value": 1}})
     setup_env["env_var"]["x"] = 2
     setup_env["store"][2] = "node_x"
@@ -272,7 +272,7 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
     node.expression = expr
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(55, setup_env["store"].copy())):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -285,13 +285,13 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert graph_object.get_nodes()["node_x"]["value"] == 55
     assert value is None
 
 
 def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
-    #arrange
+    # Arrange
     graph_object = FakeGraph({"node_x": {"child": {"child": {"value": 1}}}})
     setup_env["env_var"]["x"] = 2
     setup_env["store"][2] = "node_x"
@@ -306,7 +306,7 @@ def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     node.expression = expr
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(88, setup_env["store"].copy())):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -319,13 +319,13 @@ def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert graph_object.get_nodes()["node_x"]["child"]["child"]["value"] == 88
     assert value is None
 
 
 def test_if_statement_true_branch(setup_env):
-    #arrange
+    # Arrange
     node = IfStatement("IfStatement")
     node.condition = Term("Term")
     node.then_statements = [Declaration("Declaration")]
@@ -345,7 +345,7 @@ def test_if_statement_true_branch(setup_env):
             setup_env["loc"],
         )
     ) as mocked_statement:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -358,13 +358,13 @@ def test_if_statement_true_branch(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store == {0: 99}
     assert value is None
     assert mocked_statement.call_count == 1
 
 def test_if_statement_false_branch(setup_env):
-    #arange
+    # Arrange
     node = IfStatement("IfStatement")
     node.condition = Term("Term")
     node.then_statements = [Declaration("Declaration")]
@@ -384,7 +384,7 @@ def test_if_statement_false_branch(setup_env):
             setup_env["loc"],
         ),
     ) as mocked_statement:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -397,20 +397,20 @@ def test_if_statement_false_branch(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #asset
+    # Assert
     assert store == {0: 77}
     assert value is None
     assert mocked_statement.call_count == 1
 
 def test_if_statement_false_no_else(setup_env):
-    #arrange
+    # Arrange
     node = IfStatement("IfStatement")
     node.condition = Term("Term")
     node.then_statements = [Declaration("Declaration")]
     node.else_statements = []
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(False, setup_env["store"].copy())):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -423,18 +423,18 @@ def test_if_statement_false_no_else(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store == setup_env["store"]
     assert value is None
     assert loc == setup_env["loc"]
 
 
 def test_algorithm_statement(setup_env):
-    #arrange
+    # Arrange
     node = Algorithm("Algorithm")
 
     with patch("evaluator.categories.algorithm.execute_algorithm", return_value={"algo": "env"}):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -447,18 +447,18 @@ def test_algorithm_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert env_algo == {"algo": "env"}
     assert value is None
     assert loc == setup_env["loc"]
 
 
 def test_graph_decl_statement(setup_env):
-    #arrange
+    # Arrange
     node = GraphDecl("GraphDecl")
 
     with patch("evaluator.categories.graph_declaration.execute_graph_decl", return_value=({"G": {}}, {0: 10})):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -471,18 +471,18 @@ def test_graph_decl_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert env_graph == {"G": {}}
     assert store == {0: 10}
     assert value is None
     assert loc == setup_env["loc"]
 
 def test_expression_statement(setup_env):
-    #arrange
+    # Arrange
     node = Expression("Expression")
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, {0: 10})):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -495,17 +495,17 @@ def test_expression_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store == {0: 10}
     assert value is None
     assert loc == setup_env["loc"]
 
 def test_edge_decl_statement(setup_env):
-    #arange
+    # Arrange
     node = EdgeDecl("EdgeDecl")
 
     with patch("evaluator.categories.edge_declaration.execute_edge_declaration", return_value=("edge-value")):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -518,13 +518,13 @@ def test_edge_decl_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert value == "edge-value"
     assert store == setup_env["store"]
     assert loc == setup_env["loc"]
 
 def test_node_decl_statement(setup_env):
-    #arrange
+    # Arrange
     node = NodeDecl("NodeDecl")
     node.identifiers = ["n"]
 
@@ -537,7 +537,7 @@ def test_node_decl_statement(setup_env):
     )
 
     with patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -550,18 +550,18 @@ def test_node_decl_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert store == fake_decl_result.store
     assert env_var == fake_decl_result.env_var
     assert value is None
     assert loc == 3
 
 def test_graph_statement(setup_env):
-    #arrange
+    # Arrange
     node = GraphStatement("GraphStatement")
 
     with patch("evaluator.categories.graph_statement.execute_graph_statement") as mocked:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -574,16 +574,16 @@ def test_graph_statement(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     mocked.assert_called_once()
     assert value is None
     assert store == setup_env["store"]
 
 def test_loop_modifier_raises_loop_exception(setup_env):
-    #arrange
+    # Arrange
     node = LoopModifier("LoopModifier")
 
-    #act & assert
+    # Act & Assert
     with pytest.raises(LoopException):
         execute_statement(
             node,
@@ -597,12 +597,12 @@ def test_loop_modifier_raises_loop_exception(setup_env):
 
 
 def test_display_statement(setup_env, capsys):
-    #arrange
+    # Arrange
     node = DisplayStatement("DisplayStatement")
     node.expression = Term("Term")
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result("hello world", {0: 10})):
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -616,18 +616,18 @@ def test_display_statement(setup_env, capsys):
     captured = capsys.readouterr()
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert "hello world" in captured.out
     assert store == {0: 10}
     assert value is None
 
 def test_return_statement_raises_return_exception(setup_env):
-    #arrange
+    # Arrange
     node = ReturnStatement("ReturnStatement")
     node.expression = Term("Term")
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, {0: 10})):
-        #act & assert
+        # Act & Assert
         with pytest.raises(ReturnException):
             execute_statement(
                 node,
@@ -640,7 +640,7 @@ def test_return_statement_raises_return_exception(setup_env):
             )
 
 def test_repeat_statement_runs_body_three_times(setup_env):
-    #arrange
+    # Arrange
     node = RepeatStatement("RepeatStatement")
     node.repeat_expression = Term("Term")
     node.repeat_statements = [Declaration("Declaration")]
@@ -659,7 +659,7 @@ def test_repeat_statement_runs_body_three_times(setup_env):
             setup_env["loc"],
         ),
     ) as mocked_statement:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -672,14 +672,14 @@ def test_repeat_statement_runs_body_three_times(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert mocked_statement.call_count == 3
     assert store == setup_env["store"]
     assert value is None
     assert loc == setup_env["loc"]
 
 def test_repeat_statement_zero_times_does_not_run_body(setup_env):
-    #arrange
+    # Arrange
     node = RepeatStatement("RepeatStatement")
     node.repeat_expression = Term("Term")
     node.repeat_statements = [Declaration("Declaration")]
@@ -690,7 +690,7 @@ def test_repeat_statement_zero_times_does_not_run_body(setup_env):
     ), patch(
         "evaluator.categories.statement.execute_statement",
     ) as mocked_statement:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -703,7 +703,7 @@ def test_repeat_statement_zero_times_does_not_run_body(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert mocked_statement.call_count == 0
     assert store == setup_env["store"]
     assert value is None
@@ -711,7 +711,7 @@ def test_repeat_statement_zero_times_does_not_run_body(setup_env):
 
 
 def test_repeat_statement_breaks_on_loop_exception(setup_env):
-    #arrange
+    # Arrange
     node = RepeatStatement("RepeatStatement")
     node.repeat_expression = Term("Term")
     node.repeat_statements = [Declaration("Declaration")]
@@ -723,7 +723,7 @@ def test_repeat_statement_breaks_on_loop_exception(setup_env):
         "evaluator.categories.statement.execute_statement",
         side_effect=LoopException(),
     ) as mocked_statement:
-        #act
+        # Act
         result = execute_statement(
             node,
             setup_env["loc"],
@@ -736,7 +736,7 @@ def test_repeat_statement_breaks_on_loop_exception(setup_env):
 
     store, env_var, env_algo, env_graph, value, loc = result
 
-    #assert
+    # Assert
     assert mocked_statement.call_count == 1
     assert store == setup_env["store"]
     assert value is None
