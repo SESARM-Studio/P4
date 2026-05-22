@@ -134,10 +134,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     location = env_var.get(node.identifiers[0])
                     value = store.get(location)
                     if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
-                        E = execute_expression(node.identifiers[1].arguments[1], env_graph, env_var, env_algo, loc, graph_object, store)
-                        graph_object.add_attribute(value, E.v)
-                        v = None
-                        return ExpressionReturn(v, E.modified_store)
+                        raise Exception("Cant add attribute to a node.")
                     else: # a.SPE
                         v = graph_object.get_node_data(value,node.identifiers[1])
                         return ExpressionReturn(v, store)
