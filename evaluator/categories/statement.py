@@ -11,10 +11,10 @@ import evaluator.categories.edge_declaration
 import evaluator.categories.graph_statement
 #import evaluator.categories.edge_loop
 
-class LoopException(Exception):
+class LoopStop(Exception):
     pass
 
-class ReturnException(Exception):
+class Return(Exception):
     def __init__(self, store, env_var, env_algo, env_graph, v, loc):
         self.store = store
         self.env_var = env_var
@@ -198,7 +198,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                         return E.modified_store, env_var, env_algo, env_graph, E.v, loc
                     case False:
                         return E.modified_store, env_var, env_algo, env_graph, None, loc
-            except LoopException:
+            except LoopStop:
                 v2 = None
                 return E.modified_store, env_var, env_algo, env_graph, v2, loc
             
@@ -220,7 +220,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
                     for statement in node.statements:
                         E.modified_store, copy_env_var, copy_env_algo, copy_env_graph, E.v, copy_loc = execute_statement(statement, copy_loc, E.graph_object, E.modified_store, copy_env_var, copy_env_algo, copy_env_graph)
-            except LoopException:
+            except LoopStop:
                 return E.modified_store, env_var, env_algo, env_graph, None, loc
 
             return E.modified_store, env_var, env_algo, env_graph, E.v, loc
@@ -232,7 +232,11 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             copy_loc = deepcopy(loc)
 
             graph_object = copy_env_graph.get(node.graph_identifier)
-            copy_graph_object = graph_object.copy()
+            if graph_object:
+                copy_graph_object = graph_object.copy()
+            else:
+                graph_object = copy_env_graph.get(store.get(copy_env_var.get(node.graph_identifier)))
+                copy_graph_object = graph_object.copy()
 
             # Switch last_node and initial_node if the direction is 'opposite'
             if node.edge.direction == '<--':
@@ -305,7 +309,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                                             elif node.edge.initial_node == copy_statement.argument.identifiers[i_identifiers]:
                                                     copy_statement.argument.identifiers[i_identifiers], node2 = edge
                         store, copy_env_var, copy_env_algo, copy_env_graph, v, loc = execute_statement(copy_statement, loc, graph_object, store, copy_env_var, copy_env_algo, copy_env_graph)
-                except LoopException:
+                except LoopStop:
                     v2 = None
                     return store, env_var, env_algo, copy_env_graph, v, loc
 
@@ -325,7 +329,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     try:
                         for statement in node.repeat_statements:
                             E.modified_store, copy_env_var, copy_env_algo, copy_env_graph, v2, copy_loc  = execute_statement(statement, copy_loc, graph_object, E.modified_store, copy_env_var, copy_env_algo, copy_env_graph)
-                    except LoopException:
+                    except LoopStop:
                         v2 = None
                         return E.modified_store, env_var, env_algo, env_graph, v2, loc
                     E.v -= 1
@@ -359,7 +363,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return store, env_var, env_algo, env_graph, None, loc
 
         case LoopModifier():
-            raise LoopException()
+            raise LoopStop()
 
         case DisplayStatement():
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
@@ -368,7 +372,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case ReturnStatement():
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-            raise ReturnException(E.modified_store, env_var, env_algo, env_graph, E.v, loc)
+            raise Return(E.modified_store, env_var, env_algo, env_graph, E.v, loc)
 
         case _:
             exit("Error: No statement case match!")
