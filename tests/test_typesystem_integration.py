@@ -63,7 +63,7 @@ algo relax(node x1, node x2, w in int)
         x2.SPE := x1.SPE + w
         x2.pi := x1
 
-algo bellmanFord(node s) return bool
+algo bellmanFord(node s) returns bool
 
     initializeSingleSource(s)
 
@@ -129,7 +129,7 @@ algo helper(x_times in int, node s)
         display s
 
 text t
-algo another_one(t in nat) return real
+algo another_one(t in nat) returns real
     display t
     """
     input_file.write_text(file_contents)
