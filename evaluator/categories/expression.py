@@ -99,10 +99,10 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             return ExpressionReturn(len(E.v), E.modified_store)
         
         case IdentifierAccess():
-            if env_graph.get(node.identifiers[0]): #G.X
+            if env_graph.get(node.identifiers[0]) or env_graph.get(store.get(env_var.get(node.identifiers[0]))): # (DOT)
                 graph_object = env_graph.get(node.identifiers[0])
-                if len(node.identifiers) > 2:
-                    if isinstance(node.identifiers[2], AlgorithmCall): # G.a.addattribute() or G.nodes.addattribute()
+                if len(node.identifiers) == 3:
+                    if isinstance(node.identifiers[2], AlgorithmCall): # G.nodes.addattribute()
                         new_term = Term("Term")
                         new_term.type = "IDENTIFIER"
                         new_term.value = node.identifiers[1]
@@ -125,8 +125,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     else:
                         v = node.identifiers[1]
                         return ExpressionReturn(v, store, graph_object)
-                    
-            else: # a.X
+            else: # (DGO)
                 if graph_object.graph is not None: # Accessed from foreachEdge
                     location = env_var.get(node.identifiers[0])
                     value = store.get(location)
