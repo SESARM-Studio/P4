@@ -316,7 +316,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
             E = evaluator.categories.expression.execute_expression(node.repeat_expression, env_graph, env_var, env_algo, loc, graph_object, store)
             
-            if E.v > 0:
+            if E.v > 0: # (REP-T)
                 while E.v > 0:
                     copy_env_var = deepcopy(env_var)
                     copy_env_algo = deepcopy(env_algo)
@@ -331,15 +331,14 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     E.v -= 1
                 modified_store2 = E.modified_store
                 return modified_store2, env_var, env_algo, env_graph, v2, loc
-            else:
-                v2 = None
-                return E.modified_store, env_var, env_algo, env_graph, v2, loc
+            else: # (REP-F)
+                return E.modified_store, env_var, env_algo, env_graph, None, loc
 
         case Algorithm():
             ph_env_algo = evaluator.categories.algorithm.execute_algorithm(node, env_graph, env_var, env_algo)
             return store, env_var, ph_env_algo, env_graph, None, loc
         
-        case GraphDecl():
+        case GraphDecl(): # (GD)
             env_graph_new, store_new = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
             return store_new, env_var, env_algo, env_graph_new, None, loc
 
@@ -347,18 +346,17 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             E = evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return E.modified_store, env_var, env_algo, env_graph, None, loc
 
-        case EdgeDecl():
-            v = evaluator.categories.edge_declaration.execute_edge_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            return store, env_var, env_algo, env_graph, v, loc
+        case EdgeDecl(): # (D)_e
+            v, modified_store = evaluator.categories.edge_declaration.execute_edge_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
+            return modified_store, env_var, env_algo, env_graph, None, loc
 
         case NodeDecl():
             D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
-        case GraphStatement():
+        case GraphStatement(): # (S)_g
             evaluator.categories.graph_statement.execute_graph_statement(node, env_graph, env_var, env_algo, loc, graph_object, store)
-            v = None
-            return store, env_var, env_algo, env_graph, v, loc
+            return store, env_var, env_algo, env_graph, None, loc
 
         case LoopModifier():
             raise LoopException()
