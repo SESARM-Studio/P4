@@ -47,7 +47,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             argument_values = []
             algorithm_store = deepcopy(store)
 
-            # Retrieve algorithm information.  # (cll1)
+            # Retrieve algorithm information.
             parameters, body_statements, env_graph_old, env_var_old, env_algo_old = env_algo.get(node.identifier)
 
             # Update algorithm's algorithm store to contain itself to allow recursive calls
