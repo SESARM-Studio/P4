@@ -26,19 +26,19 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
     match node:
         case DeclarationInit():
             if node.is_list: # DEC-ASS-LIST
-                env_var_copy = deepcopy(env_var)
+                env_graph_copy = deepcopy(env_graph)
 
-                E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store)
-                D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var_copy, env_algo, loc, graph_object, E.modified_store)
+                E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
+                D = evaluator.categories.declaration.execute_declaration(node, env_graph_copy, env_var, env_algo, loc, graph_object, E.modified_store)
 
                 D.store.update({loc: E.v})
                 return D.store, D.env_var, env_algo, env_graph, None, D.location
 
             else: # DEC-ASS
-                env_var_copy = deepcopy(env_var)
+                env_graph_copy = deepcopy(env_graph)
 
-                E = evaluator.categories.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store)
-                D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var_copy, env_algo, loc, graph_object, E.modified_store)
+                E = evaluator.categories.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
+                D = evaluator.categories.declaration.execute_declaration(node, env_graph_copy, env_var, env_algo, loc, graph_object, E.modified_store)
 
                 D.store.update({loc: E.v})
 
