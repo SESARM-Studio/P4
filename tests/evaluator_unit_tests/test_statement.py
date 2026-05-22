@@ -3,7 +3,7 @@ import pytest
 from parser.ast_builder import *
 from evaluator.functions import *
 
-from evaluator.categories.statement import execute_statement, LoopException, ReturnException
+from evaluator.categories.statement import execute_statement, LoopStop, Return
 
 from unittest.mock import patch
 from types import SimpleNamespace
@@ -504,7 +504,7 @@ def test_edge_decl_statement(setup_env):
     #arange
     node = EdgeDecl("EdgeDecl")
 
-    with patch("evaluator.categories.edge_declaration.execute_edge_declaration", return_value=("edge-value")):
+    with patch("evaluator.categories.edge_declaration.execute_edge_declaration", return_value=("edge-value", setup_env["store"])):
         #act
         result = execute_statement(
             node,
@@ -519,7 +519,7 @@ def test_edge_decl_statement(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     #assert
-    assert value == "edge-value"
+    assert value == None
     assert store == setup_env["store"]
     assert loc == setup_env["loc"]
 
@@ -584,7 +584,7 @@ def test_loop_modifier_raises_loop_exception(setup_env):
     node = LoopModifier("LoopModifier")
 
     #act & assert
-    with pytest.raises(LoopException):
+    with pytest.raises(LoopStop):
         execute_statement(
             node,
             setup_env["loc"],
@@ -628,7 +628,7 @@ def test_return_statement_raises_return_exception(setup_env):
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, {0: 10})):
         #act & assert
-        with pytest.raises(ReturnException):
+        with pytest.raises(Return):
             execute_statement(
                 node,
                 setup_env["loc"],
@@ -721,7 +721,7 @@ def test_repeat_statement_breaks_on_loop_exception(setup_env):
         return_value=expr_result(5, setup_env["store"].copy()),
     ), patch(
         "evaluator.categories.statement.execute_statement",
-        side_effect=LoopException(),
+        side_effect=LoopStop(),
     ) as mocked_statement:
         #act
         result = execute_statement(
