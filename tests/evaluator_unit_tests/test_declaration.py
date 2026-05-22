@@ -1,15 +1,16 @@
 from evaluator.functions import Location, Graph
 from parser.ast_builder import *
 from evaluator.categories.declaration import execute_declaration
+from typesystem.data_types import *
 
-def make_declaration(identifiers: list[str], _type: str, is_list=False, dimension =None, token="Declaration"):
+def make_declaration(identifiers: list[str], _type, is_list=False, dimension =None, token="Declaration"):
     declaration = Declaration(token)
     declaration.type = _type
     declaration.identifiers = identifiers
     declaration.is_list = is_list
     if dimension:
         declaration.dimension = Term("Term")
-        declaration.dimension.type = 'NATURAL_NUMBER'
+        declaration.dimension.type = TypeEnum.NAT
         declaration.dimension.value = dimension
 
     return declaration
@@ -29,7 +30,7 @@ def make_node_declaration(identifiers: list[str], is_list=False, dimension=None,
 # Declare int
 def test_int_declaration():
     # Arrange
-    dec = make_declaration(["x", "y"], "int")
+    dec = make_declaration(["x", "y"], TypeEnum.INT)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -48,7 +49,7 @@ def test_int_declaration():
 # Declare nat
 def test_nat_declaration():
     # Arrange
-    dec = make_declaration(["x", "y"], "nat")
+    dec = make_declaration(["x", "y"], TypeEnum.NAT)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -67,7 +68,7 @@ def test_nat_declaration():
 # Declare real
 def test_real_declaration():
     # Arrange
-    dec = make_declaration(["x", "y"], "real")
+    dec = make_declaration(["x", "y"], TypeEnum.REAL)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -88,7 +89,7 @@ def test_real_declaration():
 # Declare text
 def test_text_declaration():
     # Arrange
-    dec = make_declaration(["x", "y"], "text")
+    dec = make_declaration(["x", "y"], TypeEnum.TEXT)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -107,7 +108,7 @@ def test_text_declaration():
 # Declare bool
 def test_bool_declaration():
     # Arrange
-    dec = make_declaration(["x", "y"], "bool")
+    dec = make_declaration(["x", "y"], TypeEnum.BOOL)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -170,7 +171,7 @@ def test_node_in_graph_declaration():
 # Declare single-dimensional list of arithmetic data type
 def test_int_1d_list_declaration():
     # Arrange
-    dec = make_declaration(["x"], "int", True)
+    dec = make_declaration(["x"], TypeEnum.INT, True)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -191,7 +192,7 @@ def test_int_1d_list_declaration():
 # Declare multi-dimensional list of arithmetic data type
 def test_int_3d_list_declaration():
     # Arrange
-    dec = make_declaration(["x"], "int", True, 3)
+    dec = make_declaration(["x"], TypeEnum.INT, True, 3)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -212,7 +213,7 @@ def test_int_3d_list_declaration():
 # Declare single-dimensional list of other data type
 def test_node_1d_list_declaration():
     # Arrange
-    dec = make_node_declaration(["x"], "node", True)
+    dec = make_node_declaration(["x"], True)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -233,7 +234,7 @@ def test_node_1d_list_declaration():
 # Declare multi-dimensional list of other data type
 def test_text_3d_list_declaration():
     # Arrange
-    dec = make_declaration(["x"], "text", True, 3)
+    dec = make_declaration(["x"], TypeEnum.TEXT, True, 3)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()

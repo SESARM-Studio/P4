@@ -1,7 +1,7 @@
 from parser.ast_builder import *
 from evaluator.functions import *
 from copy import deepcopy
-
+from typesystem.data_types import *
 import evaluator.categories.expression
 import evaluator.categories.statement
 
@@ -25,7 +25,7 @@ def make_expression(operator=None, arg1=None, arg2=None, token="Expression"):
 
 def test_expression_lit_nat():
     # Arrange
-    term = make_term("NATURAL_NUMBER", "18")
+    term = make_term(TypeEnum.NAT, "18")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -45,7 +45,7 @@ def test_expression_lit_nat():
  
 def test_expression_lit_int():
     # Arrange
-    term = make_term("INTEGER_NUMBER", "-18")
+    term = make_term(TypeEnum.INT, "-18")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -62,7 +62,7 @@ def test_expression_lit_int():
 
 def test_expression_lit_real():
     # Arrange
-    term = make_term("REAL_NUMBER", "-18.9")
+    term = make_term(TypeEnum.REAL, "-18.9")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -79,7 +79,7 @@ def test_expression_lit_real():
 
 def test_expression_lit_text():
     # Arrange
-    term = make_term("TEXT", "\"kdsfbibqoqenq fdsf !¤!¤/Y!N131288__:!321\"")
+    term = make_term(TypeEnum.TEXT, "\"kdsfbibqoqenq fdsf !¤!¤/Y!N131288__:!321\"")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -96,7 +96,7 @@ def test_expression_lit_text():
 
 def test_expression_lit_bool():
     # Arrange
-    term = make_term("BOOL_VALUE", "true")
+    term = make_term(TypeEnum.BOOL, "true")
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -146,7 +146,7 @@ def test_expression_idg():
 
     term = make_term("IDENTIFIER", "a")
     
-    graph_object.create_graph("graph")
+    graph_object.create_graph(TypeEnum.GRAPH)
     graph_object.add_node("a")
 
     env_var.update({"a": loc})
@@ -172,12 +172,12 @@ def test_expression_dot():
     store = dict()
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a']
     decl_nodes.is_list = False
     
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
 
@@ -204,12 +204,12 @@ def test_expression_dgo():
 
     # Creating a graph G
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a']
     decl_nodes.is_list = False
     
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
 
@@ -217,8 +217,8 @@ def test_expression_dgo():
     algorithm_call = AlgorithmCall("AlgorithmCall")
     algorithm_call.identifier = "addAttribute"
     algorithm_call.arguments = [
-        make_expression(arg1=make_term("TEXT", "nat")),
-        make_expression(arg1=make_term("TEXT", "SPE"))
+        make_expression(arg1=make_term(TypeEnum.TEXT, TypeEnum.NAT)),
+        make_expression(arg1=make_term(TypeEnum.TEXT, "SPE"))
     ]
 
     identifier_access_addAttribute = IdentifierAccess("IdentifierAccess")
@@ -227,7 +227,7 @@ def test_expression_dgo():
     # Assigning value 5 to node a's "SPE" attribute
     assignment = Assignment("Assignment")
     assignment.identifiers = ['G', 'a', 'SPE']
-    assignment.expression = make_expression(arg1=make_term("NATURAL_NUMBER", "5"))
+    assignment.expression = make_expression(arg1=make_term(TypeEnum.NAT, "5"))
 
     # Identifier access to attribute
     identifier_access = IdentifierAccess("IdentifierAccess")
@@ -256,8 +256,8 @@ def test_expression_dgo():
 
 def test_expression_and1():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "true")
-    arg2 = make_term("BOOL_VALUE", "false")
+    arg1 = make_term(TypeEnum.BOOL, "true")
+    arg2 = make_term(TypeEnum.BOOL, "false")
 
     expression = make_expression("and", arg1, arg2)
 
@@ -276,8 +276,8 @@ def test_expression_and1():
 
 def test_expression_and2():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "true")
-    arg2 = make_term("BOOL_VALUE", "true")
+    arg1 = make_term(TypeEnum.BOOL, "true")
+    arg2 = make_term(TypeEnum.BOOL, "true")
 
     expression = make_expression("and", arg1, arg2)
 
@@ -296,8 +296,8 @@ def test_expression_and2():
 
 def test_expression_or1():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "true")
-    arg2 = make_term("BOOL_VALUE", "false")
+    arg1 = make_term(TypeEnum.BOOL, "true")
+    arg2 = make_term(TypeEnum.BOOL, "false")
 
     expression = make_expression("or", arg1, arg2)
 
@@ -316,8 +316,8 @@ def test_expression_or1():
 
 def test_expression_or2():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "false")
-    arg2 = make_term("BOOL_VALUE", "false")
+    arg1 = make_term(TypeEnum.BOOL, "false")
+    arg2 = make_term(TypeEnum.BOOL, "false")
 
     expression = make_expression("or", arg1, arg2)
 
@@ -751,8 +751,8 @@ def test_expression_geq3():
 
 def test_expression_add():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-3")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.INT, "-3")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("+", arg1, arg2)
 
@@ -771,8 +771,8 @@ def test_expression_add():
 
 def test_expression_sub():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-3")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.INT, "-3")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("-", arg1, arg2)
 
@@ -791,8 +791,8 @@ def test_expression_sub():
 
 def test_expression_mul():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-3")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.INT, "-3")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("*", arg1, arg2)
 
@@ -811,8 +811,8 @@ def test_expression_mul():
 
 def test_expression_div():
     # Arrange
-    arg1 = make_term("REAL_NUMBER", "-24.5")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.REAL, "-24.5")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("/", arg1, arg2)
 
@@ -831,8 +831,8 @@ def test_expression_div():
 
 def test_expression_mod():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-3")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.INT, "-3")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("%", arg1, arg2)
 
@@ -854,8 +854,8 @@ def test_expression_mod():
 
 def test_expression_exp():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-3")
-    arg2 = make_term("INTEGER_NUMBER", "7")
+    arg1 = make_term(TypeEnum.INT, "-3")
+    arg2 = make_term(TypeEnum.INT, "7")
 
     expression = make_expression("^", arg1, arg2)
 
@@ -877,7 +877,7 @@ def test_expression_exp():
 
 def test_expression_neg1():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "true")
+    arg1 = make_term(TypeEnum.BOOL, "true")
 
     expression = Expression("Expression")
     expression.operator = "neg"
@@ -898,7 +898,7 @@ def test_expression_neg1():
 
 def test_expression_neg2():
     # Arrange
-    arg1 = make_term("BOOL_VALUE", "false")
+    arg1 = make_term(TypeEnum.BOOL, "false")
 
     expression = Expression("Expression")
     expression.operator = "neg"
@@ -922,7 +922,7 @@ def test_expression_neg2():
 
 def test_expression_abs():
     # Arrange
-    arg1 = make_term("INTEGER_NUMBER", "-2")
+    arg1 = make_term(TypeEnum.INT, "-2")
 
     exp = Expression("Expression")
     exp.arg1 = arg1
@@ -945,7 +945,7 @@ def test_expression_abs():
 
 def test_expression_mag1():
     # Arrange
-    arg1 = make_term("TEXT", "\"test\"")
+    arg1 = make_term(TypeEnum.TEXT, "\"test\"")
 
     exp = Expression("Expression")
     exp.arg1 = arg1
@@ -1021,11 +1021,11 @@ def test_expression_cll():
     # Algorithm parameters
     par1 = Parameter("Parameter")
     par1.identifier = "a"
-    par1.type = "nat"
+    par1.type = TypeEnum.NAT
 
     par2 = Parameter("Parameter")
     par2.identifier = "b"
-    par2.type = "nat"
+    par2.type = TypeEnum.NAT
 
     parameters = [par1, par2]
 
@@ -1034,11 +1034,11 @@ def test_expression_cll():
 
 
     # Algorithm call arguments
-    arg1 = make_term("NATURAL_NUMBER", "2")
+    arg1 = make_term(TypeEnum.NAT, "2")
     exp1 = Expression("Expression")
     exp1.arg1 = arg1
 
-    arg2 = make_term("NATURAL_NUMBER", "3")
+    arg2 = make_term(TypeEnum.NAT, "3")
     exp2 = Expression("Expression")
     exp2.arg1 = arg2
 
@@ -1065,7 +1065,7 @@ def test_expression_cll2():
     store = dict()
 
     # Algorithm body statement
-    body_expression = make_expression(arg1=make_term("REAL_NUMBER", "18.88"))
+    body_expression = make_expression(arg1=make_term(TypeEnum.REAL, "18.88"))
 
     body_statement = ReturnStatement("ReturnStatement")
     body_statement.expression = body_expression
@@ -1103,12 +1103,12 @@ def test_expression_cll2_side_effects():
     declaration_var.identifiers = ['a']
     declaration_var.type = "real"
     declaration_var.is_list = False
-    declaration_var.expression = [make_expression(arg1=make_term("REAL_NUMBER", "3.14"))]
+    declaration_var.expression = [make_expression(arg1=make_term(TypeEnum.REAL, "3.14"))]
 
     # Algorithm body statement    
     body_statement = Assignment("Assignment")
     body_statement.identifiers = ['global_var']
-    body_statement.expression = make_expression(arg1=make_term("REAL_NUMBER", "19.3"))
+    body_statement.expression = make_expression(arg1=make_term(TypeEnum.REAL, "19.3"))
 
     body_statements = [body_statement]
     parameters = []
@@ -1139,10 +1139,10 @@ def test_expression_cll2_side_effects():
 
 def test_expression_list():
     # Arrange
-    exp_inner1 = make_expression(arg1=make_term("NATURAL_NUMBER", "1"))
-    exp_inner2 = make_expression(arg1=make_term("NATURAL_NUMBER", "2"))
-    exp_inner3 = make_expression(arg1=make_term("NATURAL_NUMBER", "3"))
-    exp_inner4 = make_expression(arg1=make_term("NATURAL_NUMBER", "4"))
+    exp_inner1 = make_expression(arg1=make_term(TypeEnum.NAT, "1"))
+    exp_inner2 = make_expression(arg1=make_term(TypeEnum.NAT, "2"))
+    exp_inner3 = make_expression(arg1=make_term(TypeEnum.NAT, "3"))
+    exp_inner4 = make_expression(arg1=make_term(TypeEnum.NAT, "4"))
 
     exp_list_inner1 = ListExpression("ListExpression")
     exp_list_inner1.expressions = [exp_inner1, exp_inner2]
@@ -1186,8 +1186,8 @@ def test_expression_indexing():
     env_var.update({"a": loc})
     store.update({loc: [[1,2],[3,4]]})
 
-    exp_inner1 = make_expression(arg1=make_term("NATURAL_NUMBER", "1"))
-    exp_inner2 = make_expression(arg1=make_term("NATURAL_NUMBER", "2"))
+    exp_inner1 = make_expression(arg1=make_term(TypeEnum.NAT, "1"))
+    exp_inner2 = make_expression(arg1=make_term(TypeEnum.NAT, "2"))
 
     array_access_node = ArrayAccess("ArrayAccess")
     array_access_node.identifier = "a"
@@ -1215,7 +1215,7 @@ def test_expression_woe1():
     store = dict()
 
     # Arrange for declaring graph G with nodes a,b and the edge a-->b with weight 5 (nat)
-    exp_weight = make_expression(arg1=make_term("NATURAL_NUMBER", "5"))
+    exp_weight = make_expression(arg1=make_term(TypeEnum.NAT, "5"))
 
     decl_edge = EdgeDecl("EdgeDecl")
     decl_edge.initial_node = 'a'
@@ -1224,14 +1224,14 @@ def test_expression_woe1():
     decl_edge.weight = [exp_weight]
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
     decl_graph.graph_type = "digraph"
     decl_graph.identifier = "G"
-    decl_graph.weight_type = "nat"
+    decl_graph.weight_type = TypeEnum.NAT
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge]
 
@@ -1258,7 +1258,7 @@ def test_expression_woe2():
     store = dict()
 
     # Arrange for declaring graph G with nodes a,b and the edge a-->b with weight 5 (nat)
-    exp_weight = make_expression(arg1=make_term("NATURAL_NUMBER", "5"))
+    exp_weight = make_expression(arg1=make_term(TypeEnum.NAT, "5"))
 
     decl_edge = EdgeDecl("EdgeDecl")
     decl_edge.initial_node = 'a'
@@ -1267,14 +1267,14 @@ def test_expression_woe2():
     decl_edge.weight = [exp_weight]
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
-    decl_graph.weight_type = "nat"
+    decl_graph.weight_type = TypeEnum.NAT
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge]
 

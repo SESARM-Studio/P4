@@ -1,10 +1,10 @@
 import pytest
-
+from typesystem.data_types import *
 from evaluator.functions import Location, Graph
 from parser.ast_builder import *
 from evaluator.categories.dimension import execute_dimension
 
-def make_list_declaration(identifiers: list[str], _type: str, dimension_expression =None, token="Declaration"):
+def make_list_declaration(identifiers: list[str], _type, dimension_expression =None, token="Declaration"):
     declaration = Declaration(token)
     declaration.type = _type
     declaration.identifiers = identifiers
@@ -15,7 +15,7 @@ def make_list_declaration(identifiers: list[str], _type: str, dimension_expressi
 
 def make_term(arg):
     term = Term('Term')
-    term.type = 'NATURAL_NUMBER'
+    term.type = TypeEnum.NAT
     term.value = arg
 
     return term
@@ -24,7 +24,7 @@ def make_term(arg):
 def test_1d_list_declaration():
     # Arrange
     dim = make_term(1)
-    dec = make_list_declaration(["x"], "int", dim)
+    dec = make_list_declaration(["x"], TypeEnum.INT, dim)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -44,7 +44,7 @@ def test_1d_list_declaration():
 def test_3d_list_declaration():
     # Arrange
     dim = make_term(3)
-    dec = make_list_declaration(["x"], "int", dim)
+    dec = make_list_declaration(["x"], TypeEnum.INT, dim)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()
@@ -63,7 +63,7 @@ def test_3d_list_declaration():
 def test_0d_list_declaration():
 
     dim = make_term(0)
-    dec = make_list_declaration(["x"], "int", dim)
+    dec = make_list_declaration(["x"], TypeEnum.INT, dim)
 
     env_graph = dict()
     env_var = dict()
@@ -78,7 +78,7 @@ def test_0d_list_declaration():
 
 def test_no_dim_declaration():
     # Arrange
-    dec = make_list_declaration(["x"], "int")
+    dec = make_list_declaration(["x"], TypeEnum.INT)
     env_graph = dict()
     env_var = dict()
     env_algo = dict()

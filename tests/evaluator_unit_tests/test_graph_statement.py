@@ -1,6 +1,6 @@
 from parser.ast_builder import *
 from evaluator.functions import *
-
+from typesystem.data_types import *
 import evaluator.categories.statement
 import evaluator.categories.graph_statement
 
@@ -41,12 +41,12 @@ def test_graph_statement_add_node():
     decl_edge1.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge1]
@@ -54,7 +54,7 @@ def test_graph_statement_add_node():
     # Creating the graph statement node
     declaration_node = Declaration("Declaration")
     declaration_node.identifiers = ['d']
-    declaration_node.type = "node"
+    declaration_node.type = TypeEnum.NODE
     declaration_node.is_list = False
 
     graph_statement = GraphStatement("GraphStatement")
@@ -90,12 +90,12 @@ def test_graph_statement_add_edge():
     decl_edge1.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge1]
@@ -139,12 +139,12 @@ def test_graph_statement_add_edge_weight():
     decl_edge1.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge1]
@@ -155,7 +155,7 @@ def test_graph_statement_add_edge_weight():
     decl_edge2.nodes = ['c']
     decl_edge2.direction = "---"
     decl_edge2.weight = [
-        make_expression(arg1=make_term("NATURAL_NUMBER", "3"))
+        make_expression(arg1=make_term(TypeEnum.NAT, "3"))
     ]
 
     graph_statement = GraphStatement("GraphStatement")
@@ -196,12 +196,12 @@ def test_graph_statement_remove_node():
     decl_edge1.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge1]
@@ -209,7 +209,7 @@ def test_graph_statement_remove_node():
     # Creating the graph statement node
     declaration_node = Declaration("Declaration")
     declaration_node.identifiers = ['b']
-    declaration_node.type = "node"
+    declaration_node.type = TypeEnum.NODE
     declaration_node.is_list = False
 
     graph_statement = GraphStatement("GraphStatement")
@@ -245,12 +245,12 @@ def test_graph_statement_remove_edge():
     decl_edge1.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge1]

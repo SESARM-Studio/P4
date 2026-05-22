@@ -14,7 +14,7 @@ from evaluator.categories.statement import *
 from evaluator.categories.expression import *
 from evaluator.categories.graph_declaration import *
 from evaluator.categories.declaration import *
-
+from typesystem.data_types import *
 
 class EmptyGraphContext:
     graph = None
@@ -57,7 +57,7 @@ def test_declaration(setup_env):
     # Arrange
     node = Declaration("Declaration")
     node.identifiers = ["a"]
-    node.type = "int"
+    node.type = TypeEnum.INT
     node.is_list = False
 
     fake_result = SimpleNamespace(
@@ -92,11 +92,11 @@ def test_declaration_init_non_list(setup_env):
     # Arrange
     node = DeclarationInit("DeclarationInit")
     node.identifiers = ["a"]
-    node.type = "int"
+    node.type = TypeEnum.INT
     node.is_list = False
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "99"
     node.expression = [expr]
 
@@ -130,11 +130,11 @@ def test_declaration_init_list(setup_env):
     # Arrange
     node = DeclarationInit("DeclarationInit")
     node.identifiers = ["xs"]
-    node.type = "int"
+    node.type = TypeEnum.INT
     node.is_list = True
 
     expr = Term("Term")
-    expr.type = "NATURAL_NUMBER"
+    expr.type = TypeEnum.NAT
     expr.value = "7"
     node.expression = [expr]
 
@@ -170,7 +170,7 @@ def test_normal_assignment(setup_env):
     node.identifiers = ["x"]
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "42"
     node.expression = expr
 
@@ -202,7 +202,7 @@ def test_graph_node_attribute_assignment_outside_graph(setup_env):
     node.identifiers = ["G", "x", "value"]
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "99"
     node.expression = expr
 
@@ -234,7 +234,7 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
     node.identifiers = ["G", "x", "child", "value"]
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "99"
     node.expression = expr
 
@@ -267,7 +267,7 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
     node.identifiers = ["x", "value"]
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "55"
     node.expression = expr
 
@@ -301,7 +301,7 @@ def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     node.identifiers = ["x", "child", "child", "value"]
 
     expr = Term("Term")
-    expr.type = "INTEGER_NUMBER"
+    expr.type = TypeEnum.INT
     expr.value = "88"
     node.expression = expr
 
@@ -774,7 +774,7 @@ def make_declaration(identifiers: list[str], _type: str, is_list=False, dimensio
     declaration.is_list = is_list
     if dimension:
         declaration.dimension = Term("Term")
-        declaration.dimension.type = 'NATURAL_NUMBER'
+        declaration.dimension.type = TypeEnum.NAT
         declaration.dimension.value = dimension
     return declaration
 
@@ -784,7 +784,7 @@ def make_node_declaration(identifiers: list[str], is_list=False, dimension=None,
     declaration.is_list = is_list
     if dimension:
         declaration.dimension = Term("Term")
-        declaration.dimension.type = 'NATURAL_NUMBER'
+        declaration.dimension.type = TypeEnum.NAT
         declaration.dimension.value = dimension
     return declaration
 
@@ -798,7 +798,7 @@ def make_edge_declaration(initial_node, nodes: list, direction, weight: list, to
 
 def give_edge_declaration_int_weight(edge_decl):
     for i in range(0,len(edge_decl.nodes)):
-        term = make_term("INTEGER_NUMBER",f"{i+1}")
+        term = make_term(TypeEnum.INT,f"{i+1}")
         edge_decl.weight.append(make_expression(arg1=term))
 
 def make_graph_decl(graph_type, identifier, weight_type, nodes: list, edges: list, token="GraphDecl"):
@@ -862,14 +862,14 @@ def test_while_statement():
     statements = []
 
     condition_expression_arg1 = make_term("IDENTIFIER","i")
-    condition_expression_arg2 = make_term("NATURAL_NUMBER","6")
+    condition_expression_arg2 = make_term(TypeEnum.NAT,"6")
     condition_expression = make_expression("<", condition_expression_arg1, condition_expression_arg2)
     condition_expression = make_expression(arg1=condition_expression)
     env_var.update({"i": loc})
     store.update({loc: 1})
     loc = loc.next_location()
     
-    assigment_expression_arg1 = make_term("NATURAL_NUMBER","1")
+    assigment_expression_arg1 = make_term(TypeEnum.NAT,"1")
     assigment_expression_arg2 = make_term("IDENTIFIER","i")
     assigment_expression = make_expression("+", assigment_expression_arg1, assigment_expression_arg2)
     assigment_expression = make_expression(arg1=assigment_expression)
@@ -899,7 +899,7 @@ def test_for_each_normal():
   
     loop_identifier = "i"
     
-    assigment_expression_arg1 = make_term("NATURAL_NUMBER","1")
+    assigment_expression_arg1 = make_term(TypeEnum.NAT,"1")
     assigment_expression = make_expression(None, assigment_expression_arg1, None)
     assigment_expression = make_expression(arg1=assigment_expression)
     assigment = make_assignment(["i"],assigment_expression)
@@ -945,9 +945,9 @@ def test_for_each_edge():
     edge_decl = []
     edge_decl.append(temp_edge_decl)
 
-    graph_decl_type = 'digraph'
+    graph_decl_type = TypeEnum.DIGRAPH
     graph_decl_identifier = 'G'
-    graph_decl_weight_type = 'int'
+    graph_decl_weight_type = TypeEnum.INT
     graph_decl_nodes = node_decl
     graph_decl_edges = edge_decl
     graph_decl = make_graph_decl(graph_decl_type, graph_decl_identifier, graph_decl_weight_type, graph_decl_nodes, graph_decl_edges)

@@ -1,7 +1,7 @@
 from parser.ast_builder import *
 from evaluator.functions import *
 import networkx as nx
-
+from typesystem.data_types import *
 import evaluator.categories.graph_declaration
 
 ### AST tree helpers ###
@@ -33,7 +33,7 @@ def test_graph_declaration_graph(): #(dGraph1)
 
     # Creating a undirectional graph G node
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = []
     decl_graph.edges = []
@@ -105,9 +105,9 @@ def test_graph_declaration_graph_weight(): #(dGraph2)
 
     # Creating a undirectional graph G node
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
-    decl_graph.weight_type = "nat"
+    decl_graph.weight_type = TypeEnum.NAT
     decl_graph.nodes = []
     decl_graph.edges = []
 
@@ -135,13 +135,13 @@ def test_graph_declaration_graph_body(): #(dGraph3)
     decl_edge.direction = "---"
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     # Creating a undirectional graph G node
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge]
@@ -177,20 +177,20 @@ def test_graph_declaration_graph_weight_body(): #(dGraph4)
     decl_edge.nodes = ['b', 'c']
     decl_edge.direction = "---"
     decl_edge.weight = [
-        make_expression(arg1=make_term("NATURAL_NUMBER", "3")),
-        make_expression(arg1=make_term("NATURAL_NUMBER", "4"))
+        make_expression(arg1=make_term(TypeEnum.NAT, "3")),
+        make_expression(arg1=make_term(TypeEnum.NAT, "4"))
     ]
 
     decl_nodes = NodeDecl("NodeDecl")
-    decl_nodes.type = "node"
+    decl_nodes.type = TypeEnum.NODE
     decl_nodes.identifiers = ['a', 'b', 'c']
     decl_nodes.is_list = False
 
     # Creating a undirectional graph G node
     decl_graph = GraphDecl("GraphDecl")
-    decl_graph.graph_type = "graph"
+    decl_graph.graph_type = TypeEnum.GRAPH
     decl_graph.identifier = "G"
-    decl_graph.weight_type = "nat"
+    decl_graph.weight_type = TypeEnum.NAT
     decl_graph.nodes = [decl_nodes]
     decl_graph.edges = [decl_edge]
 

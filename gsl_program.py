@@ -1,4 +1,6 @@
 import sys
+
+from evaluator.evaluator import traverse_program
 from exceptions.preprocessor_exception import PreprocessorException
 from preprocessor.prepro import preprocessor, SourceMap
 from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
@@ -32,7 +34,7 @@ def main(args):
         ast = AbstractSyntaxTreeBuilder(inputString)
         try:
            parser.parse_Program()
-           tree = ast.build_tree(b.stack
+           tree = ast.build_tree(b.stack)
            type_checker = TypeChecker(tree, source_map)
            type_checker.check()
            traverse_program(tree)

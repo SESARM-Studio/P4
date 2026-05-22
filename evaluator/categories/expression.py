@@ -6,6 +6,7 @@ import evaluator.categories.statement
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
 from evaluator.functions import Graph
+from typesystem.data_types import *
 
 class ExpressionReturn():
     def __init__(self, value, store, graph_object=Graph()):
@@ -18,19 +19,19 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
     match node:
         case Term():
             match node.type: # (LIT)
-                case 'NATURAL_NUMBER':
+                case TypeEnum.NAT:
                     return ExpressionReturn(abs(int(node.value)), store)
-                case 'INTEGER_NUMBER':
+                case TypeEnum.INT:
                     return ExpressionReturn(int(node.value), store)
-                case 'REAL_NUMBER':
+                case TypeEnum.REAL:
                     return ExpressionReturn(float(node.value), store)
-                case 'TEXT':
+                case TypeEnum.TEXT:
                     return ExpressionReturn(str(node.value).strip("\""), store)
-                case 'BOOL_VALUE':
+                case TypeEnum.BOOL:
                     if node.value == "true":
                         return ExpressionReturn(True, store)
                     else: return ExpressionReturn(False, store)
-                case 'IDENTIFIER':
+                case 'IDENTIFIER' :
                     if graph_object.graph is not None and node.value == "nodes": #(IDG)
                         return ExpressionReturn(graph_object.get_nodes(), store)
                     else:  # (ID)

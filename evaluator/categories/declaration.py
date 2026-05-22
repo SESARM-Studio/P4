@@ -2,6 +2,7 @@ from parser.ast_builder import *
 from evaluator.functions import *
 from copy import deepcopy
 from evaluator.categories.list_declaration import execute_list_declaration, DeclarationReturn
+from typesystem.data_types import *
 
 def execute_declaration(node: Declaration | NodeDecl, env_graph: dict, env_var: dict, env_algo: dict, loc: Location, graph_object: Graph, store: dict) -> DeclarationReturn:
     env_graph_copy = env_graph.copy()
@@ -21,7 +22,7 @@ def execute_declaration(node: Declaration | NodeDecl, env_graph: dict, env_var: 
         return d_list
 
     else:
-        if node.type in ("int", "nat", "real"): #D1
+        if node.type in (TypeEnum.INT, TypeEnum.NAT, TypeEnum.REAL): #D1
 
             for iden in node.identifiers:
                 env_var_copy.update({iden: loc})
