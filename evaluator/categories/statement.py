@@ -361,12 +361,12 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case LoopModifier():
             raise LoopException()
 
-        case DisplayStatement():
+        case DisplayStatement(): # (DISPLAY)
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
             print(E.v)
             return E.modified_store, env_var, env_algo, env_graph, None, loc
 
-        case ReturnStatement():
+        case ReturnStatement(): # (RET)
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
             raise ReturnException(E.modified_store, env_var, env_algo, env_graph, E.v, loc)
 
