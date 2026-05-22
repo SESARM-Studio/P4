@@ -12,7 +12,6 @@ Statement          ::= Declaration NEWLINE
                      | GraphDecl
                      | Expression NEWLINE 
                      | EdgeDecl NEWLINE
-                     | NodeDecl NEWLINE
                      | GraphStatement NEWLINE
                      | LoopModifier NEWLINE
                      | DisplayStatement NEWLINE
@@ -74,7 +73,10 @@ GraphDecl          ::= TYPE_GRAPH IDENTIFIER ('with' TYPE_ARITH 'weight')? NEWLI
 
 NodeDecl           ::= TYPE_NODE IDENTIFIER (',' IDENTIFIER)*
 
-Declaration        ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* | IDENTIFIER DIMENSION? 'list' 'in' TYPE
+Declaration        ::= IDENTIFIER (',' IDENTIFIER)* 'in' TYPE_ARITH 
+                     | TYPE_OTHER IDENTIFIER (',' IDENTIFIER)* 
+                     | NodeDecl
+                     | IDENTIFIER DIMENSION? 'list' 'in' TYPE
 DeclarationInit    ::= IDENTIFIER 'in' TYPE_ARITH ':=' Expression 
                      | (TYPE_OTHER | TYPE_NODE) IDENTIFIER ':=' Expression 
                      | IDENTIFIER DIMENSION? 'list' 'in' TYPE ':=' ListExpression 
