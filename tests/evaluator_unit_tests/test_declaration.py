@@ -154,7 +154,7 @@ def test_node_in_graph_declaration():
     graph_object = Graph()
     graph_object.create_graph("graph")
     env_graph = dict()
-    env_graph.update({"g": graph_object.graph})
+    env_graph.update({"g": graph_object})
     store = dict()
 
     # Act
@@ -162,8 +162,8 @@ def test_node_in_graph_declaration():
 
     # Assert
     assert len(ret.env_var) == 0
-    assert isinstance(env_graph.get("g").nodes.get('x'), dict)
-    assert isinstance(env_graph.get("g").nodes.get('y'), dict)
+    assert 'x' in env_graph.get("g").get_nodes()
+    assert 'y' in env_graph.get("g").get_nodes()
 
 ### Declare lists ###
 

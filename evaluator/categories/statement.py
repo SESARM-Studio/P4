@@ -9,7 +9,6 @@ import evaluator.categories.declaration
 import evaluator.categories.graph_declaration
 import evaluator.categories.edge_declaration
 import evaluator.categories.graph_statement
-#import evaluator.categories.edge_loop
 
 class LoopStop(Exception):
     pass
@@ -26,29 +25,24 @@ class Return(Exception):
 def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo, env_graph):
     match node:
         case DeclarationInit():
-            if node.is_list:
-                # dec-list-ass
-                env_var_copy = env_var.copy()
+            if node.is_list: # DEC-ASS-LIST
+                env_graph_copy = deepcopy(env_graph)
 
-                E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store)
-                D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var_copy, env_algo, loc, graph_object, E.modified_store)
+                E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
+                D = evaluator.categories.declaration.execute_declaration(node, env_graph_copy, env_var, env_algo, loc, graph_object, E.modified_store)
 
                 D.store.update({loc: E.v})
-                return D.store, D.env_var, env_algo, env_graph, E.v, D.location
+                return D.store, D.env_var, env_algo, env_graph, None, D.location
 
-            else:
-                # dec-ass
-                env_var_copy = env_var.copy()
+            else: # DEC-ASS
+                env_graph_copy = deepcopy(env_graph)
 
-                E = evaluator.categories.execute_expression(node.expression[0], env_graph, env_var_copy, env_algo, loc, graph_object, store)
-                D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, E.modified_store)
-                env_var_copy = D.env_var
-                store_copy = D.store
-                loc_prime = D.location
+                E = evaluator.categories.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
+                D = evaluator.categories.declaration.execute_declaration(node, env_graph_copy, env_var, env_algo, loc, graph_object, E.modified_store)
 
-                store_copy.update({loc: E.v})
+                D.store.update({loc: E.v})
 
-                return store_copy, env_var_copy, env_algo, env_graph, None, loc_prime
+                return D.store, D.env_var, env_algo, env_graph, None, D.location
 
         case Declaration():
             D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
@@ -127,18 +121,18 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
                 return E.modified_store, env_var, env_algo, env_graph, None, loc
 
-            elif isinstance(node.identifiers[-1], parser.ast_builder.ArrayAccess):
-                # list-index-ass
+            elif isinstance(node.identifiers[0], parser.ast_builder.ArrayAccess):
+                # LIST-INDEX-ASS
                 indexes = []
 
-                E = evaluator.categories.expression.ExpressionReturn(None, store)
+                dim_value = evaluator.categories.expression.ExpressionReturn(None, store) # To keep the last updated store from the dim loop
 
                 for term in node.identifiers[0].indexes:
-                    E = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, E.modified_store)
-                    indexes.append(E.v)
+                    dim_value = evaluator.categories.expression.execute_expression(term, env_graph,env_var, env_algo, loc, graph_object, dim_value.modified_store)
+                    indexes.append(dim_value.v)
 
-                E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, E.modified_store)
-                map = E.modified_store.get(env_var.get(node.identifiers[0].identifier))
+                value_expr = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo,loc, graph_object, dim_value.modified_store)
+                map = value_expr.modified_store.get(env_var.get(node.identifiers[0].identifier))
                 ref = map
 
                 for index in indexes[:-1]:
@@ -155,10 +149,10 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 if indexes[-1] > len(ref):
                     for i in range(len(ref), indexes[-1]):
                         ref.append(None)
-                ref[indexes[-1] -1] = E.v # Minus 1, because Python indexes from 0, and GSL do from 1
+                ref[indexes[-1] -1] = value_expr.v # Minus 1, because Python indexes from 0, and GSL do from 1
 
-                E.modified_store.update({env_var.get(node.identifiers[0].identifier): map})
-                return E.modified_store, env_var, env_algo, env_graph, None, loc
+                value_expr.modified_store.update({env_var.get(node.identifiers[0].identifier): map})
+                return value_expr.modified_store, env_var, env_algo, env_graph, None, loc
 
             else:
                 # ass
@@ -361,12 +355,12 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
         case LoopModifier():
             raise LoopStop()
 
-        case DisplayStatement():
+        case DisplayStatement(): # (DISPLAY)
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
             print(E.v)
             return E.modified_store, env_var, env_algo, env_graph, None, loc
 
-        case ReturnStatement():
+        case ReturnStatement(): # (RET)
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
             raise Return(E.modified_store, env_var, env_algo, env_graph, E.v, loc)
 

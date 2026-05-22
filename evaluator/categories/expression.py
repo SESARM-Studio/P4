@@ -170,6 +170,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
 
         case Expression():
             match node.operator:
+                case None:
+                    return execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                 case '=': # (EQ)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
@@ -268,7 +270,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     return ExpressionReturn(v, store)
 
                 case _:
-                    return execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
+                    exit("Error: No execute_Expression case match!")
         
         case _:
             exit("Error: No execute_Expression case match!")
