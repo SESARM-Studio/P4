@@ -35,11 +35,31 @@ class Graph:
         else:
             self.graph = nx.Graph()
     
-    def add_node(self, node):
-        self.graph.add_node(node)
+    def add_node(self, new_node):
+        if len(self.graph.nodes) > 0: # If graph has nodes
+            created_graph_node_attributes = self.graph.nodes[next(iter(self.graph.nodes))] # Get attributes of the first node in graph since all nodes share same attributes
+            if len(created_graph_node_attributes) == 0: # If nodes of the graph has no attributes
+                self.graph.add_node(new_node)
+            else:
+                attributes = dict()
+                for key in created_graph_node_attributes:
+                    attributes.update({key: None}) # Create dictionary of nodes
+                self.graph.add_node(new_node, **attributes) # **attributes unpacks the dictionary
+        else: # If graph has no nodes
+            self.graph.add_node(new_node)
 
-    def add_nodes(self, nodes):
-        self.graph.add_nodes_from(nodes)
+    def add_nodes(self, new_nodes):
+        if len(self.graph.nodes) > 0: # If graph has nodes
+            created_graph_node_attributes = self.graph.nodes[next(iter(self.graph.nodes))] # Get attributes of the first node in graph since all nodes share same attributes
+            if len(created_graph_node_attributes) == 0: # If nodes of the graph has no attributes
+                self.graph.add_nodes_from(new_nodes)
+            else:
+                attributes = dict()
+                for key in created_graph_node_attributes:
+                    attributes.update({key: None}) # Create dictionary of nodes      
+                self.graph.add_nodes_from(new_nodes, **attributes) # **attributes unpacks the dictionary
+        else: # If graph has no nodes
+            self.graph.add_nodes_from(new_nodes)
 
     def add_edge(self, src, dst):
         self.graph.add_edge(src, dst)
