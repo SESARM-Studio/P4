@@ -64,7 +64,7 @@ EdgeDecl           ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<->') IDEN
 IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)+ ('.' AlgorithmCall)?
 
 
-Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('return' TYPE)? NEWLINE INDENT Statement+ DEDENT
+Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('returns' TYPE)? NEWLINE INDENT Statement+ DEDENT
 Parameter          ::= IDENTIFIER 'in' TYPE_ARITH 
                      | (TYPE_GRAPH | TYPE_OTHER | TYPE_NODE) IDENTIFIER
 
