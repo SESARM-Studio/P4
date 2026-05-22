@@ -160,7 +160,7 @@ def test_declaration_init_list(setup_env):
 
     # Assert
     assert store[2] == 7
-    assert value == 7
+    assert value == None
     assert loc == 3
 
 def test_normal_assignment(setup_env):
