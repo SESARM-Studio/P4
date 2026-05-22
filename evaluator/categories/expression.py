@@ -3,7 +3,7 @@ import math
 from copy import deepcopy
 
 import evaluator.categories.statement
-from evaluator.categories.statement import ReturnException
+from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
 from evaluator.functions import Graph
 
@@ -34,8 +34,12 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     if graph_object.graph is not None and node.value == "nodes": #(IDG)
                         return ExpressionReturn(graph_object.get_nodes(), store)
                     else:  # (ID)
-                        location = env_var.get(node.value)
-                        return ExpressionReturn(store.get(location), store, graph_object)
+                        if node.value not in env_var: # If G is an expression e.g. algo(G) we need to check env_graph.
+                            graph_object = env_graph.get(node.value)
+                            return ExpressionReturn(node.value, store, graph_object)
+                        else:
+                            location = env_var.get(node.value)
+                            return ExpressionReturn(store.get(location), store, graph_object)
                 case _:
                     exit("Invalid term type!")
 
@@ -78,7 +82,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     algorithm_store, env_var_old, env_var_old, env_graph_old, v, free_location = evaluator.categories.statement.execute_statement(statement, free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
 
                 return ExpressionReturn(v, algorithm_store)
-            except ReturnException as e:
+            except Return as e:
                 return ExpressionReturn(e.v, e.store)
         
         case ListExpression(): # (LIST)
