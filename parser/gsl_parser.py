@@ -2,45 +2,9 @@
 # REx command line: -python -main -tree -lalr 1 .\parser\gsl_parser.ebnf
 
 import sys
+from exceptions.parser_exception import ParseException
 
 class gsl_parser:
-
-  class ParseException(Exception):
-
-    def __init__(self, b, e, s, o, x):
-      self.begin = b
-      self.end = e
-      self.state = s
-      self.offending = o
-      self.expected = x
-
-    def error(self):
-      if self.offending < 0:
-        return "Lexical analysis failed"
-      else:
-        return "Syntax error"
-
-    def serialize(self, eventHandler):
-      pass
-
-    def getBegin(self):
-      return self.begin
-
-    def getEnd(self):
-      return self.end
-
-    def getState(self):
-      return self.state
-
-    def getOffending(self):
-      return self.offending
-
-    def getExpected(self):
-      return self.expected
-
-    def isAmbiguousInput(self):
-      return False
-
   class TopDownTreeBuilder:
 
     def reset(self, inputString):
@@ -376,7 +340,7 @@ class gsl_parser:
         return
 
       else: # ERROR
-        raise gsl_parser.ParseException(self.b1, self.e1, gsl_parser.TOKENSET[state] + 1, self.l1, -1)
+        raise ParseException(self.b1, self.e1, gsl_parser.TOKENSET[state] + 1, self.l1, -1)
 
       if shift >= 0:
         if nonterminalId < 0:
@@ -423,7 +387,7 @@ class gsl_parser:
     return code
 
   def error(self, b, e, s, l, t):
-    raise gsl_parser.ParseException(b, e, s, l, t)
+    raise ParseException(b, e, s, l, t)
 
   def predict(self, dpi):
     d = dpi
@@ -1167,7 +1131,7 @@ def main(args):
       try:
         parser.parse_Program()
         b.serialize(s)
-      except gsl_parser.ParseException as pe:
+      except ParseException as pe:
         raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
 
 if __name__ == '__main__':

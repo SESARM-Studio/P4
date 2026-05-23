@@ -3,6 +3,7 @@ from parser.ast_builder import AbstractSyntaxTreeBuilder
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
 from preprocessor.source_map import SourceMap
+from exceptions.parser_exception import ParseException
 
 ######### Integration of typesystem
 
@@ -14,7 +15,7 @@ def IntegratedTypesystem(inp_file: str) -> bool:
     parser = gsl_parser(preprocessed_contents, tree_builder)
     try:
         parser.parse_Program()
-    except gsl_parser.ParseException as e:
+    except ParseException as e:
        raise Exception(f"Error in earlier stage of interpreter: {parser.getErrorMessage(e)}") from e
     ast_builder = AbstractSyntaxTreeBuilder(preprocessed_contents)
     tree = ast_builder.build_tree(tree_builder.stack)

@@ -88,12 +88,12 @@ class SourceMap:
             print(f'File "{self.input_file}", lines {error_info["start_line"]}-{error_info["end_line"]}')
 
         # Prints each line of code
-        for line in error_info["lines_text"]:
-            print(f"> {line.rstrip()}")
+        for line_number, line in enumerate(error_info["lines_text"], start= error_info["start_line"]):
+            print(f"Line {line_number}> {line.rstrip()}")
 
         # Prints error type and message
         if error_type:
-            print(f"Error {error_type}: {message}")
+            print(f"{error_type} error: {message}")
         else:
             print(f"Error: {message}")
 
