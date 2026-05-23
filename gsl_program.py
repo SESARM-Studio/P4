@@ -35,11 +35,11 @@ def main(args):
         try:
            parser.parse_Program()
            tree = ast.build_tree(b.stack)
+           if debug is True:
+              print_ast(tree)
            type_checker = TypeChecker(tree, source_map)
            type_checker.check()
            traverse_program(tree)
-           if debug is True:
-              print_ast(tree)
         except gsl_parser.ParseException as pe:
             source_map.print_error(parser.getErrorMessage(pe), pe.getBegin(), pe.getEnd())
             sys.exit(1)
