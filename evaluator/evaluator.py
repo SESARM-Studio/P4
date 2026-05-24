@@ -12,6 +12,6 @@ def traverse_program(program: ASTNode):
     store = dict()
 
     if len(program.children) != 1: # (PROG1)
-        for statement in program.children: # (cmp2)
+        for statement in program.children: # (PROG1) and (cmp2)
             if not statement.token == "EOF":
                 store, env_var, env_algo, env_graph, v, loc = execute_statement(statement, loc, graph_object, store, env_var, env_algo, env_graph)
