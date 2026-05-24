@@ -1,12 +1,14 @@
 from parser.ast_builder import *
 import math
 from copy import deepcopy
+import re
 
 import evaluator.categories.statement
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
 from evaluator.functions import Graph
 from typesystem.data_types import *
+from exceptions.evaluator_exception import EvaluatorException
 
 class ExpressionReturn():
     def __init__(self, value, store, graph_object=Graph()):
@@ -18,6 +20,16 @@ class ExpressionReturn():
 def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, loc, graph_object, store):
     match node:
         case Term():
+            if re.match(r"[a-zA-Z_][a-zA-Z0-9_]*", str(node.value)) and node.value not in ["true", "false"]:
+                if graph_object.graph is not None and node.value == "nodes": #(IDG)
+                        return ExpressionReturn(graph_object.get_nodes(), store)
+                else:  # (ID)
+                    if node.value not in env_var:
+                        graph_object = env_graph.get(node.value)
+                        return ExpressionReturn(node.value, store, graph_object)
+                    else:
+                        location = env_var.get(node.value)
+                        return ExpressionReturn(store.get(location), store, graph_object)
             match node.type: # (LIT)
                 case TypeEnum.NAT:
                     return ExpressionReturn(abs(int(node.value)), store)
@@ -31,16 +43,6 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     if node.value == "true":
                         return ExpressionReturn(True, store)
                     else: return ExpressionReturn(False, store)
-                case 'IDENTIFIER' :
-                    if graph_object.graph is not None and node.value == "nodes": #(IDG)
-                        return ExpressionReturn(graph_object.get_nodes(), store)
-                    else:  # (ID)
-                        if node.value not in env_var: # If G is an expression e.g. algo(G) we need to check env_graph.
-                            graph_object = env_graph.get(node.value)
-                            return ExpressionReturn(node.value, store, graph_object)
-                        else:
-                            location = env_var.get(node.value)
-                            return ExpressionReturn(store.get(location), store, graph_object)
                 case _:
                     exit("Invalid term type!")
 
@@ -108,6 +110,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                 graph_object = env_graph.get(node.identifiers[0])
                 if len(node.identifiers) == 3:
                     if isinstance(node.identifiers[2], AlgorithmCall): # G.nodes.addattribute()
+                        if node.identifiers[1] != "nodes":
+                            raise EvaluatorException("addattribute() may only be called on all graph nodes!", node)
                         new_term = Term("Term")
                         new_term.type = "IDENTIFIER"
                         new_term.value = node.identifiers[1]
@@ -129,18 +133,20 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         return ExpressionReturn(E.v, E.modified_store, graph_object)
                     else:
                         v = node.identifiers[1]
+                        if v not in graph_object.get_nodes():
+                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
                 if graph_object.graph is not None: # Accessed from foreachEdge
                     location = env_var.get(node.identifiers[0])
                     value = store.get(location)
                     if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
-                        raise Exception("Cant add attribute to a node.")
+                        raise EvaluatorException("Cant add attribute to a node!", node)
                     else: # a.SPE
                         v = graph_object.get_node_data(value,node.identifiers[1])
                         return ExpressionReturn(v, store)
                 else:
-                    raise Exception("Cant access global node")
+                    raise EvaluatorException("Cant access global node!", node)
 
         case ArrayAccess(): # (IDX)
             array_location = env_var.get(node.identifier)
@@ -221,6 +227,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                 case '/': # (DIV)
                     E1 = execute_expression(node.arg1, env_graph, env_var, env_algo, loc, graph_object, store)
                     E2 = execute_expression(node.arg2, env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
+
+                    if E2.v == 0:
+                        raise EvaluatorException("Division by zero not permitted!", node)
                     
                     return ExpressionReturn(E1.v / E2.v, E2.modified_store)
 
@@ -263,12 +272,16 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         node_identifiers = node.arg1.split(".")[1].split("---")
 
                     edge_data = graph.get_edge_data(node_identifiers[0], node_identifiers[1])
+
+                    if edge_data is None:
+                        raise EvaluatorException(f"Graph '{graph_identifier}' does not contain an edge from node '{node_identifiers[0]}' to node '{node_identifiers[1]}'!", node)
+
                     v = edge_data.get("weight")
 
                     return ExpressionReturn(v, store)
 
                 case _:
-                    exit("Error: No execute_Expression case match!")
+                    exit("Error: No expression operator case match!")
         
         case _:
             exit("Error: No execute_Expression case match!")
