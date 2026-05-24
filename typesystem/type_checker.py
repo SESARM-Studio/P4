@@ -563,11 +563,6 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, array_access_type, self.parse_statement, node)
 
-            case Declaration() | NodeDecl(): # (std)
-                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
-                env_v = env_v1
-                env_g = env_g1
-
             case DeclarationInit(is_list=True): # (las)
                 env_v1, decl_type = self.parse_declaration_list(node, env_v, env_a, env_g)
                 for expr in node.expression:
@@ -575,6 +570,11 @@ class TypeChecker():
                     self.expect_type_compatable(expr_type, decl_type, self.parse_statement, node)
 
                 env_v = env_v1
+
+            case Declaration() | NodeDecl(): # (std)
+                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
+                env_v = env_v1
+                env_g = env_g1
 
             case IfStatement() if len(node.else_statements) == 0: # (ift)
                 if_kind = self.parse_expression(node.condition, env_v, env_a, env_g)
