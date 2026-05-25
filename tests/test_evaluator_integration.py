@@ -132,3 +132,6 @@ algo another_one(t in nat) returns real
     assert "t" in env_var
     assert "another_one" in env_algo
 
+    # Check local list does not exist in global scope
+    assert "y" not in env_var
+
