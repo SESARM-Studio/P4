@@ -1,6 +1,6 @@
 import pytest
 from typesystem.data_types import *
-from evaluator.functions import Location, Graph
+from evaluator.helpers import Location, Graph
 from parser.ast_builder import *
 from evaluator.categories.dimension import execute_dimension
 

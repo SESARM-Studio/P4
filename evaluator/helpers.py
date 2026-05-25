@@ -6,13 +6,18 @@ class Location:
         self.number = 0
         self.name = f"l{self.number}"
 
+
     def __repr__(self):
+        """Return a readable string representation rather than a memory address, for debugging."""
         return f"{self.name}"
 
     def __eq__(self, other):
+        """Compare objects based on their contents instead of memory address - so a copy of a location
+        will evaluate as equal to the original."""
         return (isinstance(other, type(self)) and (self.number, self.name) == (other.number, other.name))
 
     def __hash__(self):
+        """Return a hash value so equal objects can be found correctly in sets and dictionaries."""
         return hash((self.number, self.name))
 
     def next_location(self):

@@ -1,5 +1,5 @@
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 import evaluator.categories.edge_declaration
 
 def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_algo, loc, graph_object: Graph, store):

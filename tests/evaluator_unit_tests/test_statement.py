@@ -1,7 +1,7 @@
 import pytest
 
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 
 from evaluator.categories.statement import execute_statement, LoopStop, Return
 

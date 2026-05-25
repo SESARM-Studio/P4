@@ -1,5 +1,5 @@
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 from typesystem.data_types import *
 import evaluator.categories.statement
 import evaluator.categories.graph_statement

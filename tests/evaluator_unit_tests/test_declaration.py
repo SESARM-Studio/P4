@@ -1,4 +1,4 @@
-from evaluator.functions import Location, Graph
+from evaluator.helpers import Location, Graph
 from parser.ast_builder import *
 from evaluator.categories.declaration import execute_declaration
 from typesystem.data_types import *

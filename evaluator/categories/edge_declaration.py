@@ -1,5 +1,5 @@
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 import evaluator.categories.expression
 
 def execute_edge_declaration(ast_node: EdgeDecl, env_graph, env_var, env_algo, loc, graph_object: Graph, store):

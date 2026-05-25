@@ -6,7 +6,7 @@ import re
 import evaluator.categories.statement
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
-from evaluator.functions import Graph
+from evaluator.helpers import Graph
 from typesystem.data_types import *
 from exceptions.evaluator_exception import EvaluatorException
 

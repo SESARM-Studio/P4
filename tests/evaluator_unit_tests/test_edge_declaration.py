@@ -3,7 +3,7 @@ from unittest.mock import patch
 from types import SimpleNamespace
 
 from parser.ast_builder import EdgeDecl, Term
-from evaluator.functions import Graph, Location
+from evaluator.helpers import Graph, Location
 from evaluator.categories.edge_declaration import execute_edge_declaration
 
 @pytest.fixture

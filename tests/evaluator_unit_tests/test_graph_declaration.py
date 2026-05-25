@@ -1,5 +1,5 @@
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 import networkx as nx
 from typesystem.data_types import *
 import evaluator.categories.graph_declaration

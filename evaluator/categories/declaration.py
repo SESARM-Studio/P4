@@ -1,5 +1,5 @@
 from parser.ast_builder import *
-from evaluator.functions import *
+from evaluator.helpers import *
 from copy import deepcopy
 from evaluator.categories.list_declaration import execute_list_declaration, DeclarationReturn
 from typesystem.data_types import *

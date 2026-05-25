@@ -1,7 +1,7 @@
 import parser.ast_builder
 from parser.ast_builder import *
 from copy import deepcopy
-from evaluator.functions import assign_nested_attribute
+from evaluator.helpers import assign_nested_attribute
 
 import evaluator.categories.algorithm
 import evaluator.categories.expression
@@ -337,8 +337,8 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             return store, env_var, ph_env_algo, env_graph, None, loc
         
         case GraphDecl(): # (GD)
-            env_graph_new, store_new = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
-            return store_new, env_var, env_algo, env_graph_new, None, loc
+            env_graph_modified, store_modified = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
+            return store_modified, env_var, env_algo, env_graph_modified, None, loc
 
         case Expression(): # X
             E = evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
