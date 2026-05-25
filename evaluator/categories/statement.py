@@ -44,11 +44,11 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
                 return D.store, D.env_var, env_algo, env_graph, None, D.location
 
-        case Declaration():
+        case Declaration(): # DEC
             D = evaluator.categories.declaration.execute_declaration(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return D.store, D.env_var, env_algo, env_graph, None, D.location
 
-        case Assignment():
+        case Assignment(): # ASS
             if len(node.identifiers) > 1:
                 E = evaluator.categories.expression.execute_expression(
                     node.expression,
@@ -184,13 +184,13 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             E = evaluator.categories.expression.execute_expression(node.condition, env_graph, env_var, env_algo, loc, graph_object, store)
             try:
                 match E.v:
-                    case True:
+                    case True: # WHILE-T
                         for statement in node.statements:
                             E.modified_store, copy_env_var, copy_env_algo, copy_env_graph, E.v, copy_loc = execute_statement(statement, copy_loc, graph_object, E.modified_store, copy_env_var, copy_env_algo, copy_env_graph)
                         
                         E.modified_store, copy_env_var, copy_env_algo, copy_env_graph, E.v, copy_loc = execute_statement(node, loc, graph_object, E.modified_store, env_var, env_algo, env_graph)
                         return E.modified_store, env_var, env_algo, env_graph, E.v, loc
-                    case False:
+                    case False: # WHILE-F
                         return E.modified_store, env_var, env_algo, env_graph, None, loc
             except LoopStop:
                 v2 = None
@@ -209,7 +209,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             copy_loc = copy_loc.next_location()
 
             try:
-                for value in E.v:
+                for value in E.v: # FOR-T and FOR-F
                     E.modified_store.update({copy_env_var.get(node.loop_identifier):value})
 
                     for statement in node.statements:
@@ -268,11 +268,11 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 copy_env_var.update({node.weight_identifier: copy_loc})
                 copy_loc = copy_loc.next_location()
 
-            for edge in edges:
+            for edge in edges: # FOR-E-T and FOR-E-F
                 # Update store to match the edges in edge
                 store.update({copy_env_var.get(node.edge.initial_node):edge[0]})
                 store.update({copy_env_var.get(node.edge.last_node):edge[1]})
-                if node.weight_identifier != None:
+                if node.weight_identifier != None: # FOR-EW-T and FOR-EW-F
                     weight_value = copy_graph_object.get_edge_data(edge[0], edge[1])["weight"]
                     store.update({copy_env_var.get(node.weight_identifier):weight_value})
                 # If the current statement inside the loop is a GraphStatement,
@@ -332,7 +332,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             else: # (REP-F)
                 return E.modified_store, env_var, env_algo, env_graph, None, loc
 
-        case Algorithm():
+        case Algorithm(): # A
             ph_env_algo = evaluator.categories.algorithm.execute_algorithm(node, env_graph, env_var, env_algo)
             return store, env_var, ph_env_algo, env_graph, None, loc
         
@@ -340,7 +340,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             env_graph_new, store_new = evaluator.categories.graph_declaration.execute_graph_decl(node, env_var, env_algo, loc, env_graph, graph_object, store)
             return store_new, env_var, env_algo, env_graph_new, None, loc
 
-        case Expression():
+        case Expression(): # X
             E = evaluator.categories.expression.execute_expression(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return E.modified_store, env_var, env_algo, env_graph, None, loc
 
@@ -352,7 +352,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             evaluator.categories.graph_statement.execute_graph_statement(node, env_graph, env_var, env_algo, loc, graph_object, store)
             return store, env_var, env_algo, env_graph, None, loc
 
-        case LoopModifier():
+        case LoopModifier(): # L
             raise LoopStop()
 
         case DisplayStatement(): # (DISPLAY)
