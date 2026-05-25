@@ -3,7 +3,6 @@ import pytest
 from parser.gsl_parser import *
 from parser.ast_builder import *
 
-
 def test_base_case_recursive():
     # Arrange
     input_string = "Grandfather Father Son Grandson"
@@ -96,3 +95,41 @@ def test_replace_parent():
     assert isinstance(return_node, expected_type), f"expected: {expected_type} actual: {return_node.__class__.__name__}"
     assert len(return_node.children) == 0
     assert return_node.value == "Grandson"
+
+def test_if_statement_wo_else():
+    # Arrange
+    expected = IfStatement("IfStatement")
+    input_string = "if a > 0 then @NEWLINE @INDENT b := 10 @NEWLINE @DEDENT $"
+    b = gsl_parser.ParseTreeBuilder()
+    parser = gsl_parser(input_string, b)
+    ast = AbstractSyntaxTreeBuilder(input_string)
+    parser.parse_Program()
+    rex_if_node = b.stack[0].children[0].children[0] # Program -> Statement -> IfStatement
+
+    # Act
+    result = ast.recursive_builder(rex_if_node)
+
+    # Assert
+    assert type(result) == type(expected)
+    assert result.condition is not None
+    assert result.then_statements != []
+    assert result.else_statements == []
+
+def test_if_statement_w_else():
+    # Arrange
+    expected = IfStatement("IfStatement")
+    input_string = "if a = 100 then @NEWLINE @INDENT subtraction(a,b) @NEWLINE @DEDENT else @NEWLINE @INDENT a := a + 1 @NEWLINE @DEDENT $"
+    b = gsl_parser.ParseTreeBuilder()
+    parser = gsl_parser(input_string, b)
+    ast = AbstractSyntaxTreeBuilder(input_string)
+    parser.parse_Program()
+    rex_if_node = b.stack[0].children[0].children[0] # Program -> Statement -> IfStatement
+
+    # Act
+    result = ast.recursive_builder(rex_if_node)
+
+    # Assert
+    assert type(result) == type(expected)
+    assert result.condition is not None
+    assert result.then_statements != []
+    assert result.else_statements != []
