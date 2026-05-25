@@ -16,3 +16,4 @@ def traverse_program(program: ASTNode):
             if not statement.token == "EOF":
                 store, env_var, env_algo, env_graph, v, loc = execute_statement(statement, loc, graph_object, store, env_var, env_algo, env_graph)
     print()
+    return store, env_var, env_algo, env_graph, v, loc
