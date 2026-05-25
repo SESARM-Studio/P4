@@ -37,7 +37,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             else: # (DEC-ASS)
                 env_graph_copy = deepcopy(env_graph)
 
-                E = evaluator.categories.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
+                E = evaluator.categories.expression.execute_expression(node.expression[0], env_graph_copy, env_var, env_algo, loc, graph_object, store)
                 D = evaluator.categories.declaration.execute_declaration(node, env_graph_copy, env_var, env_algo, loc, graph_object, E.modified_store)
 
                 D.store.update({loc: E.v})
