@@ -5,4 +5,3 @@ env/
 venv/
 **/.pytest_cache/
 **/__pycache__/
-evaluator/ahmedTest.gsl
