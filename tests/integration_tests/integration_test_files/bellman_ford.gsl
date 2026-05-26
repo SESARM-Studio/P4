@@ -2,30 +2,33 @@ digraph G with int weight
     node s, y, z, t, x
 
     edge s --> t, y weight 6, 7
-    edge y --> z, x weight 9, -3
+    edge y --> z weight 9
+    edge y --> x weight -3
     edge z --> s, x weight 2, 7
-    edge t --> y, z, x weight 8, -4, 5
+    edge t --> y, z weight 8, -4
+    edge t --> x weight 5
     edge x --> t weight -2
 
-algo bellmanFord(digraph G, node s)
-    G.nodes.addAttribute("nat", "SPE") // shortest Path Estimate
-    G.nodes.addAttribute("node", "pi")
-    
+algo bellmanFord(node s) returns bool
+    G.nodes.addAttribute("int", SPE) // shortest Path Estimate
+    G.nodes.addAttribute("node", pi)
+
+    // Initialize single source sub-algorithm
+    node NIL
     for each v in G.nodes
-        v.SPE := 10000
-        v.pi := 0
+        v.SPE := 999
+        v.pi := NIL
     G.s.SPE := 0
 
-    // '||v||' is magnitude of v
     repeat ||G.nodes|| - 1 times
         for each edge x1 --> x2 with weight w in G
-            if x2.SPE > x1.SPE + w then
+            if x2.SPE > x1.SPE + w then // Relax sub-algorithm
                 x2.SPE := x1.SPE + w
                 x2.pi := x1
-            
+
     for each edge x1 --> x2 with weight w in G
         if x2.SPE > x1.SPE + w then
             return false
     return true
 
-bellmanFord(G, G.s)
+bool result := bellmanFord(G.s)

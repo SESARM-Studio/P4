@@ -1,0 +1,10 @@
+s in real
+graph x_times
+algo helper(x_times in int, node s)
+    y 1d list in int := [1,2,3]
+    repeat ||y|| - 1 times
+        display s
+
+text t
+algo another_one(t in nat) returns real
+    display t
