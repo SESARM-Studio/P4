@@ -65,7 +65,7 @@ IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)+ ('.' AlgorithmCall)?
 
 Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('returns' TYPE)? NEWLINE INDENT Statement+ DEDENT
 Parameter          ::= IDENTIFIER 'in' TYPE_ARITH 
-                     | (TYPE_GRAPH | TYPE_OTHER | TYPE_NODE) IDENTIFIER
+                     | (TYPE_OTHER | TYPE_NODE) IDENTIFIER
 
 LoopModifier       ::= 'stop'
 
