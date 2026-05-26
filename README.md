@@ -13,10 +13,10 @@ Testing CI
 python3 -m venv env
 
 # 2. Enter environment
-source env/bin/activate # linux / mac
+source env/bin/activate # Linux / Mac
 
-./env/Scripts/activate.bat # windows
+./env/Scripts/activate.bat # Windows
 
-# 3. install requirements
+# 3. Install requirements
 python3 -m pip install -r requirements
 ```
