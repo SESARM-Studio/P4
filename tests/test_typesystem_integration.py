@@ -1,4 +1,4 @@
-from preprocessor.prepro import preprocessor
+from preprocessor.preprocessor import preprocessor
 from parser.ast_builder import AbstractSyntaxTreeBuilder
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
