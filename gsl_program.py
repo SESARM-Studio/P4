@@ -1,5 +1,9 @@
 import sys
+
+from evaluator.evaluator import traverse_program
 from exceptions.preprocessor_exception import PreprocessorException
+from exceptions.parser_exception import ParseException
+from exceptions.evaluator_exception import EvaluatorException
 from preprocessor.prepro import preprocessor, SourceMap
 from parser.ast_builder import AbstractSyntaxTreeBuilder, print_ast
 from parser.gsl_parser import gsl_parser
@@ -33,13 +37,16 @@ def main(args):
         try:
            parser.parse_Program()
            tree = ast.build_tree(b.stack)
-           type_checker = TypeChecker(tree, source_map)
-           if type_checker.check():
-              print("Yay program is well formed: tree annotated")
            if debug is True:
               print_ast(tree)
-        except gsl_parser.ParseException as pe:
+           type_checker = TypeChecker(tree, source_map)
+           type_checker.check()
+           traverse_program(tree)
+        except ParseException as pe:
             source_map.print_error(parser.getErrorMessage(pe), pe.getBegin(), pe.getEnd())
+            sys.exit(1)
+        except EvaluatorException as ee:
+            source_map.print_error(ee.message, ee.span[0], ee.span[1], error_type="Evaluator")
             sys.exit(1)
 
 if __name__ == '__main__':

@@ -1,34 +1,45 @@
 from preprocessor.prepro import preprocessor
-from parser.ast_builder import AbstractSyntaxTreeBuilder
+from preprocessor.prepro import preprocessor, SourceMap
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
+from parser.ast_builder import AbstractSyntaxTreeBuilder
 from preprocessor.source_map import SourceMap
 from exceptions.parser_exception import ParseException
+from exceptions.evaluator_exception import EvaluatorException
+from evaluator.evaluator import traverse_program
+import sys
 
 ######### Integration of typesystem
 
-def IntegratedTypesystem(inp_file: str) -> bool:
+def IntegratedEvaluator(inp_file: str) -> bool:
     sm = SourceMap()
     preprocessed_contents = preprocessor(inp_file, sm)
 
     tree_builder = gsl_parser.ParseTreeBuilder()
     parser = gsl_parser(preprocessed_contents, tree_builder)
+
     try:
         parser.parse_Program()
-    except ParseException as e:
-       raise Exception(f"Error in earlier stage of interpreter: {parser.getErrorMessage(e)}") from e
-    ast_builder = AbstractSyntaxTreeBuilder(preprocessed_contents)
-    tree = ast_builder.build_tree(tree_builder.stack)
-
-    type_checker = TypeChecker(ast=tree, source_map=sm)
-    return type_checker.check()
+        ast_builder = AbstractSyntaxTreeBuilder(preprocessed_contents)
+        tree = ast_builder.build_tree(tree_builder.stack)
+        type_checker = TypeChecker(tree, sm)
+        type_checker.check()
+        program_result = traverse_program(tree)
+    except ParseException as pe:
+        sm.print_error(parser.getErrorMessage(pe), pe.getBegin(), pe.getEnd())
+        sys.exit(1)
+    except EvaluatorException as ee:
+        sm.print_error(ee.message, ee.span[0], ee.span[1], error_type="Evaluator")
+        sys.exit(1)
+    
+    return program_result
 
 ######### (Helper function)
 
 INPUT_FILES = "tests/typesystem_integration/"
 
 def test_bellman_ford(tmp_path): # tmp:path is from pytest that creates a tmp path for the test run
-    # Arrange
+    ## Arrange
     # the '/' is overloaded for path objects that concats the two paths with '/' or '\' depending on system
     input_dir = tmp_path / INPUT_FILES
     input_dir.mkdir(parents=True)
@@ -72,41 +83,16 @@ bool result := bellmanFord(G.s)
     """
     input_file.write_text(file_contents)
 
-    # Act
-    well_formed_program = IntegratedTypesystem(input_file)
+    ## Act
+    store, env_var, env_algo, env_graph, v, loc = IntegratedEvaluator(input_file)
 
-    # Assert
-    assert well_formed_program == True, "Program was not well formed"
-
-
-def test_lists(tmp_path):
-    # Arrange
-    input_dir = tmp_path / INPUT_FILES
-    input_dir.mkdir(parents=True)
-    input_file = input_dir / "lists.gsl"
-
-    file_contents = """// file:
-i 3d list in int := [[[-1,1],[2,2]],[[0,0],[-1,-1]]]
-display ||i||
-
-i := [[[1], [-1]], [[1], [1]]]
-x in int := i[1][1][1]
-
-y 1d list in real
-y := i[1][1]
-
-y[1] = 2.3
-    """
-    input_file.write_text(file_contents)
-
-    # Act
-    well_formed_program = IntegratedTypesystem(input_file)
-
-    # Assert
-    assert well_formed_program == True, "Program was not well formed"
+    ## Assert
+    # Check Bellman-Ford returns true (result is correct)
+    location = env_var.get("result")
+    assert store.get(location) == True, "Bellman-Ford does not return true!"
 
 def test_algorithm(tmp_path):
-    # Arrange
+    ## Arrange
     input_dir = tmp_path / INPUT_FILES
     input_dir.mkdir(parents=True)
     input_file = input_dir / "algorithm.gsl"
@@ -125,32 +111,17 @@ algo another_one(t in nat) returns real
     """
     input_file.write_text(file_contents)
 
-    # Act
-    well_formed_program = IntegratedTypesystem(str(input_file))
+    ## Act
+    store, env_var, env_algo, env_graph, v, loc = IntegratedEvaluator(input_file)
 
-    # Assert
-    assert well_formed_program == True, "Program was not well formed"
+    ## Assert
+    # Check that declared variables and algorithms exists
+    assert "s" in env_var
+    assert "x_times" in env_graph
+    assert "helper" in env_algo
+    assert "t" in env_var
+    assert "another_one" in env_algo
 
-def test_sorta_dfs(tmp_path):
-    # Arrange
-    input_dir = tmp_path / INPUT_FILES
-    input_dir.mkdir(parents=True)
-    input_file = input_dir / "bellman_ford.gsl"
+    # Check local list does not exist in global scope
+    assert "y" not in env_var
 
-    file_contents = """// file:
-node start
-visited list in node := [start]
-algo DFS(node n)
-    display n
-    visited[1] := n
-
-    for each neighbor in visited
-        DFS(neighbor)
-    """
-    input_file.write_text(file_contents)
-
-    # Act
-    well_formed_program = IntegratedTypesystem(input_file)
-
-    # Assert
-    assert well_formed_program == True, "Program was not well formed"

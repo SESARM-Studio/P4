@@ -198,6 +198,12 @@ class TypeChecker():
 
                         # internal algorithm implementation of addAttribute that is built in:
                         self.attributes[attribute_identifier] = attribute_type
+                    
+                    elif (len(ids) == 3): # G.nodeA.attribute
+                        self.expect_in_domain(ids[1], node_set, self.parse_expression, node)
+                        if ids[2] not in self.attributes:
+                            raise TypeCheckError
+                        kind = self.attributes.get(ids[2], TypeEnum.UNKNOWN)
 
                     else: # type system version of (gxr):
                         expr_type = self.parse_expression(ids[1], env_v, env_a, env_g)
@@ -544,7 +550,22 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, ident_type, self.parse_statement, node)
 
-            case Assignment(identifiers=ids) if len(ids) == 2: # 2 = I.X chain # (aas)
+            case Assignment(identifiers=ids) if len(ids) == 3: # 3 = I.I.X # (aas)
+                identifier_access_type = TypeEnum.UNKNOWN
+                graph = env_g.lookup(ids[0])
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_statement, node)
+                graph_type, weight_type, node_set = graph
+
+                self.expect_in_domain(ids[1], node_set, self.parse_statement, node)
+
+                if ids[2] not in self.attributes:
+                    raise TypeCheckError
+                attribute_type = self.attributes.get(ids[2], TypeEnum.UNKNOWN)
+
+                expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
+                self.expect_type_compatable(expr_type, attribute_type, self.parse_statement, node)
+
+            case Assignment(identifiers=ids) if len(ids) == 2: # 2 = I.X # (aas)
                 identifier_access_type = TypeEnum.UNKNOWN
                 # if string : I.X cannot be parsed to expression as seen in type system
                 if isinstance(ids[0], str) and isinstance(ids[1], str):
@@ -563,11 +584,6 @@ class TypeChecker():
                 expr_type = self.parse_expression(node.expression, env_v, env_a, env_g)
                 self.expect_type_compatable(expr_type, array_access_type, self.parse_statement, node)
 
-            case Declaration() | NodeDecl(): # (std)
-                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
-                env_v = env_v1
-                env_g = env_g1
-
             case DeclarationInit(is_list=True): # (las)
                 env_v1, decl_type = self.parse_declaration_list(node, env_v, env_a, env_g)
                 for expr in node.expression:
@@ -575,6 +591,11 @@ class TypeChecker():
                     self.expect_type_compatable(expr_type, decl_type, self.parse_statement, node)
 
                 env_v = env_v1
+
+            case Declaration() | NodeDecl(): # (std)
+                env_v1, env_g1, decl_type = self.parse_declaration(node, env_v, env_a, env_g, curr_graph)
+                env_v = env_v1
+                env_g = env_g1
 
             case IfStatement() if len(node.else_statements) == 0: # (ift)
                 if_kind = self.parse_expression(node.condition, env_v, env_a, env_g)

@@ -679,6 +679,8 @@ class AbstractSyntaxTreeBuilder:
                 declaration = Declaration(symbol.name, [symbol.getBegin(), symbol.getEnd()])
                 for child in symbol_children:
                     match child.name:
+                        case "NodeDecl":
+                            return self.recursive_builder(child)
                         case "IDENTIFIER":
                             declaration.identifiers.append(self.characters(child.begin, child.end))
                         case "TYPE_ARITH" | "TYPE_OTHER" | "TYPE":
