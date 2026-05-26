@@ -174,8 +174,6 @@ class GraphEnv(ScopedTypeEnvironment):
             elif graph_env2.in_domain(i):
                 new_graph_env = new_graph_env.bind(i, graph_env2.lookup(i))
 
-            else:
-                pass # varepsilon from rule = don not add binding
 
         return new_graph_env
 
