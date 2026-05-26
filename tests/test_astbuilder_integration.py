@@ -1,5 +1,5 @@
 from exceptions.preprocessor_exception import PreprocessorException
-from preprocessor.prepro import preprocessor
+from preprocessor.preprocessor import preprocessor
 from preprocessor.source_map import SourceMap
 from parser.gsl_parser import *
 from parser.ast_builder import *

@@ -1,7 +1,7 @@
 import subprocess # Used to run the generated parser
 import filecmp # Used to compare parsed output and correct output
 
-from preprocessor.prepro import preprocessor
+from preprocessor.preprocessor import preprocessor
 
 # Current naming uses parse tree, as this test is 
 # not adapted to an AST as output from parser.
