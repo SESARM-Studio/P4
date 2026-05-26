@@ -29,15 +29,17 @@ class FakeGraph:
 
 @pytest.fixture
 def setup_env():
+    loc = Location()
+    
     return {
         "env_graph": {},
-        "env_var": {"x": 0, "arr": 1},
+        "env_var": {"x": loc, "arr": loc.next_location()},
         "env_algo": {},
         "store": {
-            0: 10,
-            1: [[1, 2], [3, 4]],
+            loc: 10,
+            loc.next_location(): [[1, 2], [3, 4]]
         },
-        "loc": 2,
+        "loc": loc.next_location().next_location(),
         "graph_object": EmptyGraphContext
     }
 
@@ -61,10 +63,17 @@ def test_declaration(setup_env):
     node.is_list = False
 
     fake_result = SimpleNamespace(
-        store={0: 10, 1: [[1, 2], [3, 4]], 2: None},
-        env_var={"x": 0, "arr": 1, "a": 2},
-        location=3,
-    )
+    store={
+        setup_env["env_var"]["x"]: 10,
+        setup_env["env_var"]["arr"]: [[1, 2], [3, 4]],
+        setup_env["loc"]: None,
+    },
+    env_var={
+        **setup_env["env_var"],
+        "a": setup_env["loc"],
+    },
+    location=setup_env["loc"].next_location(),
+)
 
     with patch("evaluator.categories.declaration.execute_declaration", return_value=fake_result):
 
@@ -82,9 +91,9 @@ def test_declaration(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert env_var["a"] == 2
+    assert env_var["a"] == setup_env["loc"]
     assert value is None
-    assert loc == 3
+    assert loc == setup_env["loc"].next_location()
 
 
 def test_declaration_init_non_list(setup_env):
@@ -101,10 +110,17 @@ def test_declaration_init_non_list(setup_env):
     node.expression = [expr]
 
     fake_result = SimpleNamespace(
-        store={0: 10, 1: [[1, 2], [3, 4]], 2: None},
-        env_var={"x": 0, "arr": 1, "a": 2},
-        location=3,
-    )
+    store={
+        setup_env["env_var"]["x"]: 10,
+        setup_env["env_var"]["arr"]: [[1, 2], [3, 4]],
+        setup_env["loc"]: None,
+    },
+    env_var={
+        **setup_env["env_var"],
+        "a": setup_env["loc"],
+    },
+    location=setup_env["loc"].next_location(),
+)
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration",return_value=fake_result):
         # Act
@@ -121,9 +137,9 @@ def test_declaration_init_non_list(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store[2] == 99
+    assert store[env_var["a"]] == 99
     assert value is None
-    assert loc == 3
+    assert loc == setup_env["loc"].next_location()
 
 def test_declaration_init_list(setup_env):
 
@@ -139,10 +155,17 @@ def test_declaration_init_list(setup_env):
     node.expression = [expr]
 
     fake_decl_result = SimpleNamespace(
-        store={0: 10, 1: [[1, 2], [3, 4]], 2: []},
-        env_var={"x": 0, "arr": 1, "xs": 2},
-        location=3,
-    )
+    store={
+        setup_env["env_var"]["x"]: 10,
+        setup_env["env_var"]["arr"]: [[1, 2], [3, 4]],
+        setup_env["loc"]: [],
+    },
+    env_var={
+        **setup_env["env_var"],
+        "xs": setup_env["loc"],
+    },
+    location=setup_env["loc"].next_location(),
+)
 
     with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(7, setup_env["store"].copy())), patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
         # Act
@@ -159,9 +182,9 @@ def test_declaration_init_list(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store[2] == 7
+    assert store[env_var["xs"]] == 7
     assert value == None
-    assert loc == 3
+    assert loc == setup_env["loc"].next_location()
 
 def test_normal_assignment(setup_env):
 
@@ -189,7 +212,7 @@ def test_normal_assignment(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store[0] == 42
+    assert store[env_var["x"]] == 42
     assert value is None
     assert loc == setup_env["loc"]
 
@@ -260,8 +283,8 @@ def test_graph_node_nested_attribute_assignment_outside_graph(setup_env):
 def test_graph_node_attribute_assignment_inside_graph(setup_env):
     # Arrange
     graph_object = FakeGraph({"node_x": {"value": 1}})
-    setup_env["env_var"]["x"] = 2
-    setup_env["store"][2] = "node_x"
+    setup_env["env_var"]["x"] = setup_env["loc"]
+    setup_env["store"][setup_env["loc"]] = "node_x"
 
     node = Assignment("Assignment")
     node.identifiers = ["x", "value"]
@@ -293,8 +316,8 @@ def test_graph_node_attribute_assignment_inside_graph(setup_env):
 def test_graph_node_nested_attribute_assignment_inside_graph(setup_env):
     # Arrange
     graph_object = FakeGraph({"node_x": {"child": {"child": {"value": 1}}}})
-    setup_env["env_var"]["x"] = 2
-    setup_env["store"][2] = "node_x"
+    setup_env["env_var"]["x"] = setup_env["loc"]
+    setup_env["store"][setup_env["loc"]] = "node_x"
 
 
     node = Assignment("Assignment")
@@ -337,7 +360,7 @@ def test_if_statement_true_branch(setup_env):
     ), patch(
         "evaluator.categories.statement.execute_statement",
         return_value=(
-            {0: 99},
+            {setup_env["env_var"]["x"]: 99},
             setup_env["env_var"],
             setup_env["env_algo"],
             setup_env["env_graph"],
@@ -359,9 +382,12 @@ def test_if_statement_true_branch(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store == {0: 99}
+    assert store == {setup_env["env_var"]["x"]: 99}
     assert value is None
+    # Callcount is part of unittest.mock & is used on mocked statements to count how many times they have been called. 
+    # Used in tests for control structures, so that we ensure we dont run through them needless amount of times.
     assert mocked_statement.call_count == 1
+
 
 def test_if_statement_false_branch(setup_env):
     # Arrange
@@ -376,7 +402,7 @@ def test_if_statement_false_branch(setup_env):
     ), patch(
         "evaluator.categories.statement.execute_statement",
         return_value=(
-            {0: 77},
+            {setup_env["env_var"]["x"]: 77},
             setup_env["env_var"],
             setup_env["env_algo"],
             setup_env["env_graph"],
@@ -398,7 +424,7 @@ def test_if_statement_false_branch(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store == {0: 77}
+    assert store == {setup_env["env_var"]["x"]: 77}
     assert value is None
     assert mocked_statement.call_count == 1
 
@@ -457,7 +483,7 @@ def test_graph_decl_statement(setup_env):
     # Arrange
     node = GraphDecl("GraphDecl")
 
-    with patch("evaluator.categories.graph_declaration.execute_graph_decl", return_value=({"G": {}}, {0: 10})):
+    with patch("evaluator.categories.graph_declaration.execute_graph_decl", return_value=({"G": {}}, {setup_env["env_var"]["x"]: 10})):
         # Act
         result = execute_statement(
             node,
@@ -473,7 +499,7 @@ def test_graph_decl_statement(setup_env):
 
     # Assert
     assert env_graph == {"G": {}}
-    assert store == {0: 10}
+    assert store == {setup_env["env_var"]["x"]: 10}
     assert value is None
     assert loc == setup_env["loc"]
 
@@ -481,7 +507,7 @@ def test_expression_statement(setup_env):
     # Arrange
     node = Expression("Expression")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(42, {setup_env["env_var"]["x"]: 10})):
         # Act
         result = execute_statement(
             node,
@@ -496,7 +522,7 @@ def test_expression_statement(setup_env):
     store, env_var, env_algo, env_graph, value, loc = result
 
     # Assert
-    assert store == {0: 10}
+    assert store == {setup_env["env_var"]["x"]: 10}
     assert value is None
     assert loc == setup_env["loc"]
 
@@ -531,10 +557,16 @@ def test_node_decl_statement(setup_env):
     fake_graph_object = SimpleNamespace(graph={})
 
     fake_decl_result = SimpleNamespace(
-        store={0: 10, 2: None},
-        env_var={"x": 0, "n": 2},
-        location=3,
-    )
+    store={
+        setup_env["env_var"]["x"]: 10,
+        setup_env["loc"]: None,
+    },
+    env_var={
+        **setup_env["env_var"],
+        "n": setup_env["loc"],
+    },
+    location=setup_env["loc"].next_location(),
+)
 
     with patch("evaluator.categories.declaration.execute_declaration", return_value=fake_decl_result):
         # Act
@@ -554,7 +586,7 @@ def test_node_decl_statement(setup_env):
     assert store == fake_decl_result.store
     assert env_var == fake_decl_result.env_var
     assert value is None
-    assert loc == 3
+    assert loc == setup_env["loc"].next_location()
 
 def test_graph_statement(setup_env):
     # Arrange
@@ -601,7 +633,7 @@ def test_display_statement(setup_env, capsys):
     node = DisplayStatement("DisplayStatement")
     node.expression = Term("Term")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result("hello world", {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result("hello world", {setup_env["env_var"]["x"]: 10})):
         # Act
         result = execute_statement(
             node,
@@ -618,7 +650,7 @@ def test_display_statement(setup_env, capsys):
 
     # Assert
     assert "hello world" in captured.out
-    assert store == {0: 10}
+    assert store == {setup_env["env_var"]["x"]: 10}
     assert value is None
 
 def test_return_statement_raises_return_exception(setup_env):
@@ -626,7 +658,7 @@ def test_return_statement_raises_return_exception(setup_env):
     node = ReturnStatement("ReturnStatement")
     node.expression = Term("Term")
 
-    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, {0: 10})):
+    with patch("evaluator.categories.expression.execute_expression", return_value=expr_result(99, {setup_env["env_var"]["x"]: 10})):
         #act & assert
         with pytest.raises(Return):
             execute_statement(
