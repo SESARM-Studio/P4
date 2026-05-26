@@ -369,14 +369,6 @@ class AbstractSyntaxTreeBuilder:
                                 expression.arg2 = self.recursive_builder(child)
                         case "'or'":
                             expression.operator = self.characters(child.begin, child.end)
-                        case "'weight of'":
-                            expression.operator = self.characters(child.begin, child.end)
-                            argument_str = ""
-                            for child1 in symbol_children[index+1:]:
-                                argument_str += self.characters(child1.begin, child1.end)
-                            expression.arg1 = argument_str
-                        case "ExprNode":
-                            expression.arg1 =self.recursive_builder(child)
                 return expression
             
             case "ExprAnd":
@@ -531,8 +523,18 @@ class AbstractSyntaxTreeBuilder:
                 return expr_not
             
             case "ExprCall":
-                for child in symbol_children:
-                    return self.recursive_builder(child)
+                for index, child in enumerate(symbol_children):
+                    match child.name:
+                        case "'weight of'":
+                            expression = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
+                            expression.operator = self.characters(child.begin, child.end)
+                            argument_str = ""
+                            for child1 in symbol_children[index+1:]:
+                                argument_str += self.characters(child1.begin, child1.end)
+                            expression.arg1 = argument_str
+                            return expression
+                        case _:
+                            return self.recursive_builder(child)
                 
             case "AbsoluteValue":
                 absolute_value = AbsoluteValue(symbol.name, [symbol.getBegin(), symbol.getEnd()])
