@@ -136,7 +136,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                             raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
-                if graph_object.graph is not None: # Graph_object gotten from forEachEdge
+                if graph_object.graph is not None:
                     location = env_var.get(node.identifiers[0])
                     value = store.get(location)
                     if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
