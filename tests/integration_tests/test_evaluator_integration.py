@@ -12,9 +12,7 @@ from exceptions.evaluator_exception import EvaluatorException
 from evaluator.evaluator import traverse_program
 import sys
 
-######### Integration of typesystem
-
-def IntegratedEvaluator(inp_file: str) -> bool:
+def IntegratedEvaluator(inp_file):
     source_map = SourceMap()
     try:
         preprocessed_contents = preprocessor(inp_file, source_map)
@@ -42,11 +40,7 @@ def IntegratedEvaluator(inp_file: str) -> bool:
     
     return program_result
 
-######### (Helper function)
-
-INPUT_FILES = "tests/typesystem_integration/"
-
-def test_bellman_ford_evaluator_integration(): # tmp:path is from pytest that creates a tmp path for the test run
+def test_bellman_ford_evaluator_integration():
     ## Arrange
     input_file_path = Path("tests/integration_tests/integration_test_files/bellman_ford.gsl")
 

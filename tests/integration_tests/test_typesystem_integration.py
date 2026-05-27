@@ -11,7 +11,7 @@ import sys
 
 ######### Integration of typesystem
 
-def IntegratedTypesystem(inp_file: str) -> bool:
+def IntegratedTypesystem(inp_file):
     source_map = SourceMap()
     try:
         preprocessed_contents = preprocessor(inp_file, source_map)
@@ -34,7 +34,7 @@ def IntegratedTypesystem(inp_file: str) -> bool:
 
 ######### (Helper function)
 
-def test_bellman_ford():
+def test_bellman_ford_typesystem_integration():
     # Arrange
     input_file_path = Path("tests/integration_tests/integration_test_files/bellman_ford.gsl")
 
