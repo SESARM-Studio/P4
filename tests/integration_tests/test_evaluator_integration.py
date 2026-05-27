@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from preprocessor.prepro import preprocessor
-from preprocessor.prepro import preprocessor, SourceMap
+from P4.preprocessor.preprocessor import preprocessor
+from P4.preprocessor.preprocessor import preprocessor, SourceMap
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
 from parser.ast_builder import AbstractSyntaxTreeBuilder

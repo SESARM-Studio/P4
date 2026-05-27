@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from preprocessor.prepro import preprocessor
+from P4.preprocessor.preprocessor import preprocessor
 from preprocessor.source_map import SourceMap
 from exceptions.preprocessor_exception import PreprocessorException
 
