@@ -2,44 +2,9 @@
 # REx command line: -python -main -tree -lalr 1 .\parser\gsl_parser.ebnf
 
 import sys
+from exceptions.parser_exception import ParseException
 
 class gsl_parser:
-
-  class ParseException(Exception):
-
-    def __init__(self, b, e, s, o, x):
-      self.begin = b
-      self.end = e
-      self.state = s
-      self.offending = o
-      self.expected = x
-
-    def error(self):
-      if self.offending < 0:
-        return "lexical analysis failed"
-      else:
-        return "syntax error"
-
-    def serialize(self, eventHandler):
-      pass
-
-    def getBegin(self):
-      return self.begin
-
-    def getEnd(self):
-      return self.end
-
-    def getState(self):
-      return self.state
-
-    def getOffending(self):
-      return self.offending
-
-    def getExpected(self):
-      return self.expected
-
-    def isAmbiguousInput(self):
-      return False
 
   class TopDownTreeBuilder:
 
@@ -288,6 +253,7 @@ class gsl_parser:
         column = 1
       else:
         column += 1
+    '''
     message += "at line "
     message += str(line)
     message += ", column "
@@ -298,6 +264,7 @@ class gsl_parser:
       end = len(self.input)
     message += self.input[e.getBegin() : end]
     message += "..."
+    '''
     return message
 
   def parse_Program(self):
@@ -374,7 +341,7 @@ class gsl_parser:
         return
 
       else: # ERROR
-        raise gsl_parser.ParseException(self.b1, self.e1, gsl_parser.TOKENSET[state] + 1, self.l1, -1)
+        raise ParseException(self.b1, self.e1, gsl_parser.TOKENSET[state] + 1, self.l1, -1)
 
       if shift >= 0:
         if nonterminalId < 0:
@@ -421,7 +388,7 @@ class gsl_parser:
     return code
 
   def error(self, b, e, s, l, t):
-    raise gsl_parser.ParseException(b, e, s, l, t)
+    raise ParseException(b, e, s, l, t)
 
   def predict(self, dpi):
     d = dpi
@@ -1128,43 +1095,5 @@ class gsl_parser:
       "ListExpression",
       "Assignment",
       "AssignmentIdentifier"]
-
-def read(arg):
-  if arg.startswith("{") and arg.endswith("}"):
-    return arg[1:len(arg) - 1]
-  else:
-    with open(arg, "r", encoding="utf-8") as file:
-      content = file.read()
-    if len(content) > 0 and content[0] == "\ufeff":
-      content = content[1:]
-    return content
-
-def main(args):
-  if len(args) < 2:
-    sys.stderr.write("Usage: python gsl_parser.py [-i] INPUT...\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("  parse INPUT, which is either a filename or literal text enclosed in curly braces\n")
-    sys.stderr.write("\n")
-    sys.stderr.write("  Option:\n")
-    sys.stderr.write("    -i     indented parse tree\n")
-  else:
-    indent = False
-    for arg in args[1:]:
-      if arg == "-i":
-        indent = True
-        continue
-      s = gsl_parser.XmlSerializer()
-      s.indent = indent
-      b = gsl_parser.ParseTreeBuilder()
-      inputString = read(arg)
-      parser = gsl_parser(inputString, b)
-      try:
-        parser.parse_Program()
-        b.serialize(s)
-      except gsl_parser.ParseException as pe:
-        raise Exception ("ParseException while processing " + arg + ":\n" + parser.getErrorMessage(pe)) from pe
-
-if __name__ == '__main__':
-  sys.exit(main(sys.argv))
 
 # End
