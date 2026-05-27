@@ -164,6 +164,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             # Retrieve array element with evaluated indices and retrieved array
             v = array
             for idx in access_indices:
+                if idx > len(v):
+                    raise EvaluatorException(f"Index {idx} out of bounds in list {node.identifier} ", node)
                 v = v[idx-1] # -1 as GSL indexes from 1
 
             return ExpressionReturn(v, E.modified_store)
