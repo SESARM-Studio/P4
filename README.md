@@ -2,7 +2,9 @@
 
 ## How to run the parser
 To run the parser you write in the terminal:
+```bash
 python .\gsl_program.py INPUT
+```
 INPUT is a filepath to a .gsl file.
 
 ## Setting environment up
