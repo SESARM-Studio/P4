@@ -3,7 +3,6 @@ import math
 from copy import deepcopy
 import re
 
-import evaluator.categories.statement
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
 from evaluator.helpers import Graph
@@ -124,20 +123,20 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     else: # G.a.SPE
                         v = graph_object.get_node_data(node.identifiers[1],node.identifiers[2])
                         return ExpressionReturn(v, store)
-                else: # G.a | G.nodes
-                    if node.identifiers[1] == "nodes":
+                else: 
+                    if node.identifiers[1] == "nodes": # G.nodes
                         new_term = Term("Term")
                         new_term.type = "IDENTIFIER"
                         new_term.value = node.identifiers[1]
                         E = execute_expression(new_term, env_graph, env_var, env_algo, loc, graph_object, store)
                         return ExpressionReturn(E.v, E.modified_store, graph_object)
-                    else:
+                    else: # G.a
                         v = node.identifiers[1]
                         if v not in graph_object.get_nodes():
                             raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
-                if graph_object.graph is not None: # Accessed from foreachEdge
+                if graph_object.graph is not None:
                     location = env_var.get(node.identifiers[0])
                     value = store.get(location)
                     if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
@@ -164,6 +163,8 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             # Retrieve array element with evaluated indices and retrieved array
             v = array
             for idx in access_indices:
+                if idx > len(v):
+                    raise EvaluatorException(f"Index {idx} out of bounds in list {node.identifier} ", node)
                 v = v[idx-1] # -1 as GSL indexes from 1
 
             return ExpressionReturn(v, E.modified_store)

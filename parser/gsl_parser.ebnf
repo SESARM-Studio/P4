@@ -28,8 +28,6 @@ DisplayStatement   ::= 'display' Expression
 ReturnStatement    ::= 'return' Expression
 
 Expression         ::= ExprAnd ('or' ExprAnd)* 
-                     | 'weight of' IDENTIFIER '.' IDENTIFIER ('---' | '-->') IDENTIFIER
-                     | ExprNode
 ExprAnd            ::= ExprEq ('and' ExprEq)*
 ExprEq             ::= ExprRel (('=' | '!=') ExprRel)*
 ExprRel            ::= ExprPlus (('<' | '>' | '<=' | '>=') ExprPlus)*
@@ -44,6 +42,8 @@ ExprCall           ::= '(' Expression ')'
                      | ArrayAccess
                      | IdentifierAccess
                      | ListExpression
+                     | 'weight of' IDENTIFIER '.' IDENTIFIER ('---' | '-->') IDENTIFIER
+                     | ExprNode
                      | Term
 Term               ::= BOOL_VALUE | INTEGER_NUMBER | NATURAL_NUMBER | REAL_NUMBER | TEXT | IDENTIFIER 
 
@@ -109,7 +109,7 @@ BOOL_VALUE         ::= 'true' | 'false'
 NEWLINE            ::= '@NEWLINE'
 INDENT             ::= '@INDENT'
 DEDENT             ::= '@DEDENT'
-EOF                ::= $ | '$'
+EOF                ::= $
 
 KEYWORD            ::= 'or'
                      | 'and'

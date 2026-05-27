@@ -1,5 +1,6 @@
 from copy import deepcopy
 from parser.ast_builder import *
+from exceptions.evaluator_exception import EvaluatorException
 
 def execute_algorithm(node: Algorithm, env_graph, env_var, env_algo): #ALGO and ALGO-R (they are identical in the semantics)
     match node.token:
@@ -16,4 +17,4 @@ def execute_algorithm(node: Algorithm, env_graph, env_var, env_algo): #ALGO and 
             })
             return env_algo
         case _:
-            print("Error: you are trying to execute something that is not an algorithm")
+            raise EvaluatorException("You are trying to execute something that is not an algorithm", node)

@@ -1,6 +1,5 @@
 from parser.ast_builder import *
 from evaluator.helpers import *
-import evaluator.categories.declaration
 import evaluator.categories.edge_declaration
 
 def execute_graph_decl(tree_node: GraphDecl, env_var, env_algo, loc, env_graph, graph_object: Graph, store):

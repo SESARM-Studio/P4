@@ -3,11 +3,6 @@ from parser.ast_builder import *
 from copy import deepcopy
 from evaluator.helpers import assign_nested_attribute
 
-import evaluator.categories.algorithm
-import evaluator.categories.expression
-import evaluator.categories.declaration
-import evaluator.categories.graph_declaration
-import evaluator.categories.edge_declaration
 import evaluator.categories.graph_statement
 
 class LoopStop(Exception):
@@ -255,10 +250,6 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
             edges = deepcopy(copy_graph_object.get_edges())
 
-            # Add the initial_node and last_node from ForEachEdge() to a copy of env_var,
-            # so that they can be accessed in statements that don't use env_graph
-
-
             copy_env_var.update({node.edge.initial_node: loc})
             copy_loc = loc.next_location()
             copy_env_var.update({node.edge.last_node:copy_loc})
@@ -274,10 +265,6 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 if node.weight_identifier != None: # (FOR-EW-T) and (FOR-EW-F)
                     weight_value = copy_graph_object.get_edge_data(edge[0], edge[1])["weight"]
                     store.update({copy_env_var.get(node.weight_identifier):weight_value})
-                # If the current statement inside the loop is a GraphStatement,
-                # we change the values in a copy of it (copy_statement) to match the edges in edge,
-                # because they are the only ones that don't access env_var and store
-
 
                 try: 
                     for statement in node.statements:

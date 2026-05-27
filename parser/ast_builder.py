@@ -181,43 +181,6 @@ class ExprNode(Expression):
         self.expression = None
         self.direction = None
 
-
-def print_ast(node, prefix="", is_last=True):
-    connector = "└── " if is_last else "├── "
-
-    print(prefix + connector + node.token)
-    new_prefix = prefix + ("    " if is_last else "│   ")
-
-    for key, value in vars(node).items():
-        if isinstance(value, ASTNode):
-            if key == "parent":
-                continue
-            print_ast(getattr(node, key), new_prefix)
-        elif isinstance(value, list) and not getattr(node, key):
-            continue
-        elif isinstance(value, list):
-            if not any(isinstance(x, ASTNode) for x in getattr(node,key)):
-                print(prefix + "    " + connector + str(getattr(node, key)))
-            elif len(getattr(node, key)) > 1:
-                for index, child in enumerate(getattr(node, key)):
-                    if not isinstance(child, ASTNode):
-                        print(prefix + "    " + connector + str(child))
-                    elif index == len(getattr(node, key))-1:
-                        print_ast(child, new_prefix, True)
-                    else:
-                        print_ast(child, new_prefix, False)
-            else:
-                for child in getattr(node, key):
-                    if not isinstance(child, ASTNode):
-                        print(prefix + "    " + connector + str(getattr(node, key)))
-                    else:
-                        print_ast(child, new_prefix, True)
-        else:
-            if value == None or value == node.token:
-                continue
-            print(prefix + "    " + connector + str(value))
-
-
 # Class for the abstract syntax
 class AbstractSyntaxTreeBuilder:
     def __init__(self, input_string):
@@ -369,14 +332,6 @@ class AbstractSyntaxTreeBuilder:
                                 expression.arg2 = self.recursive_builder(child)
                         case "'or'":
                             expression.operator = self.characters(child.begin, child.end)
-                        case "'weight of'":
-                            expression.operator = self.characters(child.begin, child.end)
-                            argument_str = ""
-                            for child1 in symbol_children[index+1:]:
-                                argument_str += self.characters(child1.begin, child1.end)
-                            expression.arg1 = argument_str
-                        case "ExprNode":
-                            expression.arg1 =self.recursive_builder(child)
                 return expression
             
             case "ExprAnd":
@@ -531,8 +486,18 @@ class AbstractSyntaxTreeBuilder:
                 return expr_not
             
             case "ExprCall":
-                for child in symbol_children:
-                    return self.recursive_builder(child)
+                for index, child in enumerate(symbol_children):
+                    match child.name:
+                        case "'weight of'":
+                            expression = Expression(symbol.name, [symbol.getBegin(), symbol.getEnd()])
+                            expression.operator = self.characters(child.begin, child.end)
+                            argument_str = ""
+                            for child1 in symbol_children[index+1:]:
+                                argument_str += self.characters(child1.begin, child1.end)
+                            expression.arg1 = argument_str
+                            return expression
+                        case _:
+                            return self.recursive_builder(child)
                 
             case "AbsoluteValue":
                 absolute_value = AbsoluteValue(symbol.name, [symbol.getBegin(), symbol.getEnd()])

@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from preprocessor.prepro import preprocessor
+from preprocessor.preprocessor import preprocessor
 from preprocessor.source_map import SourceMap
 from exceptions.preprocessor_exception import PreprocessorException
 
@@ -9,7 +9,7 @@ OUTPUT_FILES = "output_files"
 
 def test_comments(tmp_path):
     # Arrange
-    expected = "x in int := 1 @NEWLINE\n$"
+    expected = "x in int := 1 @NEWLINE\n"
     input_file = INPUT_FILES / "comments.gsl"
 
     output_dir = tmp_path / OUTPUT_FILES
@@ -18,7 +18,6 @@ def test_comments(tmp_path):
 
     # Act
     sm = SourceMap()
-    print("Test file: ",input_file)
     preprocessor(input_file,sm, True, output_file)
 
     data = ""
@@ -41,7 +40,7 @@ edge a --> c weight 3 @NEWLINE
 @INDENT if w > 5 then @NEWLINE
 @INDENT return false @NEWLINE
 @DEDENT return true @NEWLINE
-@DEDENT @DEDENT $"""
+@DEDENT @DEDENT """
 
     input_file = INPUT_FILES / "indents.gsl"
 
@@ -68,8 +67,7 @@ repeat x times @NEWLINE
 @INDENT x := x + 1 @NEWLINE
 @DEDENT y in real := 3.14 @NEWLINE
 v in real := 2 @NEWLINE
-o in real := y^2 * v @NEWLINE
-$"""
+o in real := y^2 * v @NEWLINE\n"""
 
     input_file = INPUT_FILES / "newlines.gsl"
 
@@ -144,7 +142,7 @@ def test_start_indent_error(tmp_path):
 
 def test_comment_sl_in_text_type(tmp_path):
     # Arrange
-    expected = "text a := \"This is text type with a comment // This should be here\" @NEWLINE\n$"
+    expected = "text a := \"This is text type with a comment // This should be here\" @NEWLINE\n"
 
     input_file = INPUT_FILES / "commentSLInTextType.gsl"
 
@@ -165,7 +163,7 @@ def test_comment_sl_in_text_type(tmp_path):
 
 def test_comment_sl_in_text_type_and_after(tmp_path):
     # Arrange
-    expected = "text testing := \"This is a test text // This is cool\"  @NEWLINE\n$"
+    expected = "text testing := \"This is a test text // This is cool\"  @NEWLINE\n"
 
     input_file = INPUT_FILES / "commentSLInTextTypeAndAfter.gsl"
 
@@ -186,7 +184,7 @@ def test_comment_sl_in_text_type_and_after(tmp_path):
 
 def test_comment_ml_in_text_type(tmp_path):
     # Arrange
-    expected = "text something := \"I love something /* Multiline comment wow */\" @NEWLINE\n$"
+    expected = "text something := \"I love something /* Multiline comment wow */\" @NEWLINE\n"
 
     input_file = INPUT_FILES / "commentMLInTextType.gsl"
 
@@ -207,7 +205,7 @@ def test_comment_ml_in_text_type(tmp_path):
 
 def test_comment_ml_in_text_type_and_after(tmp_path):
     # Arrange
-    expected = "text blabla := \"Cool text /* Multiline comment */\"  @NEWLINE\n$"
+    expected = "text blabla := \"Cool text /* Multiline comment */\"  @NEWLINE\n"
 
     input_file = INPUT_FILES / "commentMLInTextTypeAndAfter.gsl"
 
@@ -246,7 +244,7 @@ def test_comment_in_expression_error(tmp_path):
 
 def test_multiple_ml_comments(tmp_path):
     # Arrange
-    expected = "a in int := 5  @NEWLINE\n$"
+    expected = "a in int := 5  @NEWLINE\n"
 
     input_file = INPUT_FILES / "multipleMLComments.gsl"
 
@@ -270,8 +268,7 @@ def test_ml_comment_after_sl_comment(tmp_path):
     expected = \
         """number in real := 0.1  @NEWLINE
 This is a comment @NEWLINE
-*/ @NEWLINE
-$"""
+*/ @NEWLINE\n"""
 
     input_file = INPUT_FILES / "MLCommentAfterSLComment.gsl"
 
@@ -310,7 +307,7 @@ def test_sl_comment_after_ml_comment_error(tmp_path):
 
 def test_multiple_ml_comments_after_each_other(tmp_path):
     # Arrange
-    expected = "a in nat := 1  @NEWLINE\n$"
+    expected = "a in nat := 1  @NEWLINE\n"
 
     input_file = INPUT_FILES / "multipleMLCommentsAfterEachother.gsl"
 
