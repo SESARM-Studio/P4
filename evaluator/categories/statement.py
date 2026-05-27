@@ -351,5 +351,4 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
             raise Return(E.modified_store, env_var, env_algo, env_graph, E.v, loc)
 
         case _:
-            print(vars(node))
             exit("Error: No statement case match!")

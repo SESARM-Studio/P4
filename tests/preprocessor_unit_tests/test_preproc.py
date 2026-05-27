@@ -18,7 +18,6 @@ def test_comments(tmp_path):
 
     # Act
     sm = SourceMap()
-    print("Test file: ",input_file)
     preprocessor(input_file,sm, True, output_file)
 
     data = ""

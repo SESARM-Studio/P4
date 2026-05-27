@@ -4,7 +4,7 @@ from evaluator.evaluator import traverse_program
 from exceptions.preprocessor_exception import PreprocessorException
 from exceptions.parser_exception import ParseException
 from exceptions.evaluator_exception import EvaluatorException
-from P4.preprocessor.preprocessor import preprocessor, SourceMap
+from preprocessor.preprocessor import preprocessor, SourceMap
 from parser.ast_builder import AbstractSyntaxTreeBuilder
 from parser.gsl_parser import gsl_parser
 from typesystem.type_checker import TypeChecker
