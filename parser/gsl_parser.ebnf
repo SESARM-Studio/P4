@@ -109,7 +109,7 @@ BOOL_VALUE         ::= 'true' | 'false'
 NEWLINE            ::= '@NEWLINE'
 INDENT             ::= '@INDENT'
 DEDENT             ::= '@DEDENT'
-EOF                ::= $ | '$'
+EOF                ::= $
 
 KEYWORD            ::= 'or'
                      | 'and'

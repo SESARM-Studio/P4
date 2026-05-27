@@ -155,9 +155,6 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
     if current_indent_level > 0:
         final_string += current_indent_level * "@DEDENT "
 
-    # Adds the EOD sign '$'
-    final_string += "$"
-
     # Output to file
     if return_file is False:
         return final_string
