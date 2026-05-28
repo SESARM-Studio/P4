@@ -15,7 +15,7 @@ def execute_graph_statement(tree_node: GraphStatement, env_graph, env_var, env_a
                             g.add_node(tree_node.argument.identifiers[0])
                         else:
                             raise EvaluatorException("Cant add node to not graph object", tree_node)
-                    else:
+                    else: # (ADD-NODE2)
                         location = env_var.get(tree_node.argument.identifiers[0])
                         value = store.get(location)
                         if isinstance(env_graph.get(tree_node.graph_identifier), Graph):
