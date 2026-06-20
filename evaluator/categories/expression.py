@@ -81,7 +81,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
             try: 
 
                 for statement in body_statements:
-                    algorithm_store, env_var_old, env_var_old, env_graph_old, v, free_location = evaluator.categories.statement.execute_statement(statement, free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
+                    algorithm_store, env_var_old, env_algo_old, env_graph_old, v, free_location = evaluator.categories.statement.execute_statement(statement, free_location, graph_object, algorithm_store, env_var_old, env_algo_old, env_graph_old)
 
                 return ExpressionReturn(v, algorithm_store)
             except Return as e:
