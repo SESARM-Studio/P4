@@ -5,7 +5,7 @@ import re
 
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
-from evaluator.helpers import Graph
+from evaluator.helpers import Graph, get_node_object
 from typesystem.data_types import *
 from exceptions.evaluator_exception import EvaluatorException
 
@@ -117,11 +117,18 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         E1 = execute_expression(new_term, env_graph, env_var, env_algo, loc, graph_object, store)
                         E2 = execute_expression(node.identifiers[2].arguments[1], env_graph, env_var, env_algo, loc, graph_object, E1.modified_store)
                         for graph_node in E1.v:
+                            if isinstance(graph_node, str): break # Skipping duplicate nodes added by edge declarations
                             graph_object.add_attribute(graph_node, E2.v)
                         v = None
                         return ExpressionReturn(v, E2.modified_store)
-                    else: # G.a.SPE
-                        v = graph_object.get_node_data(node.identifiers[1],node.identifiers[2])
+                    else: # G.a.SPE´
+                        node_object = get_node_object(graph_object, node.identifiers[1])
+
+                        if node_object == None:
+                            raise EvaluatorException(f"Node '{node.identifiers[1]}' does not exist in graph '{node.identifiers[0]}'!", node)
+                        
+                        v = graph_object.get_node_data(node_object, node.identifiers[2])
+
                         return ExpressionReturn(v, store)
                 else: 
                     if node.identifiers[1] == "nodes": # G.nodes
@@ -131,9 +138,11 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         E = execute_expression(new_term, env_graph, env_var, env_algo, loc, graph_object, store)
                         return ExpressionReturn(E.v, E.modified_store, graph_object)
                     else: # G.a
-                        v = node.identifiers[1]
-                        if v not in graph_object.get_nodes():
-                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
+                        v = get_node_object(graph_object, node.identifiers[1])
+
+                        if v == None:
+                            raise EvaluatorException(f"Node '{node.identifiers[1]}' does not exist in graph '{node.identifiers[0]}'!", node)
+
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
                 if graph_object.graph is not None:
@@ -141,8 +150,9 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     value = store.get(location)
                     if isinstance(node.identifiers[1], AlgorithmCall): # a.addatribute()
                         raise EvaluatorException("Cant add attribute to a node!", node)
-                    else: # a.SPE
-                        v = graph_object.get_node_data(value,node.identifiers[1])
+                    else: # e.g. a.SPE
+                        v = graph_object.get_node_data(value, node.identifiers[0])
+
                         return ExpressionReturn(v, store)
                 else:
                     raise EvaluatorException("Cant access global node!", node)
