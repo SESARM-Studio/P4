@@ -1,8 +1,7 @@
 import parser.ast_builder
 from parser.ast_builder import *
 from copy import deepcopy
-from evaluator.helpers import assign_nested_attribute
-
+from evaluator.helpers import assign_nested_attribute, get_node_object
 import evaluator.categories.graph_statement
 
 class LoopStop(Exception):
@@ -58,17 +57,17 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                 # Outside graph object: G.x or G.x.a.b
                 if graph_object.graph is None: # (DOT-ASS1)
                     graph_identifier = node.identifiers[0]
-                    node_identifier = node.identifiers[1]
                     attribute_path = node.identifiers[2:]
 
                     if graph_identifier not in env_graph:
                         raise RuntimeError(f"Unknown graph object: {graph_identifier}")
 
                     go = env_graph[graph_identifier]
+                    node_object = get_node_object(go, node.identifiers[1])
 
-                    if node_identifier not in go.get_nodes():
+                    if node_object not in go.get_nodes():
                         raise RuntimeError(
-                            f"Unknown node/member '{node_identifier}' "
+                            f"Unknown node/member '{node_object.name}' "
                             f"in graph '{graph_identifier}'"
                         )
 
@@ -81,7 +80,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     # G.x.a.b := v
                     else:
                         assign_nested_attribute(
-                            go.get_nodes()[node_identifier],
+                            node_object.attributes,
                             attribute_path,
                             E.v,
                         )
@@ -92,6 +91,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     node_identifier = node.identifiers[0]
                     node_location = env_var.get(node_identifier)
                     node_value = store.get(node_location)
+                    node_object = get_node_object(go, node_value)
                     attribute_path = node.identifiers[1:]
 
                     if node_value not in go.get_nodes():
@@ -109,7 +109,7 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
                     # x.a.b := v
                     else:
                         assign_nested_attribute(
-                            go.get_nodes()[node_value],
+                            node_object.attributes,
                             attribute_path,
                             E.v,
                         )
@@ -343,7 +343,12 @@ def execute_statement(node: ASTNode, loc, graph_object, store, env_var, env_algo
 
         case DisplayStatement(): # (DISPLAY)
             E = evaluator.categories.expression.execute_expression(node.expression, env_graph, env_var, env_algo, loc, graph_object, store)
-            print(E.v)
+
+            if isinstance(E.v, Node):
+                print(E.v.name)
+            else:
+                print(E.v)
+
             return E.modified_store, env_var, env_algo, env_graph, None, loc
 
         case ReturnStatement(): # (RET)
