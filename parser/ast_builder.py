@@ -376,7 +376,7 @@ class AbstractSyntaxTreeBuilder:
                                 expr_eq.arg1 = self.recursive_builder(child)
                             else:
                                 expr_eq.arg2 = self.recursive_builder(child)
-                        case "'='" | "!=":
+                        case "'='" | "'!='":
                             expr_eq.operator = self.characters(child.begin, child.end)
                 return expr_eq
             
