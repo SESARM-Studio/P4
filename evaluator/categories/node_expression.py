@@ -9,7 +9,7 @@ def execute_node_expression(tree_node: ExprNode, env_graph, env_var, env_algo, l
         case "---": # (NODE1---) and (NODE2---)
             E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, E.graph_object, store)
 
-            if isinstance(E.graph_object, nx.Graph):
+            if isinstance(E.graph_object.graph, nx.Graph):
                 return list(E.graph_object.graph.neighbors(E.v)), E.modified_store
             elif isinstance(E.graph_object.graph, nx.DiGraph):
                 predecessors = list(E.graph_object.graph.predecessors(E.v))
