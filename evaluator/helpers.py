@@ -29,6 +29,32 @@ class Location:
     def copy(self):
         return copy(self)
 
+
+class Node:
+  
+  def __init__(self, name: str):
+    self.name = name
+    self.attributes = dict()
+
+# def __repr__(self):
+#     """Return a readable string representation rather than a memory address"""
+#     return f"{self.name}"
+
+  def add_attribute(self, attribute, value):
+      self.attributes.update({attribute: value})
+
+  def get_attribute(self, attribute):
+      return self.attributes[attribute]
+
+    # Tilføj self-hash
+
+
+def get_node_object(graph, identifier):
+    for n in graph.get_nodes():
+        if n.name == identifier:
+            return n
+    return None
+
 class Graph:
 
     def __init__(self):
@@ -44,27 +70,36 @@ class Graph:
         if len(self.graph.nodes) > 0: # If graph has nodes
             created_graph_node_attributes = self.graph.nodes[next(iter(self.graph.nodes))] # Get attributes of the first node in graph since all nodes share same attributes
             if len(created_graph_node_attributes) == 0: # If nodes of the graph has no attributes
-                self.graph.add_node(new_node)
+                node = Node(new_node)
+                self.graph.add_node(node)
             else:
                 attributes = dict()
                 for key in created_graph_node_attributes:
                     attributes.update({key: None}) # Create dictionary of nodes
-                self.graph.add_node(new_node, **attributes) # **attributes unpacks the dictionary
+                node = Node(new_node)
+                self.graph.add_node(node, **attributes) # **attributes unpacks the dictionary
         else: # If graph has no nodes
-            self.graph.add_node(new_node)
+            node = Node(new_node)
+            self.graph.add_node(node)
 
     def add_nodes(self, new_nodes):
+
+        # Create node objects
+        nodes = []
+        for node_name in new_nodes:
+            nodes.append(Node(node_name))
+
         if len(self.graph.nodes) > 0: # If graph has nodes
             created_graph_node_attributes = self.graph.nodes[next(iter(self.graph.nodes))] # Get attributes of the first node in graph since all nodes share same attributes
             if len(created_graph_node_attributes) == 0: # If nodes of the graph has no attributes
-                self.graph.add_nodes_from(new_nodes)
+                self.graph.add_nodes_from(nodes)
             else:
                 attributes = dict()
                 for key in created_graph_node_attributes:
                     attributes.update({key: None}) # Create dictionary of nodes      
-                self.graph.add_nodes_from(new_nodes, **attributes) # **attributes unpacks the dictionary
+                self.graph.add_nodes_from(nodes, **attributes) # **attributes unpacks the dictionary
         else: # If graph has no nodes
-            self.graph.add_nodes_from(new_nodes)
+            self.graph.add_nodes_from(nodes)
 
     def add_edge(self, src, dst):
         self.graph.add_edge(src, dst)
@@ -80,7 +115,7 @@ class Graph:
         self.graph.add_weighted_edges_from(edges)
 
     def add_attribute(self, node, attribute):
-        self.graph.nodes[node][attribute] = None
+        node.add_attribute(attribute, None)
 
     def remove_node(self, node):
         self.graph.remove_node(node)
@@ -101,7 +136,7 @@ class Graph:
         return self.graph.get_edge_data(src, dst)
     
     def get_node_data(self, node, data):
-        return self.graph.nodes[node][data]
+        return node.get_attribute(data)
 
     def copy(self):
         return deepcopy(self)
