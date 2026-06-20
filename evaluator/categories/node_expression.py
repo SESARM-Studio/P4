@@ -1,13 +1,20 @@
 from parser.ast_builder import *
 from evaluator.helpers import *
 import evaluator.categories.expression
+import networkx as nx
 
 def execute_node_expression(tree_node: ExprNode, env_graph, env_var, env_algo, loc, graph_object: Graph, store):
     E = evaluator.categories.expression.ExpressionReturn(None, store, graph_object)
     match tree_node.direction:
         case "---": # (NODE1---) and (NODE2---)
             E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, E.graph_object, store)
-            return list(E.graph_object.graph.neighbors(E.v)), E.modified_store
+
+            if isinstance(E.graph_object, nx.Graph):
+                return list(E.graph_object.graph.neighbors(E.v)), E.modified_store
+            elif isinstance(E.graph_object.graph, nx.DiGraph):
+                predecessors = list(E.graph_object.graph.predecessors(E.v))
+                successors = list(E.graph_object.graph.successors(E.v))
+                return list(set(predecessors).union(successors)), E.modified_store
         case "-->": # (NODE-->)
             E = evaluator.categories.expression.execute_expression(tree_node.expression, env_graph, env_var, env_algo, loc, E.graph_object, store)
             return list(E.graph_object.graph.successors(E.v)), E.modified_store
