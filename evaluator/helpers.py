@@ -32,21 +32,28 @@ class Location:
 
 class Node:
   
-  def __init__(self, name: str):
-    self.name = name
-    self.attributes = dict()
+    def __init__(self, name: str):
+        self.name = name
+        self.attributes = dict()
 
-# def __repr__(self):
-#     """Return a readable string representation rather than a memory address"""
-#     return f"{self.name}"
+    def __repr__(self):
+        """Return a readable string representation rather than a memory address"""
+        return f"{self.name}"
+    def __eq__(self, other):
+        """Compare objects based on their contents instead of memory address - so a copy of a location
+        will evaluate as equal to the original."""
+        # How attributes (dict()) are compared might affect comparison.
+        return (isinstance(other, type(self)) and (self.name, self.attributes) == (other.name, other.attributes)) 
 
-  def add_attribute(self, attribute, value):
-      self.attributes.update({attribute: value})
+    def __hash__(self):
+        """Return a hash value so equal objects can be found correctly in sets and dictionaries."""
+        return hash((self.name, self.attributes))
+    
+    def add_attribute(self, attribute, value):
+        self.attributes.update({attribute: value})
 
-  def get_attribute(self, attribute):
-      return self.attributes[attribute]
-
-    # Tilføj self-hash
+    def get_attribute(self, attribute):
+        return self.attributes[attribute]
 
 
 def get_node_object(graph, identifier):
