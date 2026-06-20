@@ -32,7 +32,7 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
                 if "*/" not in temp_str:
                     continue
                 else:
-                    temp_str = re.sub(r".*\*\/","", temp_str)
+                    temp_str = re.sub(r".*?\*/","", temp_str, count=1)
                     if temp_str.strip() != "":
                         raise PreprocessorException("No code must follow a multi-line comment", [source_offset, source_end_location])
                     inside_comment = False
@@ -52,7 +52,7 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
                             if "*/" in temp_str[index:]:
                                 # Check if code comes after single-line multi-line comments "/* */"
                                 multi_line = re.split(r"/\*.*\*/", temp_str)
-                                if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
+                                if re.split(r"/\*.*?\*/", temp_str)[1].strip() != "":
                                     raise PreprocessorException("No code must follow a multi-line comment", [source_offset, source_end_location])
 
                                 # Remove single-line multi-line comments "/* */"
@@ -72,13 +72,13 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
                 temp_str = re.sub(r"//.*", "", temp_str)
 
                 # Check if code comes after single-line multi-line comments "/* */"
-                multi_line = re.split(r"/\*.*\*/", temp_str)
+                multi_line = re.split(r"/\*.*?\*/", temp_str)
                 if len(multi_line) > 1:
-                    if re.split(r"/\*.*\*/", temp_str)[1].strip() != "":
+                    if multi_line[1].strip() != "":
                         raise PreprocessorException("No code must follow a multi-line comment",[source_offset, source_end_location])
 
                 # Remove multi-line comments on 1 line "/* */"
-                temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str)
+                temp_str = re.sub(r"/\*.*?\*/.*", "", temp_str, count=1)
 
                 # Remove start-of multi-line comments "/*"
                 if "/*" in temp_str:
