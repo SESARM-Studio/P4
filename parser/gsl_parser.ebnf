@@ -60,8 +60,7 @@ ExprNode           ::= '(' Expression ')---'
                      | '(' Expression ')<--'
                      | '(' Expression ')<->'
 EdgeDecl           ::= TYPE_EDGE IDENTIFIER ('---' | '-->' | '<--' | '<->') IDENTIFIER (',' IDENTIFIER)* ('weight' Expression (',' Expression)*)?
-IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)+ ('.' AlgorithmCall)?
-
+IdentifierAccess   ::= IDENTIFIER ('.' IDENTIFIER)+ ('.' AlgorithmCall)? | IDENTIFIER '.' AlgorithmCall
 
 Algorithm          ::= 'algo' IDENTIFIER '(' (Parameter (',' Parameter)* )? ')' ('returns' TYPE)? NEWLINE INDENT Statement+ DEDENT
 Parameter          ::= IDENTIFIER 'in' TYPE_ARITH 

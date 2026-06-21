@@ -1,5 +1,6 @@
 from copy import copy, deepcopy
 import networkx as nx
+import numpy as np
 
 class Location:
     def __init__(self):
@@ -90,6 +91,24 @@ class Graph:
     
     def clear_edges(self):
         return self.graph.clear_edges()
+    
+    def is_directed(self):
+        return self.graph.is_directed()
+    
+    def is_weighted(self):
+        return nx.is_weighted(self.graph)
+    
+    def toMatrix(self):
+        return nx.to_numpy_array(self.graph)
+    
+    def fromMatrix(self, adjacencyMatrix, isDirected):
+        if isDirected:
+            self.graph = nx.from_numpy_array(np.array(adjacencyMatrix), create_using=nx.DiGraph)
+        else:
+            self.graph = nx.from_numpy_array(np.array(adjacencyMatrix), create_using=nx.Graph)
+        # This part is AI generated
+        mapping = {i: chr(ord("a") + i) for i in range(len(adjacencyMatrix[0]))}
+        self.graph = nx.relabel_nodes(self.graph, mapping)
 
     def get_nodes(self):
         return self.graph.nodes

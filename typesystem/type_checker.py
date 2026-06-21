@@ -165,7 +165,8 @@ class TypeChecker():
 
                 kind = [TypeEnum.NODE]
 
-            case IdentifierAccess(identifiers=[i1, i2]) if env_v.lookup(i1) == TypeEnum.UNKNOWN: # (gnd)
+            case IdentifierAccess(identifiers=[i1, i2]) if env_v.lookup(i1) == TypeEnum.UNKNOWN and not isinstance(i2, AlgorithmCall): # (gnd)
+
                 graph = env_g.lookup(i1)
                 self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression, node)
 
@@ -176,6 +177,48 @@ class TypeChecker():
                 self.expect_in_domain(i2, node_set, self.parse_expression, node)
 
                 kind = TypeEnum.NODE
+
+            case IdentifierAccess(identifiers=[i1, i2]) if env_v.lookup(i1) == TypeEnum.UNKNOWN and isinstance(i2, AlgorithmCall):
+                graph = env_g.lookup(i1)
+                self.reject_type(graph, TypeEnum.UNKNOWN, self.parse_expression, node)
+
+                graph_type, weight_type, node_set = graph
+                self.expect_type_one_of(graph_type, self.graph_types, self.parse_expression, node)
+                self.expect_type_one_of(weight_type, { TypeEnum.UNKNOWN, *self.arit_types }, self.parse_expression, node)
+                if i2.identifier == "toMatrix":
+                    if i2.arguments:
+                        raise TypeCheckError(self.parse_expression, node.span, "0 arguments", f"{len(i2.arguments)} argument{"s" if len(i2.arguments) > 1 else ""}" )
+                    else:
+                        if weight_type == TypeEnum.UNKNOWN:
+                            kind = [[TypeEnum.NAT]]
+                        else:
+                            kind = [[weight_type]]
+                elif i2.identifier == "fromMatrix":
+                    if not i2.arguments or len(i2.arguments) > 1:
+                        raise TypeCheckError(self.parse_expression, node.span, "1 argument", f"{0 if not i2.arguments else len(i2.arguments) } arguments" )
+                    else:
+                        if env_v.lookup(i2.arguments[0].arg1.value) != TypeEnum.UNKNOWN:
+                            adjacencyListType = env_v.lookup(i2.arguments[0].arg1.value)[0][0]
+
+                            self.expect_type_one_of(adjacencyListType, self.arit_types, self.parse_expression, node)
+                            if weight_type != TypeEnum.UNKNOWN:
+                                    self.expect_type_compatable(adjacencyListType, weight_type, self.parse_expression, node)
+
+                        else:
+                            if isinstance(i2.arguments[0].arg1, ListExpression):
+                                adjacencyListType = self.parse_expression(i2.arguments[0].arg1, env_v, env_a, env_g)[0][0]
+
+                                self.expect_type_one_of(adjacencyListType, self.arit_types, self.parse_expression, node)
+                                if weight_type != TypeEnum.UNKNOWN:
+                                    self.expect_type_compatable(adjacencyListType, weight_type, self.parse_expression, node)
+
+                                nodeAmount = len(i2.arguments[0].arg1.expressions[0].arg1.expressions)
+                                nodes = {chr(ord('a') + i) for i in range(nodeAmount)}
+                                
+                                env_g = env_g.bind(i1, (graph_type, weight_type, nodes))
+
+                            else:
+                                raise TypeCheckError(self.parse_expression, node.span, "ListExpression", i2.arguments[0].arg1.token)
 
             case IdentifierAccess(identifiers=ids):
                 if (graph := env_g.lookup(ids[0])) != TypeEnum.UNKNOWN: # (gxr) with addAttribute

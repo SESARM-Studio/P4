@@ -2,6 +2,7 @@ from parser.ast_builder import *
 import math
 from copy import deepcopy
 import re
+import numpy as np
 
 from evaluator.categories.statement import Return
 import evaluator.categories.node_expression
@@ -130,10 +131,59 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                         new_term.value = node.identifiers[1]
                         E = execute_expression(new_term, env_graph, env_var, env_algo, loc, graph_object, store)
                         return ExpressionReturn(E.v, E.modified_store, graph_object)
+                    elif isinstance(node.identifiers[1], AlgorithmCall):
+                        if node.identifiers[1].identifier == "toMatrix":
+                            if node.type[0] == TypeEnum.REAL:
+                                v = graph_object.toMatrix().tolist()
+                            else:
+                                v = graph_object.toMatrix().astype(int).tolist()
+                            return ExpressionReturn(v, store)
+                        
+                        elif node.identifiers[1].identifier == "fromMatrix":
+                            if isinstance(node.identifiers[1].arguments[0].arg1, ListExpression): # G.fromMatrix([[0,1],[1,0]])
+                                E = execute_expression(node.identifiers[1].arguments[0].arg1, env_graph, env_var, env_algo, loc, graph_object, store)
+                            else: # G.fromMatrix(variable)
+                                E = execute_expression(node.identifiers[1].arguments[0], env_graph, env_var, env_algo, loc, graph_object, store)
+                                if not isinstance(E.v, list):
+                                    raise EvaluatorException(f"Argument {node.identifiers[1].arguments[0].arg1.value} is not a list", node)
+                            adjacencyList = E.v
+
+                            isDirected = None
+
+                            if graph_object.is_directed():
+                                isDirected = True
+                                if graph_object.is_weighted():
+                                    graph_object.fromMatrix(adjacencyList, isDirected)
+                                else:
+                                    for row in adjacencyList:
+                                        for x in row:
+                                            if x not in [0, 1]:
+                                                raise EvaluatorException("Cannot declare/assign unweighted graph with weighted adjacency matrix", node)
+                                    graph_object.fromMatrix(adjacencyList, isDirected)
+                            else:
+                                isDirected = False
+                                numpyAdjacencyList = np.array(adjacencyList)
+                                if np.allclose(numpyAdjacencyList, numpyAdjacencyList.T):
+                                    if graph_object.is_weighted():
+                                        graph_object.fromMatrix(adjacencyList, isDirected)
+                                    else:
+                                        for row in adjacencyList:
+                                            for x in row:
+                                                if x not in [0, 1]:
+                                                    raise EvaluatorException("Cannot declare/assign unweighted graph with weighted adjacency matrix", node)
+                                        graph_object.fromMatrix(adjacencyList, isDirected)
+                                else:
+                                    raise EvaluatorException("Cannot declare/assign undirected graph with directed adjacency matrix", node)
+
+                            return ExpressionReturn(None, store)
+                        else:
+                            raise EvaluatorException(f"{node.identifiers[1].identifier} is not a valid function", node)
+
+                    
                     else: # G.a
                         v = node.identifiers[1]
                         if v not in graph_object.get_nodes():
-                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
+                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!", node)
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
                 if graph_object.graph is not None:
