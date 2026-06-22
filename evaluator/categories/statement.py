@@ -1,7 +1,7 @@
 import parser.ast_builder
 from parser.ast_builder import *
 from copy import deepcopy
-from evaluator.helpers import assign_nested_attribute, get_node_object
+from evaluator.helpers import assign_nested_attribute, get_node_object, Node
 import evaluator.categories.graph_statement
 
 class LoopStop(Exception):
