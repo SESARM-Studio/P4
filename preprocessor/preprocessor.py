@@ -51,8 +51,8 @@ def preprocessor(file_input, source_map: SourceMap, return_file=False, file_outp
                         if temp_str[index+1] == "*":
                             if "*/" in temp_str[index:]:
                                 # Check if code comes after single-line multi-line comments "/* */"
-                                multi_line = re.split(r"/\*.*\*/", temp_str)
-                                if re.split(r"/\*.*?\*/", temp_str)[1].strip() != "":
+                                multi_line = re.split(r"/\*.*?\*/", temp_str)
+                                if multi_line[1].strip() != "":
                                     raise PreprocessorException("No code must follow a multi-line comment", [source_offset, source_end_location])
 
                                 # Remove single-line multi-line comments "/* */"
