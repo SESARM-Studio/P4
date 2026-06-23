@@ -356,7 +356,7 @@ class TypeChecker():
 
                 self.expect_type_one_of(weight_type, { *self.arit_types, TypeEnum.UNKNOWN }, self.parse_graph_statement, node)
 
-                ident2 = node.argument
+                ident2 = node.argument.identifiers[0]
                 self.expect_in_domain(ident2, node_set, self.parse_graph_statement, node)
         else: # (are)
             graph = env_g.lookup(node.graph_identifier)

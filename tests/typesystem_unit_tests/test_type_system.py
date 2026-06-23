@@ -551,10 +551,17 @@ def test_type_system_grn():
         node1
     ]
 
+    decl = Declaration("Declaration")
+    decl.is_list = False
+    decl.type = "node"
+    decl.identifiers = ['c']
+
     graph_stmt = GraphStatement("GraphStatement")
     graph_stmt.graph_identifier = "yes_graph"
     graph_stmt.operator = "remove"
-    graph_stmt.argument = "c"
+    graph_stmt.argument = decl
+
+
 
     ast = ASTNode("PROGRAM", None, [
         graph_decl_node,
