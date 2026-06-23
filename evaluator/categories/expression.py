@@ -133,7 +133,7 @@ def execute_expression(node: Expression | Term, env_graph, env_var, env_algo, lo
                     else: # G.a
                         v = node.identifiers[1]
                         if v not in graph_object.get_nodes():
-                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!")
+                            raise EvaluatorException(f"Node '{v}' does not exist in graph '{node.identifiers[0]}'!", node)
                         return ExpressionReturn(v, store, graph_object)
             else: # (DGO)
                 if graph_object.graph is not None:
